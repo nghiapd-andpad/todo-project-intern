@@ -1,4 +1,4 @@
-package handler
+package service
 
 import (
 	"context"
@@ -20,7 +20,7 @@ type TodoHandler struct {
 	todov1.UnimplementedTodosServiceServer
 	TodoCreator    todos.TodoCreator
 	TodoGetter     todos.TodoGetter
-	TodoListReader todos.TodoListReader
+	TodoListReader todos.TodoLister
 	TodoUpdater    todos.TodoUpdater
 	TodoDeleter    todos.TodoDeleter
 }
@@ -28,7 +28,7 @@ type TodoHandler struct {
 func NewTodoHandler(
 	creator todos.TodoCreator,
 	getter todos.TodoGetter,
-	listReader todos.TodoListReader,
+	listReader todos.TodoLister,
 	updater todos.TodoUpdater,
 	deleter todos.TodoDeleter,
 ) *TodoHandler {
@@ -72,7 +72,7 @@ func (h *TodoHandler) ListTodos(ctx context.Context, req *todov1.ListTodosReques
 	}
 
 	// Build Input
-	in := &input.TodoListReader{
+	in := &input.TodoLister{
 		Parent: req.GetParent(),
 	}
 

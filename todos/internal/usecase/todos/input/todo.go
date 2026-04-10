@@ -6,7 +6,7 @@ type TodoGetter struct {
 	ID entity.TodoID
 }
 
-type TodoListReader struct {
+type TodoLister struct {
 	Parent string // users/{u_id}/todo-lists/{l_id}
 }
 

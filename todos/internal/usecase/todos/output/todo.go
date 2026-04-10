@@ -6,7 +6,7 @@ type TodoGetter struct {
 	Todo *entity.Todo
 }
 
-type TodoListReader struct {
+type TodoLister struct {
 	Todos []*entity.Todo
 }
 
