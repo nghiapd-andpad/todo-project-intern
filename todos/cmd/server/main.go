@@ -5,45 +5,44 @@ import (
 	"log"
 	"net"
 
+	"github.com/nghiaphunng18/todos/di" // Import folder di nơi chứa wire_gen.go
 	todov1 "github.com/nghiaphunng18/todos/gen/todo/v1"
-	handler "github.com/nghiaphunng18/todos/internal/handler/grpc/service"
-	"github.com/nghiaphunng18/todos/internal/usecase/todos"
+	"github.com/nghiaphunng18/todos/internal/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func main() {
-	// Listen on port 50051
-	lis, err := net.Listen("tcp", ":50051")
+	// Load Configuration
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
+
+	// Initialize Database
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
+
+	// Use Google Wire to initialize the TodoHandler
+	todoHandler := di.InitializeTodoHandler(db)
+
+	// Setup gRPC Server
+	lis, err := net.Listen("tcp", ":"+cfg.ServerPort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	// Create gRPC Server
 	s := grpc.NewServer()
-
-	todoCreator := todos.NewTodoCreator(nil)
-	todoGetter := todos.NewTodoGetter(nil)
-	todoListReader := todos.NewTodoListReader(nil)
-	todoUpdater := todos.NewTodoUpdater(nil, nil)
-	todoDeleter := todos.NewTodoDeleter(nil)
-
-	// Create TodoHandler with use cases
-	todoHandler := handler.NewTodoHandler(
-		todoCreator,
-		todoGetter,
-		todoListReader,
-		todoUpdater,
-		todoDeleter,
-	)
-
-	// Register TodoHandler to gRPC Server
 	todov1.RegisterTodosServiceServer(s, todoHandler)
-
-	// Register reflection service on gRPC server
 	reflection.Register(s)
 
-	fmt.Println("gRPC Server is running on port :50051...")
+	fmt.Printf("gRPC Server is running on port :%s...\n", cfg.ServerPort)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
