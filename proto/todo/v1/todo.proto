@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package todo.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/nghiapd-andpad/todo-project-intern/services/todo-service/gen/todo/v1;todov1";
+
+service TodosService {
+  rpc GetTodo(GetTodoRequest) returns (Todo);
+  rpc ListTodos(ListTodosRequest) returns (ListTodosResponse);
+  rpc CreateTodo(CreateTodoRequest) returns (Todo);
+  rpc UpdateTodo(UpdateTodoRequest) returns (Todo);
+  rpc DeleteTodo(DeleteTodoRequest) returns (google.protobuf.Empty);
+}
+
+message Todo {
+  // Format: users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+  string name = 1; 
+  string title = 2;
+  string description = 3;
+  TodoStatus status = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+enum TodoStatus {
+  TODO_STATUS_UNSPECIFIED = 0;
+  TODO_STATUS_PENDING = 1;
+  TODO_STATUS_IN_PROGRESS = 2;
+  TODO_STATUS_DONE = 3;
+}
+
+message GetTodoRequest {
+  string name = 1;
+}
+
+message ListTodosRequest {
+  string parent = 1; // users/{user_id}/todo-lists/{list_id}
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListTodosResponse {
+  repeated Todo todos = 1;
+  string next_page_token = 2;
+}
+
+message CreateTodoRequest {
+  string parent = 1;
+  string title = 2;
+  string description = 3;
+}
+
+message UpdateTodoRequest {
+  Todo todo = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message DeleteTodoRequest {
+  string name = 1;
+}
