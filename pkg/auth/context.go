@@ -1,0 +1,30 @@
+package auth
+
+import (
+	"context"
+)
+
+type contextKey string
+
+const (
+	userIDKey contextKey = "user_id"
+	rolesKey  contextKey = "roles"
+)
+
+// Set user ID and roles in context
+func SetUserContext(ctx context.Context, userID int64, roles []string) context.Context {
+	ctx = context.WithValue(ctx, userIDKey, userID)
+	return context.WithValue(ctx, rolesKey, roles)
+}
+
+// Get user ID from context
+func GetUserID(ctx context.Context) (int64, bool) {
+	uid, ok := ctx.Value(userIDKey).(int64)
+	return uid, ok
+}
+
+// Get roles from context
+func GetRoles(ctx context.Context) ([]string, bool) {
+	roles, ok := ctx.Value(rolesKey).([]string)
+	return roles, ok
+}
