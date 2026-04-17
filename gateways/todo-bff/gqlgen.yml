@@ -1,0 +1,35 @@
+schema:
+  - internal/handler/graph/*.graphqls
+
+exec:
+  filename: internal/handler/graph/generated.go
+  package: graph
+
+model:
+  filename: internal/handler/graph/models_gen.go
+  package: graph
+
+# Map from GraphQL Type to Go Struct
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+  Time:
+    model:
+      - github.com/99designs/gqlgen/graphql.Time
+  
+  # Map Todo type to Go struct
+  Todo:
+    model: github.com/nghiapd-andpad/todo-project-intern/gateways/todo-bff/internal/domain.Todo
+    fields:
+      # Field Resolver
+      creator:
+        resolver: true 
+
+  User:
+    model: github.com/nghiapd-andpad/todo-project-intern/gateways/todo-bff/internal/domain.User
+
+resolver:
+  layout: follow-schema
+  dir: internal/handler/graph
+  package: graph

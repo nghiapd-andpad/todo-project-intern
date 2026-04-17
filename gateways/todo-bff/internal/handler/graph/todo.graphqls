@@ -1,0 +1,33 @@
+# Resource Name: users/{user_id}/todo-lists/{todo_list_id}/todos/{todo_id}
+
+type Todo {
+    id: ID!
+    title: String!
+    description: String
+    status: TodoStatus!
+    priority: Priority!
+    dueDate: Time
+    createdAt: Time!
+    updatedAt: Time!
+    creator: User! 
+}
+
+enum TodoStatus {
+    PENDING
+    IN_PROGRESS
+    DONE
+}
+
+enum Priority {
+    LOW
+    MEDIUM
+    HIGH
+}
+
+type Query {
+    todo(name: ID!): Todo! @auth
+}
+
+type Mutation {
+    createTodo(title: String!, description: String): Todo! @auth
+}

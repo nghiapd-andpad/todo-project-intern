@@ -1,0 +1,17 @@
+# Resource Name: users/{user_id}
+
+type User {
+    id: ID!
+    username: String!
+    email: String!
+}
+
+type AuthPayload {
+    token: String!
+    user: User!
+}
+
+extend type Mutation {
+    register(username: String!, password: String!, email: String!): User!
+    login(username: String!, password: String!): AuthPayload!
+}
