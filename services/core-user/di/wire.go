@@ -6,19 +6,22 @@ package di
 import (
 	"github.com/google/wire"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/user"
+	userHandler "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/user"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/security"
-	user_usecase "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user"
-	"gorm.io/gorm"
+	userUsecase "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user"
+	"google.golang.org/grpc"
 )
 
-func InitializeUserHandler(db *gorm.DB, cfg *config.Config) (*user.UserHandler, error) {
+func InitializeApp() (*grpc.Server, func(), error) {
 	wire.Build(
+		config.New,
+		persistence.NewDatabase,
 		persistence.WireSet,
 		security.WireSet,
-		user_usecase.WireSet,
-		user.NewUserHandler,
+		userUsecase.WireSet,        // Dùng alias mới
+		userHandler.NewUserHandler, // Dùng alias mới
+		userHandler.NewGRPCServer,  // Dùng alias mới
 	)
-	return nil, nil
+	return nil, nil, nil
 }

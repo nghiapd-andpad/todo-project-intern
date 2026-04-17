@@ -8,21 +8,32 @@ package di
 
 import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/user"
+	user2 "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/user"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/security"
-	user2 "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user"
-	"gorm.io/gorm"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user"
+	"google.golang.org/grpc"
 )
 
 // Injectors from wire.go:
 
-func InitializeUserHandler(db *gorm.DB, cfg *config.Config) (*user.UserHandler, error) {
+func InitializeApp() (*grpc.Server, func(), error) {
+	configConfig, err := config.New()
+	if err != nil {
+		return nil, nil, err
+	}
+	db, cleanup, err := persistence.NewDatabase(configConfig)
+	if err != nil {
+		return nil, nil, err
+	}
 	userCommandsGateway := persistence.NewUserRepository(db)
-	userCreator := user2.NewUserCreator(userCommandsGateway)
+	userCreator := user.NewUserCreator(userCommandsGateway)
 	userQueriesGateway := persistence.NewUserQueryRepository(db)
-	tokenGenerator := security.NewJWTManager(cfg)
-	userAuthenticator := user2.NewUserAuthenticator(userQueriesGateway, tokenGenerator)
-	userHandler := user.NewUserHandler(userCreator, userAuthenticator)
-	return userHandler, nil
+	tokenGenerator := security.NewJWTManager(configConfig)
+	userAuthenticator := user.NewUserAuthenticator(userQueriesGateway, tokenGenerator)
+	userHandler := user2.NewUserHandler(userCreator, userAuthenticator)
+	server := user2.NewGRPCServer(configConfig, userHandler)
+	return server, func() {
+		cleanup()
+	}, nil
 }

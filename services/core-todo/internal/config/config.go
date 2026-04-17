@@ -19,7 +19,7 @@ type Config struct {
 	AppEnv     string `envconfig:"APP_ENV" default:"development"`
 }
 
-func Load() (*Config, error) {
+func New() (*Config, error) {
 	env := os.Getenv("APP_ENV")
 
 	var envFile string

@@ -7,15 +7,24 @@
 package di
 
 import (
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
-	"gorm.io/gorm"
+	"google.golang.org/grpc"
 )
 
 // Injectors from wire.go:
 
-func InitializeTodoHandler(db *gorm.DB) *todo.TodoHandler {
+func InitializeApp() (*grpc.Server, func(), error) {
+	configConfig, err := config.New()
+	if err != nil {
+		return nil, nil, err
+	}
+	db, cleanup, err := persistence.NewDatabase(configConfig)
+	if err != nil {
+		return nil, nil, err
+	}
 	todoCommandsGateway := persistence.NewTodoCommandsGateway(db)
 	todoCreator := todos.NewTodoCreator(todoCommandsGateway)
 	todoQueriesGateway := persistence.NewTodoQueriesGateway(db)
@@ -24,5 +33,8 @@ func InitializeTodoHandler(db *gorm.DB) *todo.TodoHandler {
 	todoUpdater := todos.NewTodoUpdater(todoCommandsGateway, todoQueriesGateway)
 	todoDeleter := todos.NewTodoDeleter(todoCommandsGateway)
 	todoHandler := todo.NewTodoHandler(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter)
-	return todoHandler
+	server := todo.NewGRPCServer(configConfig, todoHandler)
+	return server, func() {
+		cleanup()
+	}, nil
 }

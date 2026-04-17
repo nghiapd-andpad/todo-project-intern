@@ -25,7 +25,7 @@ type Config struct {
 	JWTExpirationHrs int    `envconfig:"JWT_EXPIRATION_HRS" default:"24"`
 }
 
-func Load() (*Config, error) {
+func New() (*Config, error) {
 	env := os.Getenv("APP_ENV")
 	var envFile string
 	switch env {

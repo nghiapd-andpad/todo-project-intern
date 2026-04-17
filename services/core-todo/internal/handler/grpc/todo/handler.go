@@ -2,7 +2,10 @@ package todo
 
 import (
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type TodoHandler struct {
@@ -28,4 +31,11 @@ func NewTodoHandler(
 		TodoUpdater:    updater,
 		TodoDeleter:    deleter,
 	}
+}
+
+func NewGRPCServer(cfg *config.Config, handler *TodoHandler) *grpc.Server {
+	s := grpc.NewServer()
+	todov1.RegisterTodosServiceServer(s, handler)
+	reflection.Register(s)
+	return s
 }

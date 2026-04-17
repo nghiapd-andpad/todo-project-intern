@@ -5,19 +5,21 @@ package di
 
 import (
 	"github.com/google/wire"
-	"gorm.io/gorm"
-
-	todo "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
-
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
+	"google.golang.org/grpc"
 )
 
-func InitializeTodoHandler(db *gorm.DB) *todo.TodoHandler {
+func InitializeApp() (*grpc.Server, func(), error) {
 	wire.Build(
+		config.New,
+		persistence.NewDatabase,
 		persistence.WireSet,
 		todos.WireSet,
 		todo.NewTodoHandler,
+		todo.NewGRPCServer,
 	)
-	return &todo.TodoHandler{}
+	return nil, nil, nil
 }
