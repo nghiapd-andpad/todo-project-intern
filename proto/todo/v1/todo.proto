@@ -6,7 +6,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "github.com/nghiapd-andpad/todo-project-intern/services/todo-service/gen/todo/v1;todov1";
+option go_package = "module github.com/nghiapd-andpad/todo-project-intern/services/core-todo/gen/todo/v1;todov1";
 
 service TodosService {
   rpc GetTodo(GetTodoRequest) returns (Todo);

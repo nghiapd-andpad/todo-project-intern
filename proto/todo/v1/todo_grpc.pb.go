@@ -2,13 +2,12 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.1
-// source: todo/v1/todo.proto
+// source: proto/todo/v1/todo.proto
 
 package todov1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -271,5 +270,5 @@ var TodosService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "todo/v1/todo.proto",
+	Metadata: "proto/todo/v1/todo.proto",
 }

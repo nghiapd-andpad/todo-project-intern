@@ -5,8 +5,6 @@
 ```
 .
 ├── docker-compose.yml       # Define and run multi-service containers
-├── gateways
-│   └── todo-bff             # Backend-for-Frontend (API gateway for clients)
 ├── go.work                  # Workspace to link multiple Go modules
 ├── go.work.sum              # Checksum for workspace dependencies
 ├── pkg
@@ -20,8 +18,9 @@
 │   └── user                 # Proto definitions for user domain
 ├── README.md                # Project documentation
 └── services
-    ├── todo-service         # Todo microservice
-    └── user-service         # User microservice
+    ├── bff-web              # API Gateway for Web Client (GraphQL)
+    ├── core-todo            # Todo microservice
+    └── core-user            # User microservice
 ```
 
 ---
@@ -30,14 +29,14 @@
 
 This project follows a microservices architecture within a monorepo setup:
 
-* Each service (`todo-service`, `user-service`) is an independent Go module
+* Each service (`core-todo`, `core-user`) is an independent Go module
+* services/bff-web: Acts as a BFF layer, specifically tailored for Web Clients
 * Communication between services is done via gRPC using protobuf contracts (`proto/`)
 * Shared logic is extracted into `pkg/`
-* `gateways/todo-bff` acts as a BFF layer, aggregating and exposing APIs to clients
 
 ---
 
-## 3. Todo Service – Internal Architecture
+## 3. Todo Service – Internal Architecture (core-todo)
 
 ```
 .
@@ -98,7 +97,7 @@ This project follows a microservices architecture within a monorepo setup:
 
 ---
 
-## 4. User Service – Internal Architecture
+## 4. User Service – Internal Architecture (core-user)
 
 ```
 .
