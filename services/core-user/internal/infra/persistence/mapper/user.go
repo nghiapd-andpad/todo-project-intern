@@ -28,5 +28,7 @@ func EntityToModel(e *entity.User) *model.User {
 		Username:       e.Username,
 		Email:          e.Email,
 		HashedPassword: e.HashedPassword,
+		CreatedAt:      e.CreatedAt,
+		UpdatedAt:      e.UpdatedAt,
 	}
 }

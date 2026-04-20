@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
@@ -12,18 +11,31 @@ import (
 )
 
 type userCreator struct {
-	userRepo gateway.UserCommandsGateway
+	userCommands gateway.UserCommandsGateway
+	userQueries  gateway.UserQueriesGateway
 }
 
-func NewUserCreator(repo gateway.UserCommandsGateway) UserCreator {
-	return &userCreator{userRepo: repo}
+func NewUserCreator(userCommands gateway.UserCommandsGateway, userQueries gateway.UserQueriesGateway) UserCreator {
+	return &userCreator{userCommands: userCommands, userQueries: userQueries}
 }
 
 func (u *userCreator) Register(ctx context.Context, in *input.UserRegister) (*output.UserRegister, error) {
+	// Check username already exists
+	existingUser, _ := u.userQueries.GetByUsername(ctx, in.Username)
+	if existingUser != nil {
+		return nil, entity.ErrUsernameAlreadyExists
+	}
+
+	// Check email already exists
+	existingUser, _ = u.userQueries.GetByEmail(ctx, in.Email)
+	if existingUser != nil {
+		return nil, entity.ErrEmailAlreadyExists
+	}
+
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
+		return nil, entity.ErrInternal
 	}
 
 	// Create Entity
@@ -34,8 +46,8 @@ func (u *userCreator) Register(ctx context.Context, in *input.UserRegister) (*ou
 	}
 
 	// Save to DB
-	if err := u.userRepo.Create(ctx, userEnt); err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+	if err := u.userCommands.Create(ctx, userEnt); err != nil {
+		return nil, err
 	}
 
 	// Return output DTO

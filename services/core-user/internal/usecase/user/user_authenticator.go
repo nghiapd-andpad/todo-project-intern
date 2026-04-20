@@ -2,9 +2,9 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/output"
@@ -24,13 +24,13 @@ func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*ou
 	// Find user by username
 	userEnt, err := u.userRepo.GetByUsername(ctx, in.Username)
 	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
+		return nil, entity.ErrInvalidCredentials
 	}
 
-	// Compare password
+	// check password
 	err = bcrypt.CompareHashAndPassword([]byte(userEnt.HashedPassword), []byte(in.Password))
 	if err != nil {
-		return nil, fmt.Errorf("invalid password")
+		return nil, entity.ErrInvalidCredentials
 	}
 
 	// Create JWT token
@@ -41,7 +41,7 @@ func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*ou
 
 	token, error := u.tokenGenerator.Generate(ctx, payload, 24*time.Hour)
 	if error != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", error)
+		return nil, entity.ErrInternal
 	}
 
 	return &output.UserLogin{

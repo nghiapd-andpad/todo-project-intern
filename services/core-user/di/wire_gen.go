@@ -26,9 +26,9 @@ func InitializeApp() (*grpc.Server, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	userCommandsGateway := persistence.NewUserRepository(db)
-	userCreator := user.NewUserCreator(userCommandsGateway)
-	userQueriesGateway := persistence.NewUserQueryRepository(db)
+	userCommandsGateway := persistence.NewUserCommandsGateway(db)
+	userQueriesGateway := persistence.NewUserQueryGateway(db)
+	userCreator := user.NewUserCreator(userCommandsGateway, userQueriesGateway)
 	tokenGenerator := security.NewJWTManager(configConfig)
 	userAuthenticator := user.NewUserAuthenticator(userQueriesGateway, tokenGenerator)
 	userHandler := user2.NewUserHandler(userCreator, userAuthenticator)
