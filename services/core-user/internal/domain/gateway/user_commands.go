@@ -7,5 +7,5 @@ import (
 )
 
 type UserCommandsGateway interface {
-	Create(ctx context.Context, user *entity.User) error
+	Create(ctx context.Context, user *entity.User) (*entity.User, error)
 }

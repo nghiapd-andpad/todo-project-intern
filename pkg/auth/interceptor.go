@@ -4,63 +4,36 @@ import (
 	"context"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
-type AuthInterceptor struct {
-	secretKey string
-}
-
-func NewAuthInterceptor(secretKey string) *AuthInterceptor {
-	return &AuthInterceptor{secretKey: secretKey}
-}
-
-func (i *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
+func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		// Get metadata from context
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
-			return nil, status.Errorf(codes.Unauthenticated, "metadata is not provided")
+			return handler(ctx, req)
 		}
 
-		// Get Bearer Token
-		values := md.Get("authorization")
-		if len(values) == 0 {
-			return nil, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
+		// get user ID and roles from metadata
+		userIDs := md.Get("x-user-id")
+		var userID string
+		if len(userIDs) > 0 {
+			userID = userIDs[0]
 		}
 
-		accessToken := strings.TrimPrefix(values[0], "Bearer ")
-
-		// Verify JWT
-		claims := &jwt.MapClaims{}
-		token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte(i.secretKey), nil
-		})
-
-		if err != nil || !token.Valid {
-			return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
-		}
-
-		// Get user ID and roles from claims
-		userID := int64((*claims)["user_id"].(float64))
-
+		rolesHeader := md.Get("x-user-roles")
 		var roles []string
-		if r, ok := (*claims)["roles"].([]interface{}); ok {
-			for _, v := range r {
-				roles = append(roles, v.(string))
-			}
+		if len(rolesHeader) > 0 {
+			roles = strings.Split(rolesHeader[0], ",")
 		}
 
-		// Set user ID and roles in context
+		// Inject user ID and roles into context
 		newCtx := SetUserContext(ctx, userID, roles)
 		return handler(newCtx, req)
 	}

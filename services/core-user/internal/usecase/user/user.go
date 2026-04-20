@@ -13,4 +13,5 @@ type UserCreator interface {
 
 type UserAuthenticator interface {
 	Login(ctx context.Context, in *input.UserLogin) (*output.UserLogin, error)
+	Verify(ctx context.Context, token string) (*output.VerifyTokenOutput, error)
 }

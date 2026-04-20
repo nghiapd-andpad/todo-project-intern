@@ -12,14 +12,14 @@ const (
 )
 
 // Set user ID and roles in context
-func SetUserContext(ctx context.Context, userID int64, roles []string) context.Context {
+func SetUserContext(ctx context.Context, userID string, roles []string) context.Context {
 	ctx = context.WithValue(ctx, userIDKey, userID)
 	return context.WithValue(ctx, rolesKey, roles)
 }
 
 // Get user ID from context
-func GetUserID(ctx context.Context) (int64, bool) {
-	uid, ok := ctx.Value(userIDKey).(int64)
+func GetUserID(ctx context.Context) (string, bool) {
+	uid, ok := ctx.Value(userIDKey).(string)
 	return uid, ok
 }
 

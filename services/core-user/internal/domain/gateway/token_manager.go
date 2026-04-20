@@ -12,6 +12,7 @@ type TokenPayload struct {
 	Roles  []string
 }
 
-type TokenGenerator interface {
+type TokenManager interface {
 	Generate(ctx context.Context, payload TokenPayload, duration time.Duration) (string, error)
+	Verify(ctx context.Context, token string) (*TokenPayload, error)
 }

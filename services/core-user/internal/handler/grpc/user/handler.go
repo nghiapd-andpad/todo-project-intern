@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	userv1 "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user"
@@ -25,7 +26,10 @@ func NewUserHandler(
 }
 
 func NewGRPCServer(cfg *config.Config, handler *UserHandler) *grpc.Server {
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.UnaryServerInterceptor()),
+	)
+
 	userv1.RegisterUserServiceServer(s, handler)
 	reflection.Register(s)
 	return s

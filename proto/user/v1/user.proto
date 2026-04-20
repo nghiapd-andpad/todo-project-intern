@@ -36,6 +36,7 @@ message VerifyTokenRequest {
 
 message VerifyTokenResponse {
   string user_id = 1;
+  repeated string roles = 2;
 }
 
 message User {

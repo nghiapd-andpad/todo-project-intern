@@ -46,16 +46,17 @@ func (u *userCreator) Register(ctx context.Context, in *input.UserRegister) (*ou
 	}
 
 	// Save to DB
-	if err := u.userCommands.Create(ctx, userEnt); err != nil {
+	createdUser, err := u.userCommands.Create(ctx, userEnt)
+	if err != nil {
 		return nil, err
 	}
 
 	// Return output DTO
 	return &output.UserRegister{
 		User: &output.UserDTO{
-			ID:       userEnt.ID.String(),
-			Username: userEnt.Username,
-			Email:    userEnt.Email,
+			ID:       createdUser.ID.String(),
+			Username: createdUser.Username,
+			Email:    createdUser.Email,
 		},
 	}, nil
 }

@@ -12,17 +12,17 @@ import (
 )
 
 type userAuthenticator struct {
-	userRepo       gateway.UserQueriesGateway
-	tokenGenerator gateway.TokenGenerator
+	userQueriesGateway gateway.UserQueriesGateway
+	tokenManager       gateway.TokenManager
 }
 
-func NewUserAuthenticator(repo gateway.UserQueriesGateway, tokenGenerator gateway.TokenGenerator) UserAuthenticator {
-	return &userAuthenticator{userRepo: repo, tokenGenerator: tokenGenerator}
+func NewUserAuthenticator(repo gateway.UserQueriesGateway, tokenGenerator gateway.TokenManager) UserAuthenticator {
+	return &userAuthenticator{userQueriesGateway: repo, tokenManager: tokenGenerator}
 }
 
 func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*output.UserLogin, error) {
 	// Find user by username
-	userEnt, err := u.userRepo.GetByUsername(ctx, in.Username)
+	userEnt, err := u.userQueriesGateway.GetByUsername(ctx, in.Username)
 	if err != nil {
 		return nil, entity.ErrInvalidCredentials
 	}
@@ -39,7 +39,7 @@ func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*ou
 		Roles:  []string{"user"},
 	}
 
-	token, error := u.tokenGenerator.Generate(ctx, payload, 24*time.Hour)
+	token, error := u.tokenManager.Generate(ctx, payload, 24*time.Hour)
 	if error != nil {
 		return nil, entity.ErrInternal
 	}
@@ -51,5 +51,18 @@ func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*ou
 			Username: userEnt.Username,
 			Email:    userEnt.Email,
 		},
+	}, nil
+}
+
+func (u *userAuthenticator) Verify(ctx context.Context, token string) (*output.VerifyTokenOutput, error) {
+	// Gọi sang Infra (Manager)
+	payload, err := u.tokenManager.Verify(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &output.VerifyTokenOutput{
+		UserID: payload.UserID.String(),
+		Roles:  payload.Roles,
 	}, nil
 }

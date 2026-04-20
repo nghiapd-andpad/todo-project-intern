@@ -48,3 +48,15 @@ func (h *UserHandler) Login(ctx context.Context, req *userv1.LoginRequest) (*use
 		User:        mapper.UserToPb(out.User),
 	}, nil
 }
+
+func (h *UserHandler) VerifyToken(ctx context.Context, req *userv1.VerifyTokenRequest) (*userv1.VerifyTokenResponse, error) {
+	out, err := h.UserAuthenticator.Verify(ctx, req.GetAccessToken())
+	if err != nil {
+		return nil, errors.ToStatus(err)
+	}
+
+	return &userv1.VerifyTokenResponse{
+		UserId: out.UserID,
+		Roles:  out.Roles,
+	}, nil
+}
