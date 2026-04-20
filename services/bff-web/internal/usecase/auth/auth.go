@@ -12,6 +12,7 @@ import (
 type AuthUseCase interface {
 	Register(ctx context.Context, in *input.RegisterInput) (*domain.User, error)
 	Login(ctx context.Context, in *input.LoginInput) (*output.LoginOutput, error)
+	Authenticate(ctx context.Context, token string) (string, []string, error)
 }
 
 type authUseCase struct {
@@ -35,4 +36,17 @@ func (u *authUseCase) Login(ctx context.Context, in *input.LoginInput) (*output.
 		AccessToken: token,
 		User:        user,
 	}, nil
+}
+
+func (u *authUseCase) Authenticate(ctx context.Context, token string) (string, []string, error) {
+	if token == "" {
+		return "", nil, domain.ErrUnauthorized
+	}
+
+	userID, roles, err := u.authGateway.VerifyToken(ctx, token)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return userID, roles, nil
 }

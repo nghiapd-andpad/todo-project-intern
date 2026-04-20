@@ -1,3 +1,4 @@
 scalar Time
 
 directive @auth on FIELD_DEFINITION | OBJECT
+directive @hasRoles(roles: [String!]!) on FIELD_DEFINITION

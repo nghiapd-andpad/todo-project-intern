@@ -6,38 +6,36 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	userv1 "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/di"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/directive"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/graph"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/http/middleware"
 )
 
 func main() {
-	// Connect to user-service gRPC server
-	userConn, err := grpc.Dial("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	resolver, cleanup, err := di.InitializeResolver()
 	if err != nil {
-		log.Fatalf("Cannot connect to user-service: %v", err)
+		log.Fatalf("failed to initialize resolver: %v", err)
 	}
-	defer userConn.Close()
+	defer cleanup()
 
-	// Create gRPC client for user-service
-	userClient := userv1.NewUserServiceClient(userConn)
+	// Config GraphQL with Directives (@auth, @hasRoles)
+	graphConfig := graph.Config{Resolvers: resolver}
+	graphConfig.Directives.Auth = directive.Auth
+	graphConfig.Directives.HasRoles = directive.HasRoles
 
-	// Initialize GraphQL resolver with dependencies
-	resolver := di.InitializeResolver(userClient)
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
 
-	// Config GraphQL server
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
-		Resolvers: resolver,
-	}))
+	srv.SetErrorPresenter(graph.PresentError)
 
-	// Route GraphQL endpoint và Playground
+	authUC := resolver.AuthUseCase
+
 	http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
-	http.Handle("/graphql", srv)
 
-	log.Printf("BFF Server is running...")
+	http.Handle("/graphql", middleware.AuthMiddleware(authUC)(srv))
+
+	log.Printf("BFF Web Server is running on port :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatalf("Server error: %v", err)
+		log.Fatalf("server error: %v", err)
 	}
 }

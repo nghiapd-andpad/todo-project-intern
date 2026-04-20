@@ -7,7 +7,6 @@
 package di
 
 import (
-	"github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/graph"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth"
@@ -15,9 +14,16 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeResolver(userSvc userv1.UserServiceClient) *graph.Resolver {
-	authGateway := grpc_client.NewAuthServiceClient(userSvc)
+func InitializeResolver() (*graph.Resolver, func(), error) {
+	clientConn, cleanup, err := grpc_client.NewUserGRPCConn()
+	if err != nil {
+		return nil, nil, err
+	}
+	userServiceClient := grpc_client.NewUserServiceClient(clientConn)
+	authGateway := grpc_client.NewAuthServiceClient(userServiceClient)
 	authUseCase := auth.NewAuthUseCase(authGateway)
 	resolver := graph.NewResolver(authUseCase)
-	return resolver
+	return resolver, func() {
+		cleanup()
+	}, nil
 }

@@ -35,7 +35,8 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	Auth func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	Auth     func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	HasRoles func(ctx context.Context, obj any, next graphql.Resolver, roles []string) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -338,6 +339,17 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) dir_hasRoles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "roles", ec.unmarshalNString2ᚕstringᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["roles"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createTodo_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -504,7 +516,7 @@ func (ec *executionContext) _AuthPayload_user(ctx context.Context, field graphql
 			return obj.User, nil
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐUser,
 		true,
 		true,
 	)
@@ -555,7 +567,7 @@ func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field grap
 			next = directive1
 			return next
 		},
-		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐTodo,
+		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐTodo,
 		true,
 		true,
 	)
@@ -616,7 +628,7 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 			return ec.Resolvers.Mutation().Register(ctx, fc.Args["username"].(string), fc.Args["password"].(string), fc.Args["email"].(string))
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐUser,
 		true,
 		true,
 	)
@@ -665,7 +677,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 			return ec.Resolvers.Mutation().Login(ctx, fc.Args["username"].(string), fc.Args["password"].(string))
 		},
 		nil,
-		ec.marshalNAuthPayload2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐAuthPayload,
+		ec.marshalNAuthPayload2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐAuthPayload,
 		true,
 		true,
 	)
@@ -725,7 +737,7 @@ func (ec *executionContext) _Query_todo(ctx context.Context, field graphql.Colle
 			next = directive1
 			return next
 		},
-		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐTodo,
+		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐTodo,
 		true,
 		true,
 	)
@@ -980,7 +992,7 @@ func (ec *executionContext) _Todo_status(ctx context.Context, field graphql.Coll
 			return ec.Resolvers.Todo().Status(ctx, obj)
 		},
 		nil,
-		ec.marshalNTodoStatus2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐTodoStatus,
+		ec.marshalNTodoStatus2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoStatus,
 		true,
 		true,
 	)
@@ -1009,7 +1021,7 @@ func (ec *executionContext) _Todo_priority(ctx context.Context, field graphql.Co
 			return ec.Resolvers.Todo().Priority(ctx, obj)
 		},
 		nil,
-		ec.marshalNPriority2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐPriority,
+		ec.marshalNPriority2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐPriority,
 		true,
 		true,
 	)
@@ -1125,7 +1137,7 @@ func (ec *executionContext) _Todo_creator(ctx context.Context, field graphql.Col
 			return ec.Resolvers.Todo().Creator(ctx, obj)
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐUser,
 		true,
 		true,
 	)
@@ -3422,11 +3434,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthPayload2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v AuthPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthPayload2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v AuthPayload) graphql.Marshaler {
 	return ec._AuthPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAuthPayload2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v *AuthPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthPayload2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v *AuthPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -3468,13 +3480,13 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNPriority2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐPriority(ctx context.Context, v any) (Priority, error) {
+func (ec *executionContext) unmarshalNPriority2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐPriority(ctx context.Context, v any) (Priority, error) {
 	var res Priority
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPriority2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐPriority(ctx context.Context, sel ast.SelectionSet, v Priority) graphql.Marshaler {
+func (ec *executionContext) marshalNPriority2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐPriority(ctx context.Context, sel ast.SelectionSet, v Priority) graphql.Marshaler {
 	return v
 }
 
@@ -3494,6 +3506,36 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
 	res, err := graphql.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3510,11 +3552,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTodo2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐTodo(ctx context.Context, sel ast.SelectionSet, v domain.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐTodo(ctx context.Context, sel ast.SelectionSet, v domain.Todo) graphql.Marshaler {
 	return ec._Todo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐTodo(ctx context.Context, sel ast.SelectionSet, v *domain.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐTodo(ctx context.Context, sel ast.SelectionSet, v *domain.Todo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -3524,21 +3566,21 @@ func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋto
 	return ec._Todo(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNTodoStatus2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐTodoStatus(ctx context.Context, v any) (TodoStatus, error) {
+func (ec *executionContext) unmarshalNTodoStatus2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoStatus(ctx context.Context, v any) (TodoStatus, error) {
 	var res TodoStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTodoStatus2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋhandlerᚋgraphᚐTodoStatus(ctx context.Context, sel ast.SelectionSet, v TodoStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNTodoStatus2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoStatus(ctx context.Context, sel ast.SelectionSet, v TodoStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐUser(ctx context.Context, sel ast.SelectionSet, v domain.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐUser(ctx context.Context, sel ast.SelectionSet, v domain.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋgatewaysᚋtodoᚑbffᚋinternalᚋdomainᚐUser(ctx context.Context, sel ast.SelectionSet, v *domain.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚐUser(ctx context.Context, sel ast.SelectionSet, v *domain.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
