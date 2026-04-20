@@ -5,15 +5,11 @@
 ```
 .
 ├── docker-compose.yml       # Define and run multi-service containers
-├── go.work                  # Workspace to link multiple Go modules
-├── go.work.sum              # Checksum for workspace dependencies
 ├── pkg
 │   ├── auth                 # Shared authentication utilities
 │   ├── config               # Shared configuration utilities
-│   ├── go.mod               # Module definition for shared packages
 │   └── logger               # Shared logging utilities
 ├── proto
-│   ├── go.mod               # Module for protobuf contracts
 │   ├── todo                 # Proto definitions for todo domain
 │   └── user                 # Proto definitions for user domain
 ├── README.md                # Project documentation
