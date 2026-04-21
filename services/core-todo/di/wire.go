@@ -8,16 +8,20 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
+	todousecase "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
 	"google.golang.org/grpc"
 )
 
-func InitializeApp() (*grpc.Server, func(), error) {
+func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	wire.Build(
-		config.New,
+		// Infrastructure
 		persistence.NewDatabase,
 		persistence.WireSet,
-		todos.WireSet,
+
+		// Usecases
+		todousecase.WireSet,
+
+		// Handler + gRPC server
 		todo.NewTodoHandler,
 		todo.NewGRPCServer,
 	)

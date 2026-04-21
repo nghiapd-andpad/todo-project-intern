@@ -5,26 +5,22 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
 
-// convert from model to entity
-func ToEntity(m *model.Todo) *entity.Todo {
+func TodoToEntity(m *model.Todo) *entity.Todo {
 	if m == nil {
 		return nil
 	}
 
 	e := &entity.Todo{
 		ID:          entity.TodoID(m.ID),
+		TodoListID:  entity.TodoListID(m.TodoListID),
 		Title:       m.Title,
 		Description: m.Description,
 		Status:      entity.TodoStatus(m.Status),
 		Priority:    entity.Priority(m.Priority),
+		CreatorID:   entity.UserID(m.CreatorID),
 		DueDate:     m.DueDate,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
-	}
-
-	if m.TodoListID != nil {
-		listID := entity.TodoListID(*m.TodoListID)
-		e.TodoListID = &listID
 	}
 
 	if m.AssigneeID != nil {
@@ -35,26 +31,22 @@ func ToEntity(m *model.Todo) *entity.Todo {
 	return e
 }
 
-// convert from entity to model
-func FromEntity(e *entity.Todo) *model.Todo {
+func TodoFromEntity(e *entity.Todo) *model.Todo {
 	if e == nil {
 		return nil
 	}
 
 	m := &model.Todo{
 		ID:          int64(e.ID),
+		TodoListID:  int64(e.TodoListID),
 		Title:       e.Title,
 		Description: e.Description,
 		Status:      string(e.Status),
 		Priority:    string(e.Priority),
+		CreatorID:   int64(e.CreatorID),
 		DueDate:     e.DueDate,
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,
-	}
-
-	if e.TodoListID != nil {
-		id := int64(*e.TodoListID)
-		m.TodoListID = &id
 	}
 
 	if e.AssigneeID != nil {

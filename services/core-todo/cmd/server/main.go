@@ -17,7 +17,7 @@ func main() {
 	}
 
 	// Initialize App
-	server, cleanup, err := di.InitializeApp()
+	server, cleanup, err := di.InitializeApp(cfg)
 	if err != nil {
 		log.Fatalf("failed to initialize app: %v", err)
 	}
@@ -28,7 +28,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	fmt.Printf("gRPC Server is running on port :%s...\n", cfg.ServerPort)
+	fmt.Printf("gRPC Server is running on port :%s\n", cfg.ServerPort)
 	if err := server.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

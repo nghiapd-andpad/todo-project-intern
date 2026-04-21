@@ -2,6 +2,7 @@ package todos
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
@@ -17,18 +18,13 @@ type todoDeleter struct {
 }
 
 func NewTodoDeleter(todoCommandsGateway gateway.TodoCommandsGateway) TodoDeleter {
-	return &todoDeleter{
-		todoCommandsGateway: todoCommandsGateway,
-	}
+	return &todoDeleter{todoCommandsGateway: todoCommandsGateway}
 }
 
 func (s *todoDeleter) Delete(ctx context.Context, in *input.TodoDeleter) (*output.TodoDeleter, error) {
-	err := s.todoCommandsGateway.Delete(ctx, in.ID)
-	if err != nil {
-		return nil, err
+	if err := s.todoCommandsGateway.Delete(ctx, in.ID); err != nil {
+		return nil, fmt.Errorf("todoDeleter.Delete: %w", err)
 	}
 
-	return &output.TodoDeleter{
-		Success: true,
-	}, nil
+	return &output.TodoDeleter{}, nil
 }

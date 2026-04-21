@@ -1,0 +1,42 @@
+package todo
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
+	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+func (h *TodoHandler) CreateTodoList(ctx context.Context, req *todov1.CreateTodoListRequest) (*todov1.TodoList, error) {
+	if req.GetDisplayName() == "" {
+		return nil, status.Error(codes.InvalidArgument, "display_name is required")
+	}
+
+	// Extract OwnerID from auth context
+	userIDStr, ok := auth.GetUserID(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "missing user id in context")
+	}
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, fmt.Sprintf("invalid user id: %v", err))
+	}
+
+	out, err := h.todoListCreator.Create(ctx, &input.TodoListCreator{
+		Name:    req.GetDisplayName(),
+		OwnerID: entity.UserID(userID),
+	})
+	if err != nil {
+		return nil, grpcerrors.ToGRPC(err)
+	}
+
+	return mapper.TodoListToPb(out.TodoList), nil
+}

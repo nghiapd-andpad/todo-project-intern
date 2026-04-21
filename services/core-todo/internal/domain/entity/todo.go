@@ -2,34 +2,35 @@ package entity
 
 import "time"
 
+type TodoID int64
+
+type TodoStatus string
+
+const (
+	TodoStatusPending    TodoStatus = "PENDING"
+	TodoStatusInProgress TodoStatus = "IN_PROGRESS"
+	TodoStatusDone       TodoStatus = "DONE"
+)
+
+type Priority string
+
+const (
+	PriorityLow    Priority = "LOW"
+	PriorityMedium Priority = "MEDIUM"
+	PriorityHigh   Priority = "HIGH"
+	PriorityUrgent Priority = "URGENT"
+)
+
 type Todo struct {
 	ID          TodoID
-	TodoListID  *TodoListID
+	TodoListID  TodoListID
 	Title       string
 	Description *string
 	Status      TodoStatus
 	Priority    Priority
-	DueDate     *time.Time
 	AssigneeID  *UserID
+	DueDate     *time.Time
+	CreatorID   UserID
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-}
-
-func NewTodo(title string) *Todo {
-	now := time.Now()
-
-	return &Todo{
-		Title:     title,
-		Status:    TodoStatusPending,
-		Priority:  PriorityMedium,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-}
-
-func (t *Todo) IsOverdue() bool {
-	if t.DueDate == nil || t.Status == TodoStatusDone {
-		return false
-	}
-	return time.Now().After(*t.DueDate)
 }

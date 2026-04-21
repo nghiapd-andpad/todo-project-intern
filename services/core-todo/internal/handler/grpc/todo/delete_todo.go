@@ -2,32 +2,33 @@ package todo
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// Delete a Todo by Resource Name: users/{u_id}/todo-lists/{l_id}/todos/{t_id}
 func (h *TodoHandler) DeleteTodo(ctx context.Context, req *todov1.DeleteTodoRequest) (*emptypb.Empty, error) {
-	// Parse
-	todoID, err := parseTodoID(req.GetName())
+	// Parse resource name
+	parsed, err := resourcename.ParseTodoResourceName(req.GetName())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid todo name: %v", err))
 	}
 
-	// Build Input
+	// Build input
 	in := &input.TodoDeleter{
-		ID: entity.TodoID(todoID),
+		ID: entity.TodoID(parsed.TodoID),
 	}
 
 	// Execute
-	_, err = h.TodoDeleter.Delete(ctx, in)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete todo: %v", err)
+	if _, err := h.todoDeleter.Delete(ctx, in); err != nil {
+		return nil, grpcerrors.ToGRPC(err)
 	}
 
 	return &emptypb.Empty{}, nil

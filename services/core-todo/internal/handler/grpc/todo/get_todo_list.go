@@ -14,24 +14,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (h *TodoHandler) GetTodo(ctx context.Context, req *todov1.GetTodoRequest) (*todov1.Todo, error) {
-	// Parse resource name
-	parsed, err := resourcename.ParseTodoResourceName(req.GetName())
+func (h *TodoHandler) GetTodoList(ctx context.Context, req *todov1.GetTodoListRequest) (*todov1.TodoList, error) {
+	parsed, err := resourcename.ParseTodoListResourceName(req.GetName())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid todo name: %v", err))
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid todo list name: %v", err))
 	}
 
-	// Build input
-	in := &input.TodoGetter{
-		ID: entity.TodoID(parsed.TodoID),
-	}
-
-	// Execute
-	out, err := h.todoGetter.Get(ctx, in)
+	out, err := h.todoListGetter.Get(ctx, &input.TodoListGetter{
+		ID: entity.TodoListID(parsed.TodoListID),
+	})
 	if err != nil {
 		return nil, grpcerrors.ToGRPC(err)
 	}
 
-	// Map response
-	return mapper.TodoToPb(out.Todo), nil
+	return mapper.TodoListToPb(out.TodoList), nil
 }

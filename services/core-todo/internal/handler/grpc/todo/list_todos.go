@@ -2,33 +2,55 @@ package todo
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// Get List of Todos by Parent Resource Name: users/{u_id}/todo-lists/{l_id}
 func (h *TodoHandler) ListTodos(ctx context.Context, req *todov1.ListTodosRequest) (*todov1.ListTodosResponse, error) {
-	// Validate Parent
-	if req.GetParent() == "" {
-		return nil, status.Error(codes.InvalidArgument, "parent is required")
+	// Parse parent resource name
+	parent, err := resourcename.ParseTodoListResourceName(req.GetParent())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid parent: %v", err))
 	}
 
-	// Build Input
-	in := &input.TodoLister{
-		Parent: req.GetParent(),
+	// Build opts filters
+	listID := entity.TodoListID(parent.TodoListID)
+	opts := gateway.ListTodosOptions{
+		TodoListID: &listID,
+		Offset:     int(req.GetOffset()),
+		Limit:      int(req.GetPageSize()),
 	}
+
+	// Optional filters
+	if s := mapper.PbToStatus(req.GetStatusFilter()); s != nil {
+		opts.Status = s
+	}
+	if p := mapper.PbToPriority(req.GetPriorityFilter()); p != nil {
+		opts.Priority = p
+	}
+	if ts := req.GetTitleSearch(); ts != "" {
+		opts.TitleSearch = &ts
+	}
+
+	// Build input
+	in := &input.TodoLister{Opts: opts}
 
 	// Execute
-	out, err := h.TodoListReader.List(ctx, in)
+	out, err := h.todoLister.List(ctx, in)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list todos: %v", err)
+		return nil, grpcerrors.ToGRPC(err)
 	}
 
-	// Map List
+	// Map response
 	pbTodos := make([]*todov1.Todo, len(out.Todos))
 	for i, t := range out.Todos {
 		pbTodos[i] = mapper.TodoToPb(t)
@@ -36,5 +58,6 @@ func (h *TodoHandler) ListTodos(ctx context.Context, req *todov1.ListTodosReques
 
 	return &todov1.ListTodosResponse{
 		Todos: pbTodos,
+		Total: out.Total,
 	}, nil
 }

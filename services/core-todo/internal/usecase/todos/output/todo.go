@@ -8,6 +8,7 @@ type TodoGetter struct {
 
 type TodoLister struct {
 	Todos []*entity.Todo
+	Total int64
 }
 
 type TodoCreator struct {
@@ -18,6 +19,4 @@ type TodoUpdater struct {
 	Todo *entity.Todo
 }
 
-type TodoDeleter struct {
-	Success bool
-}
+type TodoDeleter struct{}

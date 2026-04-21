@@ -2,43 +2,70 @@ package todo
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// Update a Todo by Resource Name: users/{u_id}/todo-lists/{l_id}/todos/{t_id}
 func (h *TodoHandler) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) (*todov1.Todo, error) {
+	// Validate
 	if req.GetTodo() == nil {
-		return nil, status.Error(codes.InvalidArgument, "todo resource is required")
+		return nil, status.Error(codes.InvalidArgument, "todo is required")
+	}
+	if req.GetUpdateMask() == nil || len(req.GetUpdateMask().GetPaths()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "update_mask is required")
 	}
 
-	// Parse ID từ field 'name' của object Todo gửi lên
-	todoID, err := parseTodoID(req.GetTodo().GetName())
+	// Parse resource name
+	parsed, err := resourcename.ParseTodoResourceName(req.GetTodo().GetName())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid todo name: %v", err))
 	}
 
-	// Build Input
-	title := req.GetTodo().GetTitle()
-	desc := req.GetTodo().GetDescription()
-
+	// Build input
 	in := &input.TodoUpdater{
-		ID:          entity.TodoID(todoID),
-		Title:       &title,
-		Description: &desc,
+		ID: entity.TodoID(parsed.TodoID),
+	}
+
+	for _, path := range req.GetUpdateMask().GetPaths() {
+		switch path {
+		case "title":
+			t := req.GetTodo().GetTitle()
+			in.Title = &t
+		case "description":
+			d := req.GetTodo().GetDescription()
+			in.Description = &d
+		case "status":
+			in.Status = mapper.PbToStatus(req.GetTodo().GetStatus())
+		case "priority":
+			in.Priority = mapper.PbToPriority(req.GetTodo().GetPriority())
+		case "due_date":
+			d := req.GetTodo().GetDueDate()
+			if d != nil {
+				dateStr := d.AsTime().Format("2006-01-02")
+				in.DueDate = &dateStr
+			}
+		case "assignee_id":
+			if req.GetTodo().GetAssigneeId() != 0 {
+				aID := entity.UserID(req.GetTodo().GetAssigneeId())
+				in.AssigneeID = &aID
+			}
+		}
 	}
 
 	// Execute
-	out, err := h.TodoUpdater.Update(ctx, in)
+	out, err := h.todoUpdater.Update(ctx, in)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update todo: %v", err)
+		return nil, grpcerrors.ToGRPC(err)
 	}
 
-	// Map
+	// Map response
 	return mapper.TodoToPb(out.Todo), nil
 }

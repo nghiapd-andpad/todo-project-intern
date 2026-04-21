@@ -16,12 +16,8 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp() (*grpc.Server, func(), error) {
-	configConfig, err := config.New()
-	if err != nil {
-		return nil, nil, err
-	}
-	db, cleanup, err := persistence.NewDatabase(configConfig)
+func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
+	db, cleanup, err := persistence.NewDatabase(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -29,11 +25,18 @@ func InitializeApp() (*grpc.Server, func(), error) {
 	todoCreator := todos.NewTodoCreator(todoCommandsGateway)
 	todoQueriesGateway := persistence.NewTodoQueriesGateway(db)
 	todoGetter := todos.NewTodoGetter(todoQueriesGateway)
-	todoLister := todos.NewTodoListReader(todoQueriesGateway)
+	todoLister := todos.NewTodoLister(todoQueriesGateway)
 	todoUpdater := todos.NewTodoUpdater(todoCommandsGateway, todoQueriesGateway)
 	todoDeleter := todos.NewTodoDeleter(todoCommandsGateway)
-	todoHandler := todo.NewTodoHandler(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter)
-	server := todo.NewGRPCServer(configConfig, todoHandler)
+	todoListCommandsGateway := persistence.NewTodoListCommandsGateway(db)
+	todoListCreator := todos.NewTodoListCreator(todoListCommandsGateway)
+	todoListQueriesGateway := persistence.NewTodoListQueriesGateway(db)
+	todoListGetter := todos.NewTodoListGetter(todoListQueriesGateway)
+	todoListLister := todos.NewTodoListLister(todoListQueriesGateway)
+	todoListUpdater := todos.NewTodoListUpdater(todoListCommandsGateway, todoListQueriesGateway)
+	todoListDeleter := todos.NewTodoListDeleter(todoListCommandsGateway)
+	todoHandler := todo.NewTodoHandler(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter, todoListCreator, todoListGetter, todoListLister, todoListUpdater, todoListDeleter)
+	server := todo.NewGRPCServer(cfg, todoHandler)
 	return server, func() {
 		cleanup()
 	}, nil

@@ -1,6 +1,7 @@
 package todo
 
 import (
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
@@ -10,31 +11,52 @@ import (
 
 type TodoHandler struct {
 	todov1.UnimplementedTodosServiceServer
-	TodoCreator    todos.TodoCreator
-	TodoGetter     todos.TodoGetter
-	TodoListReader todos.TodoLister
-	TodoUpdater    todos.TodoUpdater
-	TodoDeleter    todos.TodoDeleter
+
+	// Todo usecases
+	todoCreator todos.TodoCreator
+	todoGetter  todos.TodoGetter
+	todoLister  todos.TodoLister
+	todoUpdater todos.TodoUpdater
+	todoDeleter todos.TodoDeleter
+
+	// TodoList usecases
+	todoListCreator todos.TodoListCreator
+	todoListGetter  todos.TodoListGetter
+	todoListLister  todos.TodoListLister
+	todoListUpdater todos.TodoListUpdater
+	todoListDeleter todos.TodoListDeleter
 }
 
 func NewTodoHandler(
-	creator todos.TodoCreator,
-	getter todos.TodoGetter,
-	listReader todos.TodoLister,
-	updater todos.TodoUpdater,
-	deleter todos.TodoDeleter,
+	todoCreator todos.TodoCreator,
+	todoGetter todos.TodoGetter,
+	todoLister todos.TodoLister,
+	todoUpdater todos.TodoUpdater,
+	todoDeleter todos.TodoDeleter,
+	todoListCreator todos.TodoListCreator,
+	todoListGetter todos.TodoListGetter,
+	todoListLister todos.TodoListLister,
+	todoListUpdater todos.TodoListUpdater,
+	todoListDeleter todos.TodoListDeleter,
 ) *TodoHandler {
 	return &TodoHandler{
-		TodoCreator:    creator,
-		TodoGetter:     getter,
-		TodoListReader: listReader,
-		TodoUpdater:    updater,
-		TodoDeleter:    deleter,
+		todoCreator:     todoCreator,
+		todoGetter:      todoGetter,
+		todoLister:      todoLister,
+		todoUpdater:     todoUpdater,
+		todoDeleter:     todoDeleter,
+		todoListCreator: todoListCreator,
+		todoListGetter:  todoListGetter,
+		todoListLister:  todoListLister,
+		todoListUpdater: todoListUpdater,
+		todoListDeleter: todoListDeleter,
 	}
 }
 
 func NewGRPCServer(cfg *config.Config, handler *TodoHandler) *grpc.Server {
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.UnaryServerInterceptor()),
+	)
 	todov1.RegisterTodosServiceServer(s, handler)
 	reflection.Register(s)
 	return s

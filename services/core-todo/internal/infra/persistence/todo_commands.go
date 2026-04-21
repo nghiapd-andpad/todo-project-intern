@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
@@ -19,28 +20,32 @@ func NewTodoCommandsGateway(db *gorm.DB) gateway.TodoCommandsGateway {
 }
 
 func (g *todoCommandsGateway) Create(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
-	m := mapper.FromEntity(todo)
+	m := mapper.TodoFromEntity(todo)
 
 	if err := g.db.WithContext(ctx).Create(m).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("db create todo: %w", err)
 	}
 
-	return mapper.ToEntity(m), nil
+	return mapper.TodoToEntity(m), nil
 }
 
 func (g *todoCommandsGateway) Update(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
-	m := mapper.FromEntity(todo)
+	m := mapper.TodoFromEntity(todo)
 
 	if err := g.db.WithContext(ctx).Save(m).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("db update todo: %w", err)
 	}
 
-	return mapper.ToEntity(m), nil
+	return mapper.TodoToEntity(m), nil
 }
 
 func (g *todoCommandsGateway) Delete(ctx context.Context, todoID entity.TodoID) error {
-	if err := g.db.WithContext(ctx).Delete(&model.Todo{}, int64(todoID)).Error; err != nil {
-		return err
+	// soft delete
+	result := g.db.WithContext(ctx).Delete(&model.Todo{}, int64(todoID))
+
+	if result.Error != nil {
+		return fmt.Errorf("db delete todo: %w", result.Error)
 	}
+
 	return nil
 }

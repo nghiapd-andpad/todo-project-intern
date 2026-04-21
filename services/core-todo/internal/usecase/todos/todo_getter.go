@@ -2,7 +2,7 @@ package todos
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
@@ -14,40 +14,24 @@ type TodoGetter interface {
 	Get(ctx context.Context, in *input.TodoGetter) (*output.TodoGetter, error)
 }
 
-// implementation of TodoGetter
 type todoGetter struct {
 	todoQueriesGateway gateway.TodoQueriesGateway
 }
 
-// NewTodoGetter creates a new instance of TodoGetter
 func NewTodoGetter(todoQueriesGateway gateway.TodoQueriesGateway) TodoGetter {
-	return &todoGetter{
-		todoQueriesGateway: todoQueriesGateway,
-	}
+	return &todoGetter{todoQueriesGateway: todoQueriesGateway}
 }
 
 func (s *todoGetter) Get(ctx context.Context, in *input.TodoGetter) (*output.TodoGetter, error) {
-	if in == nil {
-		return nil, errors.New("input is nil")
-	}
-
 	todo, err := s.todoQueriesGateway.Get(ctx, in.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("todoGetter.Get: %w", err)
 	}
 
 	if todo == nil {
-		return nil, errors.New("todo not found")
+		return nil, entity.NewNotFound("todo not found").
+			WithDetail("todo_id", fmt.Sprintf("%d", in.ID))
 	}
 
-	return &output.TodoGetter{
-		Todo: &entity.Todo{
-			ID:          todo.ID,
-			Title:       todo.Title,
-			Description: todo.Description,
-			Status:      todo.Status,
-			CreatedAt:   todo.CreatedAt,
-			UpdatedAt:   todo.UpdatedAt,
-		},
-	}, nil
+	return &output.TodoGetter{Todo: todo}, nil
 }
