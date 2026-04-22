@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
@@ -11,37 +12,47 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserAuthenticator interface {
+	Login(ctx context.Context, in *input.UserLogin) (*output.UserLogin, error)
+}
+
 type userAuthenticator struct {
 	userQueriesGateway gateway.UserQueriesGateway
 	tokenManager       gateway.TokenManager
 }
 
-func NewUserAuthenticator(repo gateway.UserQueriesGateway, tokenGenerator gateway.TokenManager) UserAuthenticator {
-	return &userAuthenticator{userQueriesGateway: repo, tokenManager: tokenGenerator}
+func NewUserAuthenticator(
+	userQueriesGateway gateway.UserQueriesGateway,
+	tokenManager gateway.TokenManager,
+) UserAuthenticator {
+	return &userAuthenticator{
+		userQueriesGateway: userQueriesGateway,
+		tokenManager:       tokenManager,
+	}
 }
 
 func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*output.UserLogin, error) {
-	// Find user by username
+	// Get user by username
 	userEnt, err := u.userQueriesGateway.GetByUsername(ctx, in.Username)
 	if err != nil {
-		return nil, entity.ErrInvalidCredentials
+		return nil, fmt.Errorf("userAuthenticator.Login: %w", err)
 	}
 
-	// check password
-	err = bcrypt.CompareHashAndPassword([]byte(userEnt.HashedPassword), []byte(in.Password))
-	if err != nil {
-		return nil, entity.ErrInvalidCredentials
+	if userEnt == nil {
+		return nil, entity.NewInvalidCredentials()
 	}
 
-	// Create JWT token
-	payload := gateway.TokenPayload{
+	if err := bcrypt.CompareHashAndPassword([]byte(userEnt.HashedPassword), []byte(in.Password)); err != nil {
+		return nil, entity.NewInvalidCredentials()
+	}
+
+	// Generate JWT
+	token, err := u.tokenManager.Generate(ctx, gateway.TokenPayload{
 		UserID: userEnt.ID,
 		Roles:  []string{"user"},
-	}
-
-	token, error := u.tokenManager.Generate(ctx, payload, 24*time.Hour)
-	if error != nil {
-		return nil, entity.ErrInternal
+	}, 24*time.Hour)
+	if err != nil {
+		return nil, fmt.Errorf("userAuthenticator.Login generate token: %w", err)
 	}
 
 	return &output.UserLogin{
@@ -51,18 +62,5 @@ func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*ou
 			Username: userEnt.Username,
 			Email:    userEnt.Email,
 		},
-	}, nil
-}
-
-func (u *userAuthenticator) Verify(ctx context.Context, token string) (*output.VerifyTokenOutput, error) {
-	// Gọi sang Infra (Manager)
-	payload, err := u.tokenManager.Verify(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	return &output.VerifyTokenOutput{
-		UserID: payload.UserID.String(),
-		Roles:  payload.Roles,
 	}, nil
 }

@@ -8,32 +8,36 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func ToStatus(err error) error {
+func ToGRPC(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	if _, ok := status.FromError(err); ok {
-		return err
+	var appErr *entity.AppError
+	if errors.As(err, &appErr) {
+		switch appErr.Code {
+		case entity.ErrNotFound:
+			return status.Error(codes.NotFound, appErr.Message)
+		case entity.ErrInvalidParameter:
+			return status.Error(codes.InvalidArgument, appErr.Message)
+		case entity.ErrAuthZ:
+			return status.Error(codes.PermissionDenied, appErr.Message)
+		case entity.ErrAuthN:
+			return status.Error(codes.Unauthenticated, appErr.Message)
+		case entity.ErrInvalidCredentials:
+			return status.Error(codes.Unauthenticated, appErr.Message)
+		case entity.ErrUsernameAlreadyExists:
+			return status.Error(codes.AlreadyExists, appErr.Message)
+		case entity.ErrEmailAlreadyExists:
+			return status.Error(codes.AlreadyExists, appErr.Message)
+		case entity.ErrInvalidToken:
+			return status.Error(codes.Unauthenticated, appErr.Message)
+		case entity.ErrExpiredToken:
+			return status.Error(codes.Unauthenticated, appErr.Message)
+		case entity.ErrInternal:
+			return status.Error(codes.Internal, appErr.Message)
+		}
 	}
 
-	switch {
-	case errors.Is(err, entity.ErrUserNotFound):
-		return status.Error(codes.NotFound, err.Error())
-
-	case errors.Is(err, entity.ErrUsernameAlreadyExists):
-		return status.Error(codes.AlreadyExists, err.Error())
-
-	case errors.Is(err, entity.ErrEmailAlreadyExists):
-		return status.Error(codes.AlreadyExists, err.Error())
-
-	case errors.Is(err, entity.ErrUserNotFound):
-		return status.Error(codes.NotFound, err.Error())
-
-	case errors.Is(err, entity.ErrInvalidCredentials):
-		return status.Error(codes.Unauthenticated, "invalid credentials")
-
-	default:
-		return status.Error(codes.Internal, "internal server error")
-	}
+	return status.Error(codes.Internal, "internal server error")
 }

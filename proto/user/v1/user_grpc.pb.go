@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.1
-// source: user/v1/user.proto
+// source: proto/user/v1/user.proto
 
 package userv1
 
@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_Register_FullMethodName    = "/user.v1.UserService/Register"
-	UserService_Login_FullMethodName       = "/user.v1.UserService/Login"
-	UserService_VerifyToken_FullMethodName = "/user.v1.UserService/VerifyToken"
+	UserService_Register_FullMethodName          = "/user.v1.UserService/Register"
+	UserService_Login_FullMethodName             = "/user.v1.UserService/Login"
+	UserService_GetUser_FullMethodName           = "/user.v1.UserService/GetUser"
+	UserService_GetUserByUsername_FullMethodName = "/user.v1.UserService/GetUserByUsername"
+	UserService_GetUserByEmail_FullMethodName    = "/user.v1.UserService/GetUserByEmail"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -30,7 +32,9 @@ const (
 type UserServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
-	VerifyToken(ctx context.Context, in *VerifyTokenRequest, opts ...grpc.CallOption) (*VerifyTokenResponse, error)
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	GetUserByUsername(ctx context.Context, in *GetUserByUsernameRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	GetUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error)
 }
 
 type userServiceClient struct {
@@ -61,10 +65,30 @@ func (c *userServiceClient) Login(ctx context.Context, in *LoginRequest, opts ..
 	return out, nil
 }
 
-func (c *userServiceClient) VerifyToken(ctx context.Context, in *VerifyTokenRequest, opts ...grpc.CallOption) (*VerifyTokenResponse, error) {
+func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(VerifyTokenResponse)
-	err := c.cc.Invoke(ctx, UserService_VerifyToken_FullMethodName, in, out, cOpts...)
+	out := new(UserResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserByUsername(ctx context.Context, in *GetUserByUsernameRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserByUsername_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserByEmail(ctx context.Context, in *GetUserByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserByEmail_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +101,9 @@ func (c *userServiceClient) VerifyToken(ctx context.Context, in *VerifyTokenRequ
 type UserServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	VerifyToken(context.Context, *VerifyTokenRequest) (*VerifyTokenResponse, error)
+	GetUser(context.Context, *GetUserRequest) (*UserResponse, error)
+	GetUserByUsername(context.Context, *GetUserByUsernameRequest) (*UserResponse, error)
+	GetUserByEmail(context.Context, *GetUserByEmailRequest) (*UserResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -94,8 +120,14 @@ func (UnimplementedUserServiceServer) Register(context.Context, *RegisterRequest
 func (UnimplementedUserServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedUserServiceServer) VerifyToken(context.Context, *VerifyTokenRequest) (*VerifyTokenResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method VerifyToken not implemented")
+func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*UserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserByUsername(context.Context, *GetUserByUsernameRequest) (*UserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserByUsername not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserByEmail(context.Context, *GetUserByEmailRequest) (*UserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserByEmail not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -154,20 +186,56 @@ func _UserService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_VerifyToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyTokenRequest)
+func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).VerifyToken(ctx, in)
+		return srv.(UserServiceServer).GetUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserService_VerifyToken_FullMethodName,
+		FullMethod: UserService_GetUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).VerifyToken(ctx, req.(*VerifyTokenRequest))
+		return srv.(UserServiceServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserByUsername_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserByUsernameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserByUsername(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserByUsername_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserByUsername(ctx, req.(*GetUserByUsernameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserByEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserByEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserByEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserByEmail(ctx, req.(*GetUserByEmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -188,10 +256,18 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_Login_Handler,
 		},
 		{
-			MethodName: "VerifyToken",
-			Handler:    _UserService_VerifyToken_Handler,
+			MethodName: "GetUser",
+			Handler:    _UserService_GetUser_Handler,
+		},
+		{
+			MethodName: "GetUserByUsername",
+			Handler:    _UserService_GetUserByUsername_Handler,
+		},
+		{
+			MethodName: "GetUserByEmail",
+			Handler:    _UserService_GetUserByEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "user/v1/user.proto",
+	Metadata: "proto/user/v1/user.proto",
 }

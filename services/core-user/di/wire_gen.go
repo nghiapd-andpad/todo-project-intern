@@ -17,22 +17,19 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeApp() (*grpc.Server, func(), error) {
-	configConfig, err := config.New()
-	if err != nil {
-		return nil, nil, err
-	}
-	db, cleanup, err := persistence.NewDatabase(configConfig)
+func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
+	db, cleanup, err := persistence.NewDatabase(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 	userCommandsGateway := persistence.NewUserCommandsGateway(db)
 	userQueriesGateway := persistence.NewUserQueryGateway(db)
 	userCreator := user.NewUserCreator(userCommandsGateway, userQueriesGateway)
-	tokenGenerator := security.NewJWTManager(configConfig)
-	userAuthenticator := user.NewUserAuthenticator(userQueriesGateway, tokenGenerator)
-	userHandler := user2.NewUserHandler(userCreator, userAuthenticator)
-	server := user2.NewGRPCServer(configConfig, userHandler)
+	tokenManager := security.NewJWTManager(cfg)
+	userAuthenticator := user.NewUserAuthenticator(userQueriesGateway, tokenManager)
+	userGetter := user.NewUserGetter(userQueriesGateway)
+	userHandler := user2.NewUserHandler(userCreator, userAuthenticator, userGetter)
+	server := user2.NewGRPCServer(cfg, userHandler)
 	return server, func() {
 		cleanup()
 	}, nil

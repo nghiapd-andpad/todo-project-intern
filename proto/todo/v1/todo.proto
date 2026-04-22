@@ -1,29 +1,26 @@
 syntax = "proto3";
-
 package todo.v1;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "module github.com/nghiapd-andpad/todo-project-intern/services/core-todo/gen/todo/v1;todov1";
+option go_package = "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1;todov1";
 
 service TodosService {
+  // TodoList RPCs
+  rpc GetTodoList(GetTodoListRequest) returns (TodoList);
+  rpc ListTodoLists(ListTodoListsRequest) returns (ListTodoListsResponse);
+  rpc CreateTodoList(CreateTodoListRequest) returns (TodoList);
+  rpc UpdateTodoList(UpdateTodoListRequest) returns (TodoList);
+  rpc DeleteTodoList(DeleteTodoListRequest) returns (google.protobuf.Empty);
+
+  // Todo RPCs
   rpc GetTodo(GetTodoRequest) returns (Todo);
   rpc ListTodos(ListTodosRequest) returns (ListTodosResponse);
   rpc CreateTodo(CreateTodoRequest) returns (Todo);
   rpc UpdateTodo(UpdateTodoRequest) returns (Todo);
   rpc DeleteTodo(DeleteTodoRequest) returns (google.protobuf.Empty);
-}
-
-message Todo {
-  // Format: users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
-  string name = 1; 
-  string title = 2;
-  string description = 3;
-  TodoStatus status = 4;
-  google.protobuf.Timestamp created_at = 5;
-  google.protobuf.Timestamp updated_at = 6;
 }
 
 enum TodoStatus {
@@ -33,25 +30,91 @@ enum TodoStatus {
   TODO_STATUS_DONE = 3;
 }
 
-message GetTodoRequest {
+enum Priority {
+  PRIORITY_UNSPECIFIED = 0;
+  PRIORITY_LOW = 1;
+  PRIORITY_MEDIUM = 2;
+  PRIORITY_HIGH = 3;
+  PRIORITY_URGENT = 4;
+}
+
+message TodoList {
+  // Format: users/{user_id}/todo-lists/{list_id}
   string name = 1;
+  string display_name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message GetTodoListRequest {
+  string name = 1; // users/{user_id}/todo-lists/{list_id}
+}
+
+message ListTodoListsRequest {
+  string parent = 1;     // users/{user_id}
+  int32  page_size = 2;
+  int32  offset = 3;
+  string name_search = 4;
+}
+
+message ListTodoListsResponse {
+  repeated TodoList todo_lists = 1;
+  int64 total = 2;
+}
+
+message CreateTodoListRequest {
+  string parent = 1;       // users/{user_id}
+  string display_name = 2;
+}
+
+message UpdateTodoListRequest {
+  TodoList todo_list = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message DeleteTodoListRequest {
+  string name = 1; // users/{user_id}/todo-lists/{list_id}
+}
+
+message Todo {
+  // Format: users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+  string name = 1;
+  string title = 2;
+  string description = 3;
+  TodoStatus status = 4;
+  Priority priority = 5;
+  google.protobuf.Timestamp due_date = 6;
+  int64 assignee_id = 7;
+  int64 creator_id = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message GetTodoRequest {
+  string name = 1; // users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
 }
 
 message ListTodosRequest {
-  string parent = 1; // users/{user_id}/todo-lists/{list_id}
-  int32 page_size = 2;
-  string page_token = 3;
+  string parent = 1;       // users/{user_id}/todo-lists/{list_id}
+  int32  page_size = 2;
+  int32  offset = 3;
+  TodoStatus status_filter = 4;
+  Priority priority_filter = 5;
+  string title_search = 6;
 }
 
 message ListTodosResponse {
   repeated Todo todos = 1;
-  string next_page_token = 2;
+  int64 total = 2;
 }
 
 message CreateTodoRequest {
-  string parent = 1;
+  string parent = 1;      // users/{user_id}/todo-lists/{list_id}
   string title = 2;
   string description = 3;
+  Priority priority = 4;
+  string due_date = 5;    // format: "2006-01-02"
+  int64 assignee_id = 6;
 }
 
 message UpdateTodoRequest {
@@ -60,5 +123,5 @@ message UpdateTodoRequest {
 }
 
 message DeleteTodoRequest {
-  string name = 1;
+  string name = 1; // users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
 }

@@ -10,14 +10,12 @@ import (
 )
 
 func main() {
-	// Load config
 	cfg, err := config.New()
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	// Initialize dependencies and gRPC server
-	server, cleanup, err := di.InitializeApp()
+	server, cleanup, err := di.InitializeApp(cfg)
 	if err != nil {
 		log.Fatalf("failed to initialize app: %v", err)
 	}
@@ -28,7 +26,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	fmt.Printf("User gRPC Server is running on port :%s...\n", cfg.ServerPort)
+	fmt.Printf("User gRPC server listening on :%s\n", cfg.ServerPort)
 	if err := server.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

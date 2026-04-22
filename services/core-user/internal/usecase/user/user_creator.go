@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
@@ -10,53 +11,67 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type userCreator struct {
-	userCommands gateway.UserCommandsGateway
-	userQueries  gateway.UserQueriesGateway
+type UserCreator interface {
+	Register(ctx context.Context, in *input.UserRegister) (*output.UserRegister, error)
 }
 
-func NewUserCreator(userCommands gateway.UserCommandsGateway, userQueries gateway.UserQueriesGateway) UserCreator {
-	return &userCreator{userCommands: userCommands, userQueries: userQueries}
+type userCreator struct {
+	userCommandsGateway gateway.UserCommandsGateway
+	userQueriesGateway  gateway.UserQueriesGateway
+}
+
+func NewUserCreator(
+	userCommandsGateway gateway.UserCommandsGateway,
+	userQueriesGateway gateway.UserQueriesGateway,
+) UserCreator {
+	return &userCreator{
+		userCommandsGateway: userCommandsGateway,
+		userQueriesGateway:  userQueriesGateway,
+	}
 }
 
 func (u *userCreator) Register(ctx context.Context, in *input.UserRegister) (*output.UserRegister, error) {
-	// Check username already exists
-	existingUser, _ := u.userQueries.GetByUsername(ctx, in.Username)
-	if existingUser != nil {
-		return nil, entity.ErrUsernameAlreadyExists
+	// Check username duplicate
+	existing, err := u.userQueriesGateway.GetByUsername(ctx, in.Username)
+	if err != nil {
+		return nil, fmt.Errorf("userCreator.Register check username: %w", err)
+	}
+	if existing != nil {
+		return nil, entity.NewUsernameAlreadyExists()
 	}
 
-	// Check email already exists
-	existingUser, _ = u.userQueries.GetByEmail(ctx, in.Email)
-	if existingUser != nil {
-		return nil, entity.ErrEmailAlreadyExists
+	// Check email duplicate
+	existing, err = u.userQueriesGateway.GetByEmail(ctx, in.Email)
+	if err != nil {
+		return nil, fmt.Errorf("userCreator.Register check email: %w", err)
+	}
+	if existing != nil {
+		return nil, entity.NewEmailAlreadyExists()
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, entity.ErrInternal
+		return nil, fmt.Errorf("userCreator.Register hash password: %w", err)
 	}
 
-	// Create Entity
+	// Create entity
 	userEnt := &entity.User{
 		Username:       in.Username,
 		Email:          in.Email,
 		HashedPassword: string(hashedPassword),
 	}
 
-	// Save to DB
-	createdUser, err := u.userCommands.Create(ctx, userEnt)
+	created, err := u.userCommandsGateway.Create(ctx, userEnt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("userCreator.Register: %w", err)
 	}
 
-	// Return output DTO
 	return &output.UserRegister{
 		User: &output.UserDTO{
-			ID:       createdUser.ID.String(),
-			Username: createdUser.Username,
-			Email:    createdUser.Email,
+			ID:       created.ID.String(),
+			Username: created.Username,
+			Email:    created.Email,
 		},
 	}, nil
 }

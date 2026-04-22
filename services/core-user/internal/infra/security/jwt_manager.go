@@ -2,13 +2,11 @@ package security
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 )
 
@@ -28,7 +26,11 @@ func NewJWTManager(cfg *config.Config) gateway.TokenManager {
 	}
 }
 
-func (j *jwtManager) Generate(ctx context.Context, payload gateway.TokenPayload, duration time.Duration) (string, error) {
+func (j *jwtManager) Generate(
+	ctx context.Context,
+	payload gateway.TokenPayload,
+	duration time.Duration,
+) (string, error) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
@@ -40,37 +42,10 @@ func (j *jwtManager) Generate(ctx context.Context, payload gateway.TokenPayload,
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	signedToken, err := token.SignedString([]byte(j.secretKey))
+	signed, err := token.SignedString(j.secretKey)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", entity.ErrTokenSigning, err)
+		return "", fmt.Errorf("sign token: %w", err)
 	}
 
-	return signedToken, nil
-}
-
-func (j *jwtManager) Verify(ctx context.Context, tokenStr string) (*gateway.TokenPayload, error) {
-	claims := &UserClaims{}
-
-	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, entity.ErrUntrustedMethod
-		}
-		return []byte(j.secretKey), nil
-	})
-
-	if err != nil {
-		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, entity.ErrExpiredToken
-		}
-		return nil, fmt.Errorf("%w: %v", entity.ErrInvalidToken, err)
-	}
-
-	if !token.Valid {
-		return nil, entity.ErrInvalidToken
-	}
-
-	return &gateway.TokenPayload{
-		UserID: entity.UserID(claims.UserID),
-		Roles:  claims.Roles,
-	}, nil
+	return signed, nil
 }

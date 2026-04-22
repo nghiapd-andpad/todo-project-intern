@@ -4,59 +4,52 @@ import (
 	"context"
 
 	userv1 "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/errors"
+	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/input"
 )
 
 func (h *UserHandler) Register(ctx context.Context, req *userv1.RegisterRequest) (*userv1.RegisterResponse, error) {
-	// Build Input
+	// Validate
+	if req.GetUsername() == "" || req.GetPassword() == "" || req.GetEmail() == "" {
+		return nil, grpcerrors.ToGRPC(nil)
+	}
+
+	// Build input
 	in := &input.UserRegister{
 		Username: req.GetUsername(),
 		Password: req.GetPassword(),
 		Email:    req.GetEmail(),
 	}
 
-	// Execute UseCase
-	out, err := h.UserCreator.Register(ctx, in)
+	// Execute
+	out, err := h.userCreator.Register(ctx, in)
 	if err != nil {
-		return nil, errors.ToStatus(err)
+		return nil, grpcerrors.ToGRPC(err)
 	}
 
-	// Map to Proto Response
+	// Map response
 	return &userv1.RegisterResponse{
 		User: mapper.UserToPb(out.User),
 	}, nil
 }
 
 func (h *UserHandler) Login(ctx context.Context, req *userv1.LoginRequest) (*userv1.LoginResponse, error) {
-	// Build Input
+	// Build input
 	in := &input.UserLogin{
 		Username: req.GetUsername(),
 		Password: req.GetPassword(),
 	}
 
-	// Execute UseCase
-	out, err := h.UserAuthenticator.Login(ctx, in)
+	// Execute
+	out, err := h.userAuthenticator.Login(ctx, in)
 	if err != nil {
-		return nil, errors.ToStatus(err)
+		return nil, grpcerrors.ToGRPC(err)
 	}
 
-	// Map to Proto Response
+	// Map response
 	return &userv1.LoginResponse{
 		AccessToken: out.AccessToken,
 		User:        mapper.UserToPb(out.User),
-	}, nil
-}
-
-func (h *UserHandler) VerifyToken(ctx context.Context, req *userv1.VerifyTokenRequest) (*userv1.VerifyTokenResponse, error) {
-	out, err := h.UserAuthenticator.Verify(ctx, req.GetAccessToken())
-	if err != nil {
-		return nil, errors.ToStatus(err)
-	}
-
-	return &userv1.VerifyTokenResponse{
-		UserId: out.UserID,
-		Roles:  out.Roles,
 	}, nil
 }

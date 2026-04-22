@@ -13,15 +13,19 @@ import (
 	"google.golang.org/grpc"
 )
 
-func InitializeApp() (*grpc.Server, func(), error) {
+func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	wire.Build(
-		config.New,
+		// Infrastructure
 		persistence.NewDatabase,
 		persistence.WireSet,
 		security.WireSet,
-		userUsecase.WireSet,        // Dùng alias mới
-		userHandler.NewUserHandler, // Dùng alias mới
-		userHandler.NewGRPCServer,  // Dùng alias mới
+
+		// Usecases
+		userUsecase.WireSet,
+
+		// Handler and gRPC server
+		userHandler.NewUserHandler,
+		userHandler.NewGRPCServer,
 	)
 	return nil, nil, nil
 }
