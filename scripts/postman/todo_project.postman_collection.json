@@ -1,0 +1,515 @@
+{
+  "info": {
+    "_postman_id": "edda30ef-7c4e-4a28-a331-97aa510d10f0",
+    "name": "todo project intern",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53914594"
+  },
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "const token = jsonData.data.login.token;",
+                  "if (token) {",
+                  "    pm.environment.set(\"access_token\", token);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Login($username: String!, $password: String!) {\n  login(username: $username, password: $password) {\n    token\n    user {\n      id\n      username\n      email\n    }\n  }\n}",
+                "variables": "{\n  \"username\": \"use1\",\n  \"password\": \"12345678\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Register($username: String!, $email: String!, $password: String!) {\n  register(username: $username, email: $email, password: $password) {\n    id\n    username\n    email\n  }\n}",
+                "variables": "{\n  \"username\": \"use7\",\n  \"email\": \"use7@gmail.com\",\n  \"password\": \"12345678\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "todo",
+      "item": [
+        {
+          "name": "create todo list",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation CreateTodoList($parent: String!, $input: CreateTodoListInput!) {\n  createTodoList(parent: $parent, input: $input) {\n    name\n    displayName\n    createdAt\n    updatedAt\n  }\n}",
+                "variables": "{\n  \"parent\": \"users/1\",\n  \"input\": {\n    \"displayName\": \"Task 1\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get todo lists",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ListTodoLists($parent: String!, $input: ListTodoListsInput) {\n  todoLists(parent: $parent, input: $input) {\n    todoLists {\n      name\n      displayName\n      createdAt\n    }\n    total\n  }\n}",
+                "variables": "{\n  \"parent\": \"users/2\",\n  \"input\": {\n    \"pageSize\": 10,\n    \"offset\": 0\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get todo list",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query GetTodoList($name: ID!) {\n  todoList(name: $name) {\n    name\n    displayName\n    createdAt\n    updatedAt\n  }\n}",
+                "variables": "{\n  \"name\": \"users/2/todo-lists/2\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create todo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation CreateTodo($parent: String!, $input: CreateTodoInput!) {\n  createTodo(parent: $parent, input: $input) {\n    name\n    title\n    description\n    status\n    priority\n    creatorId\n    createdAt\n  }\n}",
+                "variables": "{\n  \"parent\": \"users/2/todo-lists/2\",\n  \"input\": {\n    \"title\": \"Buy groceries\",\n    \"description\": \"Milk and eggs\",\n    \"priority\": \"HIGH\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get todo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query GetTodo($name: ID!) {\n  todo(name: $name) {\n    name\n    title\n    description\n    status\n    priority\n    creatorId\n    createdAt\n    updatedAt\n    creator {\n      id\n      username\n      email\n    }\n  }\n}",
+                "variables": "{\n  \"name\": \"users/1/todo-lists/1/todos/1\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get list todos with filter",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ListTodos($parent: String!, $input: ListTodosInput) {\n  todos(parent: $parent, input: $input) {\n    todos {\n      name\n      title\n      status\n      priority\n      creator {\n        id\n        username\n      }\n    }\n    total\n  }\n}",
+                "variables": "{\n  \"parent\": \"users/2/todo-lists/2\",\n  \"input\": {\n    \"pageSize\": 10,\n    \"offset\": 0\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update todo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation UpdateTodo($name: ID!, $input: UpdateTodoInput!) {\n  updateTodo(name: $name, input: $input) {\n    name\n    title\n    status\n    priority\n    updatedAt\n  }\n}",
+                "variables": "{\n  \"name\": \"users/1/todo-lists/1/todos/1\",\n  \"input\": {\n    \"status\": \"IN_PROGRESS\",\n    \"priority\": \"URGENT\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update todo list",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation UpdateTodoList($name: ID!, $input: UpdateTodoListInput!) {\n  updateTodoList(name: $name, input: $input) {\n    name\n    displayName\n    updatedAt\n  }\n}",
+                "variables": "{\n  \"name\": \"users/1/todo-lists/1\",\n  \"input\": {\n    \"displayName\": \"Updated List Name\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get user by id",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query UserByID($id: ID!) {\n  userById(id: $id) {\n    id\n    username\n    email\n  }\n}",
+                "variables": "{\n  \"id\": \"1\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete todo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation DeleteTodo($name: ID!) {\n  deleteTodo(name: $name)\n}",
+                "variables": "{\n  \"name\": \"users/1/todo-lists/1/todos/1\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete todo list",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation DeleteTodoList($name: ID!) {\n  deleteTodoList(name: $name)\n}",
+                "variables": "{\n  \"name\": \"users/1/todo-lists/1\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "user",
+      "item": [
+        {
+          "name": "login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "const token = jsonData.data.login.token;",
+                  "if (token) {",
+                  "    pm.environment.set(\"access_token\", token);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Login($username: String!, $password: String!) {\n  login(username: $username, password: $password) {\n    token\n    user {\n      id\n      username\n      email\n    }\n  }\n}",
+                "variables": "{\n  \"username\": \"use1\",\n  \"password\": \"12345678\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Register($username: String!, $email: String!, $password: String!) {\n  register(username: $username, email: $email, password: $password) {\n    id\n    username\n    email\n  }\n}",
+                "variables": "{\n  \"username\": \"use7\",\n  \"email\": \"use7@gmail.com\",\n  \"password\": \"12345678\"\n}"
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/graphql",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "access_token",
+      "value": ""
+    }
+  ]
+}
