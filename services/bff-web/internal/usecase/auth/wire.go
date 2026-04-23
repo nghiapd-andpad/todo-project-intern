@@ -2,6 +2,7 @@ package auth
 
 import "github.com/google/wire"
 
-var ProviderSet = wire.NewSet(
-	NewAuthUseCase,
+var WireSet = wire.NewSet(
+	NewRegisterer,
+	NewLoginer,
 )

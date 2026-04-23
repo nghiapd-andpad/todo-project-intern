@@ -7,45 +7,145 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/dataloader"
 )
 
+// CreateTodoList is the resolver for the createTodoList field.
+func (r *mutationResolver) CreateTodoList(ctx context.Context, parent string, input CreateTodoListInput) (*entity.TodoList, error) {
+	return r.todoCreator.CreateTodoList(ctx, parent, input.DisplayName)
+}
+
+// UpdateTodoList is the resolver for the updateTodoList field.
+func (r *mutationResolver) UpdateTodoList(ctx context.Context, name string, input UpdateTodoListInput) (*entity.TodoList, error) {
+	return r.todoUpdater.UpdateTodoList(ctx, name, input.DisplayName)
+}
+
+// DeleteTodoList is the resolver for the deleteTodoList field.
+func (r *mutationResolver) DeleteTodoList(ctx context.Context, name string) (bool, error) {
+	if err := r.todoDeleter.DeleteTodoList(ctx, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, title string, description *string) (*domain.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+func (r *mutationResolver) CreateTodo(ctx context.Context, parent string, input CreateTodoInput) (*entity.Todo, error) {
+	in := gateway.CreateTodoInput{
+		Title:       input.Title,
+		Description: input.Description,
+		DueDate:     input.DueDate,
+		AssigneeID:  input.AssigneeID,
+	}
+	if input.Priority != nil {
+		p := entity.Priority(*input.Priority)
+		in.Priority = &p
+	}
+	return r.todoCreator.CreateTodo(ctx, parent, in)
+}
+
+// UpdateTodo is the resolver for the updateTodo field.
+func (r *mutationResolver) UpdateTodo(ctx context.Context, name string, input UpdateTodoInput) (*entity.Todo, error) {
+	in := gateway.UpdateTodoInput{
+		Title:       input.Title,
+		Description: input.Description,
+		DueDate:     input.DueDate,
+		AssigneeID:  input.AssigneeID,
+	}
+	if input.Status != nil {
+		s := entity.TodoStatus(*input.Status)
+		in.Status = &s
+	}
+	if input.Priority != nil {
+		p := entity.Priority(*input.Priority)
+		in.Priority = &p
+	}
+	return r.todoUpdater.UpdateTodo(ctx, name, in)
+}
+
+// DeleteTodo is the resolver for the deleteTodo field.
+func (r *mutationResolver) DeleteTodo(ctx context.Context, name string) (bool, error) {
+	if err := r.todoDeleter.DeleteTodo(ctx, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// TodoList is the resolver for the todoList field.
+func (r *queryResolver) TodoList(ctx context.Context, name string) (*entity.TodoList, error) {
+	return r.todoGetter.GetTodoList(ctx, name)
+}
+
+// TodoLists is the resolver for the todoLists field.
+func (r *queryResolver) TodoLists(ctx context.Context, parent string, input *ListTodoListsInput) (*TodoListPage, error) {
+	opts := gateway.ListTodoListsOptions{Limit: 20}
+	if input != nil {
+		if input.PageSize != nil {
+			opts.Limit = *input.PageSize
+		}
+		if input.Offset != nil {
+			opts.Offset = *input.Offset
+		}
+		opts.NameSearch = input.NameSearch
+	}
+
+	page, err := r.todoLister.ListTodoLists(ctx, parent, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &TodoListPage{TodoLists: page.TodoLists, Total: int(page.Total)}, nil
 }
 
 // Todo is the resolver for the todo field.
-func (r *queryResolver) Todo(ctx context.Context, name string) (*domain.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todo - todo"))
+func (r *queryResolver) Todo(ctx context.Context, name string) (*entity.Todo, error) {
+	return r.todoGetter.GetTodo(ctx, name)
 }
 
-// Status is the resolver for the status field.
-func (r *todoResolver) Status(ctx context.Context, obj *domain.Todo) (TodoStatus, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
-}
+// Todos is the resolver for the todos field.
+func (r *queryResolver) Todos(ctx context.Context, parent string, input *ListTodosInput) (*TodoPage, error) {
+	opts := gateway.ListTodosOptions{Limit: 20}
+	if input != nil {
+		if input.PageSize != nil {
+			opts.Limit = *input.PageSize
+		}
+		if input.Offset != nil {
+			opts.Offset = *input.Offset
+		}
+		opts.TitleSearch = input.TitleSearch
+		if input.Status != nil {
+			s := entity.TodoStatus(*input.Status)
+			opts.Status = &s
+		}
+		if input.Priority != nil {
+			p := entity.Priority(*input.Priority)
+			opts.Priority = &p
+		}
+	}
 
-// Priority is the resolver for the priority field.
-func (r *todoResolver) Priority(ctx context.Context, obj *domain.Todo) (Priority, error) {
-	panic(fmt.Errorf("not implemented: Priority - priority"))
+	page, err := r.todoLister.ListTodos(ctx, parent, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &TodoPage{Todos: page.Todos, Total: int(page.Total)}, nil
 }
 
 // Creator is the resolver for the creator field.
-func (r *todoResolver) Creator(ctx context.Context, obj *domain.Todo) (*domain.User, error) {
-	panic(fmt.Errorf("not implemented: Creator - creator"))
+func (r *todoResolver) Creator(ctx context.Context, obj *entity.Todo) (*entity.User, error) {
+	if obj.CreatorID == "" {
+		return nil, nil
+	}
+
+	loaders := dataloader.For(ctx)
+	if loaders == nil {
+		return r.userGetter.GetByID(ctx, obj.CreatorID)
+	}
+
+	return r.userGetter.GetByID(ctx, obj.CreatorID)
 }
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 // Todo returns TodoResolver implementation.
 func (r *Resolver) Todo() TodoResolver { return &todoResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
 type todoResolver struct{ *Resolver }

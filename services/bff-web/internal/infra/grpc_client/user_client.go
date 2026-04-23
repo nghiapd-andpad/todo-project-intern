@@ -14,11 +14,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type authGateway struct {
+type userGateway struct {
 	client userv1.UserServiceClient
 }
 
-func NewAuthGateway(cfg *config.Config) (gateway.AuthGateway, func(), error) {
+func NewUserGateway(cfg *config.Config) (gateway.UserGateway, func(), error) {
 	conn, err := grpc.Dial(
 		cfg.UserServiceAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -28,28 +28,33 @@ func NewAuthGateway(cfg *config.Config) (gateway.AuthGateway, func(), error) {
 		return nil, nil, fmt.Errorf("dial user service: %w", err)
 	}
 	client := userv1.NewUserServiceClient(conn)
-	return &authGateway{client: client}, func() { conn.Close() }, nil
+	return &userGateway{client: client}, func() { conn.Close() }, nil
 }
 
-func (g *authGateway) Register(ctx context.Context, username, password, email string) (*entity.User, error) {
-	resp, err := g.client.Register(ctx, &userv1.RegisterRequest{
-		Username: username,
-		Password: password,
-		Email:    email,
-	})
+func (g *userGateway) GetByID(ctx context.Context, id string) (*entity.User, error) {
+	resp, err := g.client.GetUser(ctx, &userv1.GetUserRequest{Id: id})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("userGateway.GetByID: %w", err)
 	}
 	return mapper.UserFromPb(resp.User), nil
 }
 
-func (g *authGateway) Login(ctx context.Context, username, password string) (string, *entity.User, error) {
-	resp, err := g.client.Login(ctx, &userv1.LoginRequest{
+func (g *userGateway) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
+	resp, err := g.client.GetUserByUsername(ctx, &userv1.GetUserByUsernameRequest{
 		Username: username,
-		Password: password,
 	})
 	if err != nil {
-		return "", nil, err
+		return nil, fmt.Errorf("userGateway.GetByUsername: %w", err)
 	}
-	return resp.AccessToken, mapper.UserFromPb(resp.User), nil
+	return mapper.UserFromPb(resp.User), nil
+}
+
+func (g *userGateway) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+	resp, err := g.client.GetUserByEmail(ctx, &userv1.GetUserByEmailRequest{
+		Email: email,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("userGateway.GetByEmail: %w", err)
+	}
+	return mapper.UserFromPb(resp.User), nil
 }

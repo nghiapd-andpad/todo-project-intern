@@ -8,45 +8,34 @@ package graph
 import (
 	"context"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 )
 
 // Register is the resolver for the register field.
-func (r *mutationResolver) Register(ctx context.Context, username string, password string, email string) (*domain.User, error) {
-	// Convert input data to RegisterInput struct
-	in := &input.RegisterInput{
-		Username: username,
-		Email:    email,
-		Password: password,
-	}
-
-	// Execute the UseCase
-	user, err := r.AuthUseCase.Register(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
+func (r *mutationResolver) Register(ctx context.Context, username string, password string, email string) (*entity.User, error) {
+	return r.authUsecase.Register(ctx, username, password, email)
 }
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*AuthPayload, error) {
-	// Convert input data to LoginInput struct
-	in := &input.LoginInput{
-		Username: username,
-		Password: password,
-	}
-
-	// Execute the UseCase
-	out, err := r.AuthUseCase.Login(ctx, in)
+	token, user, err := r.loginUsecase.Login(ctx, username, password)
 	if err != nil {
 		return nil, err
 	}
+	return &AuthPayload{Token: token, User: user}, nil
+}
 
-	// Convert output data
-	return &AuthPayload{
-		Token: out.AccessToken,
-		User:  out.User,
-	}, nil
+// UserByID is the resolver for the userById field.
+func (r *queryResolver) UserByID(ctx context.Context, id string) (*entity.User, error) {
+	return r.userGetter.GetByID(ctx, id)
+}
+
+// UserByUsername is the resolver for the userByUsername field.
+func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*entity.User, error) {
+	return r.userGetter.GetByUsername(ctx, username)
+}
+
+// UserByEmail is the resolver for the userByEmail field.
+func (r *queryResolver) UserByEmail(ctx context.Context, email string) (*entity.User, error) {
+	return r.userGetter.GetByEmail(ctx, email)
 }

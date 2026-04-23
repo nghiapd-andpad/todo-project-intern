@@ -11,6 +11,12 @@ type AuthPayload {
     user: User!
 }
 
+extend type Query {
+    userById(id: ID!): User! @auth
+    userByUsername(username: String!): User! @auth
+    userByEmail(email: String!): User! @auth
+}
+
 extend type Mutation {
     register(username: String!, password: String!, email: String!): User!
     login(username: String!, password: String!): AuthPayload!

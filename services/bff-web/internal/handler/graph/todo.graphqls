@@ -1,33 +1,108 @@
-# Resource Name: users/{user_id}/todo-lists/{todo_list_id}/todos/{todo_id}
+type TodoList {
+  name: ID!          # users/{user_id}/todo-lists/{list_id}
+  displayName: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
 
 type Todo {
-    id: ID!
-    title: String!
-    description: String
-    status: TodoStatus!
-    priority: Priority!
-    dueDate: Time
-    createdAt: Time!
-    updatedAt: Time!
-    creator: User! 
+  name: ID!          # users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+  title: String!
+  description: String
+  status: TodoStatus!
+  priority: Priority!
+  dueDate: Time
+  creatorId: String!
+  assigneeId: String
+  createdAt: Time!
+  updatedAt: Time!
+
+  # Field resolver
+  creator: User
 }
 
 enum TodoStatus {
-    PENDING
-    IN_PROGRESS
-    DONE
+  PENDING
+  IN_PROGRESS
+  DONE
 }
 
 enum Priority {
-    LOW
-    MEDIUM
-    HIGH
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
-type Query {
-    todo(name: ID!): Todo! @auth
+# Pagination
+type TodoListPage {
+  todoLists: [TodoList!]!
+  total: Int!
 }
 
-type Mutation {
-    createTodo(title: String!, description: String): Todo! @auth
+type TodoPage {
+  todos: [Todo!]!
+  total: Int!
+}
+
+# Input types
+input ListTodoListsInput {
+  pageSize: Int
+  offset:   Int
+  nameSearch: String
+}
+
+input ListTodosInput {
+  pageSize:    Int
+  offset:      Int
+  status:      TodoStatus
+  priority:    Priority
+  titleSearch: String
+}
+
+input CreateTodoListInput {
+  displayName: String!
+}
+
+input UpdateTodoListInput {
+  displayName: String
+}
+
+input CreateTodoInput {
+  title:       String!
+  description: String
+  priority:    Priority
+  dueDate:     String   # "2006-01-02"
+  assigneeId:  String
+}
+
+input UpdateTodoInput {
+  title:       String
+  description: String
+  status:      TodoStatus
+  priority:    Priority
+  dueDate:     String
+  assigneeId:  String
+}
+
+extend type Query {
+  # TodoList
+  todoList(name: ID!): TodoList! @auth
+  todoLists(parent: String!, input: ListTodoListsInput): TodoListPage! @auth
+
+  # Todo
+  todo(name: ID!): Todo! @auth
+  todos(parent: String!, input: ListTodosInput): TodoPage! @auth
+}
+
+extend type Mutation {
+  # TodoList
+  createTodoList(parent: String!, input: CreateTodoListInput!): TodoList! @auth
+  updateTodoList(name: ID!, input: UpdateTodoListInput!): TodoList! @auth
+  deleteTodoList(name: ID!): Boolean! @auth
+
+  # Todo
+  createTodo(parent: String!, input: CreateTodoInput!): Todo! @auth
+  updateTodo(name: ID!, input: UpdateTodoInput!): Todo! @auth
+  deleteTodo(name: ID!): Boolean! @auth
 }

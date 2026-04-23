@@ -3,17 +3,38 @@
 package graph
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"strconv"
-
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 )
 
 type AuthPayload struct {
 	Token string       `json:"token"`
-	User  *domain.User `json:"user"`
+	User  *entity.User `json:"user"`
+}
+
+type CreateTodoInput struct {
+	Title       string           `json:"title"`
+	Description *string          `json:"description,omitempty"`
+	Priority    *entity.Priority `json:"priority,omitempty"`
+	DueDate     *string          `json:"dueDate,omitempty"`
+	AssigneeID  *string          `json:"assigneeId,omitempty"`
+}
+
+type CreateTodoListInput struct {
+	DisplayName string `json:"displayName"`
+}
+
+type ListTodoListsInput struct {
+	PageSize   *int    `json:"pageSize,omitempty"`
+	Offset     *int    `json:"offset,omitempty"`
+	NameSearch *string `json:"nameSearch,omitempty"`
+}
+
+type ListTodosInput struct {
+	PageSize    *int               `json:"pageSize,omitempty"`
+	Offset      *int               `json:"offset,omitempty"`
+	Status      *entity.TodoStatus `json:"status,omitempty"`
+	Priority    *entity.Priority   `json:"priority,omitempty"`
+	TitleSearch *string            `json:"titleSearch,omitempty"`
 }
 
 type Mutation struct {
@@ -22,116 +43,25 @@ type Mutation struct {
 type Query struct {
 }
 
-type Priority string
-
-const (
-	PriorityLow    Priority = "LOW"
-	PriorityMedium Priority = "MEDIUM"
-	PriorityHigh   Priority = "HIGH"
-)
-
-var AllPriority = []Priority{
-	PriorityLow,
-	PriorityMedium,
-	PriorityHigh,
+type TodoListPage struct {
+	TodoLists []*entity.TodoList `json:"todoLists"`
+	Total     int                `json:"total"`
 }
 
-func (e Priority) IsValid() bool {
-	switch e {
-	case PriorityLow, PriorityMedium, PriorityHigh:
-		return true
-	}
-	return false
+type TodoPage struct {
+	Todos []*entity.Todo `json:"todos"`
+	Total int            `json:"total"`
 }
 
-func (e Priority) String() string {
-	return string(e)
+type UpdateTodoInput struct {
+	Title       *string            `json:"title,omitempty"`
+	Description *string            `json:"description,omitempty"`
+	Status      *entity.TodoStatus `json:"status,omitempty"`
+	Priority    *entity.Priority   `json:"priority,omitempty"`
+	DueDate     *string            `json:"dueDate,omitempty"`
+	AssigneeID  *string            `json:"assigneeId,omitempty"`
 }
 
-func (e *Priority) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Priority(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Priority", str)
-	}
-	return nil
-}
-
-func (e Priority) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *Priority) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e Priority) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type TodoStatus string
-
-const (
-	TodoStatusPending    TodoStatus = "PENDING"
-	TodoStatusInProgress TodoStatus = "IN_PROGRESS"
-	TodoStatusDone       TodoStatus = "DONE"
-)
-
-var AllTodoStatus = []TodoStatus{
-	TodoStatusPending,
-	TodoStatusInProgress,
-	TodoStatusDone,
-}
-
-func (e TodoStatus) IsValid() bool {
-	switch e {
-	case TodoStatusPending, TodoStatusInProgress, TodoStatusDone:
-		return true
-	}
-	return false
-}
-
-func (e TodoStatus) String() string {
-	return string(e)
-}
-
-func (e *TodoStatus) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = TodoStatus(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid TodoStatus", str)
-	}
-	return nil
-}
-
-func (e TodoStatus) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *TodoStatus) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e TodoStatus) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
+type UpdateTodoListInput struct {
+	DisplayName *string `json:"displayName,omitempty"`
 }

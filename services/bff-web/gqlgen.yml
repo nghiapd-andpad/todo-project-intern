@@ -9,7 +9,11 @@ model:
   filename: internal/handler/graph/models_gen.go
   package: graph
 
-# Map from GraphQL Type to Go Struct
+resolver:
+  layout: follow-schema
+  dir: internal/handler/graph
+  package: graph
+
 models:
   ID:
     model:
@@ -17,19 +21,21 @@ models:
   Time:
     model:
       - github.com/99designs/gqlgen/graphql.Time
-  
-  # Map Todo type to Go struct
+
   Todo:
-    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain.Todo
+    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.Todo
     fields:
-      # Field Resolver
       creator:
-        resolver: true 
+        resolver: true
+
+  TodoList:
+    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.TodoList
+
+  TodoStatus:
+    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.TodoStatus
+
+  Priority:
+    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.Priority
 
   User:
-    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain.User
-
-resolver:
-  layout: follow-schema
-  dir: internal/handler/graph
-  package: graph
+    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.User

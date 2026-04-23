@@ -1,18 +1,49 @@
 package graph
 
-import "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth"
-
-// This file will not be regenerated automatically.
-//
-// It serves as dependency injection for your app, add any dependencies you require
-// here.
+import (
+	authusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth"
+	todousecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo"
+	userusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/user"
+)
 
 type Resolver struct {
-	AuthUseCase auth.AuthUseCase
+	// Auth
+	authUsecase  authusecase.Registerer
+	loginUsecase authusecase.Loginer
+
+	// Todo
+	todoGetter  todousecase.TodoGetter
+	todoLister  todousecase.TodoLister
+	todoCreator todousecase.TodoCreator
+	todoUpdater todousecase.TodoUpdater
+	todoDeleter todousecase.TodoDeleter
+
+	// User
+	userGetter userusecase.UserGetter
 }
 
-func NewResolver(authUC auth.AuthUseCase) *Resolver {
+func NewResolver(
+	authUsecase authusecase.Registerer,
+	loginUsecase authusecase.Loginer,
+	todoGetter todousecase.TodoGetter,
+	todoLister todousecase.TodoLister,
+	todoCreator todousecase.TodoCreator,
+	todoUpdater todousecase.TodoUpdater,
+	todoDeleter todousecase.TodoDeleter,
+	userGetter userusecase.UserGetter,
+) *Resolver {
 	return &Resolver{
-		AuthUseCase: authUC,
+		authUsecase:  authUsecase,
+		loginUsecase: loginUsecase,
+		todoGetter:   todoGetter,
+		todoLister:   todoLister,
+		todoCreator:  todoCreator,
+		todoUpdater:  todoUpdater,
+		todoDeleter:  todoDeleter,
+		userGetter:   userGetter,
 	}
+}
+
+func (r *Resolver) GetUserGetter() userusecase.UserGetter {
+	return r.userGetter
 }

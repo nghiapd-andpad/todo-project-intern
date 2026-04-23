@@ -7,23 +7,58 @@
 package di
 
 import (
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/graph"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/jwt"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/user"
 )
 
 // Injectors from wire.go:
 
-func InitializeResolver() (*graph.Resolver, func(), error) {
-	clientConn, cleanup, err := grpc_client.NewUserGRPCConn()
+func InitializeApp(cfg *config.Config) (*App, func(), error) {
+	authGateway, cleanup, err := grpc_client.NewAuthGateway(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
-	userServiceClient := grpc_client.NewUserServiceClient(clientConn)
-	authGateway := grpc_client.NewAuthServiceClient(userServiceClient)
-	authUseCase := auth.NewAuthUseCase(authGateway)
-	resolver := graph.NewResolver(authUseCase)
-	return resolver, func() {
+	registerer := auth.NewRegisterer(authGateway)
+	loginer := auth.NewLoginer(authGateway)
+	todoGateway, cleanup2, err := grpc_client.NewTodoGateway(cfg)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	todoGetter := todo.NewTodoGetter(todoGateway)
+	todoLister := todo.NewTodoLister(todoGateway)
+	todoCreator := todo.NewTodoCreator(todoGateway)
+	todoUpdater := todo.NewTodoUpdater(todoGateway)
+	todoDeleter := todo.NewTodoDeleter(todoGateway)
+	userGateway, cleanup3, err := grpc_client.NewUserGateway(cfg)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	userUsecase := user.NewUserUsecase(userGateway)
+	userGetter := user.ProvideUserGetter(userUsecase)
+	resolver := graph.NewResolver(registerer, loginer, todoGetter, todoLister, todoCreator, todoUpdater, todoDeleter, userGetter)
+	jwtManager := jwt.NewJwtManager(cfg)
+	app := &App{
+		Resolver:   resolver,
+		JwtManager: jwtManager,
+	}
+	return app, func() {
+		cleanup3()
+		cleanup2()
 		cleanup()
 	}, nil
+}
+
+// wire.go:
+
+type App struct {
+	Resolver   *graph.Resolver
+	JwtManager *jwt.JwtManager
 }
