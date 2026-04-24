@@ -11,6 +11,7 @@ import (
 
 type UserGetter interface {
 	GetByID(ctx context.Context, id entity.UserID) (*output.UserDTO, error)
+	GetByIDs(ctx context.Context, ids []entity.UserID) ([]*output.UserDTO, error)
 	GetByUsername(ctx context.Context, username string) (*output.UserDTO, error)
 	GetByEmail(ctx context.Context, email string) (*output.UserDTO, error)
 }
@@ -39,6 +40,27 @@ func (u *userGetter) GetByID(ctx context.Context, id entity.UserID) (*output.Use
 		Username: userEnt.Username,
 		Email:    userEnt.Email,
 	}, nil
+}
+
+func (u *userGetter) GetByIDs(ctx context.Context, ids []entity.UserID) ([]*output.UserDTO, error) {
+	userEntities, err := u.userQueriesGateway.GetByIDs(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("userGetter.GetByIDs: %w", err)
+	}
+
+	dtos := make([]*output.UserDTO, 0, len(userEntities))
+	for _, ent := range userEntities {
+		if ent == nil {
+			continue
+		}
+		dtos = append(dtos, &output.UserDTO{
+			ID:       ent.ID.String(),
+			Username: ent.Username,
+			Email:    ent.Email,
+		})
+	}
+
+	return dtos, nil
 }
 
 func (u *userGetter) GetByUsername(ctx context.Context, username string) (*output.UserDTO, error) {

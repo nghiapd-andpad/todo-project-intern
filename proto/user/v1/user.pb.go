@@ -465,6 +465,94 @@ func (x *UserResponse) GetUser() *User {
 	return nil
 }
 
+type BatchGetUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ids           []string               `protobuf:"bytes,1,rep,name=ids,proto3" json:"ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchGetUsersRequest) Reset() {
+	*x = BatchGetUsersRequest{}
+	mi := &file_proto_user_v1_user_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchGetUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchGetUsersRequest) ProtoMessage() {}
+
+func (x *BatchGetUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_user_v1_user_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchGetUsersRequest.ProtoReflect.Descriptor instead.
+func (*BatchGetUsersRequest) Descriptor() ([]byte, []int) {
+	return file_proto_user_v1_user_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *BatchGetUsersRequest) GetIds() []string {
+	if x != nil {
+		return x.Ids
+	}
+	return nil
+}
+
+type BatchGetUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchGetUsersResponse) Reset() {
+	*x = BatchGetUsersResponse{}
+	mi := &file_proto_user_v1_user_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchGetUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchGetUsersResponse) ProtoMessage() {}
+
+func (x *BatchGetUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_user_v1_user_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchGetUsersResponse.ProtoReflect.Descriptor instead.
+func (*BatchGetUsersResponse) Descriptor() ([]byte, []int) {
+	return file_proto_user_v1_user_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *BatchGetUsersResponse) GetUsers() []*User {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
 var File_proto_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_proto_user_v1_user_proto_rawDesc = "" +
@@ -493,13 +581,18 @@ const file_proto_user_v1_user_proto_rawDesc = "" +
 	"\x15GetUserByEmailRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"1\n" +
 	"\fUserResponse\x12!\n" +
-	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user2\xd9\x02\n" +
+	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\"(\n" +
+	"\x14BatchGetUsersRequest\x12\x10\n" +
+	"\x03ids\x18\x01 \x03(\tR\x03ids\"<\n" +
+	"\x15BatchGetUsersResponse\x12#\n" +
+	"\x05users\x18\x01 \x03(\v2\r.user.v1.UserR\x05users2\xa9\x03\n" +
 	"\vUserService\x12?\n" +
 	"\bRegister\x12\x18.user.v1.RegisterRequest\x1a\x19.user.v1.RegisterResponse\x126\n" +
 	"\x05Login\x12\x15.user.v1.LoginRequest\x1a\x16.user.v1.LoginResponse\x129\n" +
 	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x15.user.v1.UserResponse\x12M\n" +
 	"\x11GetUserByUsername\x12!.user.v1.GetUserByUsernameRequest\x1a\x15.user.v1.UserResponse\x12G\n" +
-	"\x0eGetUserByEmail\x12\x1e.user.v1.GetUserByEmailRequest\x1a\x15.user.v1.UserResponseBDZBgithub.com/nghiapd-andpad/todo-project-intern/proto/user/v1;userv1b\x06proto3"
+	"\x0eGetUserByEmail\x12\x1e.user.v1.GetUserByEmailRequest\x1a\x15.user.v1.UserResponse\x12N\n" +
+	"\rBatchGetUsers\x12\x1d.user.v1.BatchGetUsersRequest\x1a\x1e.user.v1.BatchGetUsersResponseBDZBgithub.com/nghiapd-andpad/todo-project-intern/proto/user/v1;userv1b\x06proto3"
 
 var (
 	file_proto_user_v1_user_proto_rawDescOnce sync.Once
@@ -513,7 +606,7 @@ func file_proto_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_proto_user_v1_user_proto_rawDescData
 }
 
-var file_proto_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_proto_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_proto_user_v1_user_proto_goTypes = []any{
 	(*User)(nil),                     // 0: user.v1.User
 	(*RegisterRequest)(nil),          // 1: user.v1.RegisterRequest
@@ -524,26 +617,31 @@ var file_proto_user_v1_user_proto_goTypes = []any{
 	(*GetUserByUsernameRequest)(nil), // 6: user.v1.GetUserByUsernameRequest
 	(*GetUserByEmailRequest)(nil),    // 7: user.v1.GetUserByEmailRequest
 	(*UserResponse)(nil),             // 8: user.v1.UserResponse
+	(*BatchGetUsersRequest)(nil),     // 9: user.v1.BatchGetUsersRequest
+	(*BatchGetUsersResponse)(nil),    // 10: user.v1.BatchGetUsersResponse
 }
 var file_proto_user_v1_user_proto_depIdxs = []int32{
-	0, // 0: user.v1.RegisterResponse.user:type_name -> user.v1.User
-	0, // 1: user.v1.LoginResponse.user:type_name -> user.v1.User
-	0, // 2: user.v1.UserResponse.user:type_name -> user.v1.User
-	1, // 3: user.v1.UserService.Register:input_type -> user.v1.RegisterRequest
-	3, // 4: user.v1.UserService.Login:input_type -> user.v1.LoginRequest
-	5, // 5: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
-	6, // 6: user.v1.UserService.GetUserByUsername:input_type -> user.v1.GetUserByUsernameRequest
-	7, // 7: user.v1.UserService.GetUserByEmail:input_type -> user.v1.GetUserByEmailRequest
-	2, // 8: user.v1.UserService.Register:output_type -> user.v1.RegisterResponse
-	4, // 9: user.v1.UserService.Login:output_type -> user.v1.LoginResponse
-	8, // 10: user.v1.UserService.GetUser:output_type -> user.v1.UserResponse
-	8, // 11: user.v1.UserService.GetUserByUsername:output_type -> user.v1.UserResponse
-	8, // 12: user.v1.UserService.GetUserByEmail:output_type -> user.v1.UserResponse
-	8, // [8:13] is the sub-list for method output_type
-	3, // [3:8] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0,  // 0: user.v1.RegisterResponse.user:type_name -> user.v1.User
+	0,  // 1: user.v1.LoginResponse.user:type_name -> user.v1.User
+	0,  // 2: user.v1.UserResponse.user:type_name -> user.v1.User
+	0,  // 3: user.v1.BatchGetUsersResponse.users:type_name -> user.v1.User
+	1,  // 4: user.v1.UserService.Register:input_type -> user.v1.RegisterRequest
+	3,  // 5: user.v1.UserService.Login:input_type -> user.v1.LoginRequest
+	5,  // 6: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
+	6,  // 7: user.v1.UserService.GetUserByUsername:input_type -> user.v1.GetUserByUsernameRequest
+	7,  // 8: user.v1.UserService.GetUserByEmail:input_type -> user.v1.GetUserByEmailRequest
+	9,  // 9: user.v1.UserService.BatchGetUsers:input_type -> user.v1.BatchGetUsersRequest
+	2,  // 10: user.v1.UserService.Register:output_type -> user.v1.RegisterResponse
+	4,  // 11: user.v1.UserService.Login:output_type -> user.v1.LoginResponse
+	8,  // 12: user.v1.UserService.GetUser:output_type -> user.v1.UserResponse
+	8,  // 13: user.v1.UserService.GetUserByUsername:output_type -> user.v1.UserResponse
+	8,  // 14: user.v1.UserService.GetUserByEmail:output_type -> user.v1.UserResponse
+	10, // 15: user.v1.UserService.BatchGetUsers:output_type -> user.v1.BatchGetUsersResponse
+	10, // [10:16] is the sub-list for method output_type
+	4,  // [4:10] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_proto_user_v1_user_proto_init() }
@@ -557,7 +655,7 @@ func file_proto_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_user_v1_user_proto_rawDesc), len(file_proto_user_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

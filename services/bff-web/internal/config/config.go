@@ -20,6 +20,10 @@ type Config struct {
 
 	// JWT secret
 	JWTSecret string `envconfig:"JWT_SECRET" default:"secret_key"`
+
+	// DataLoader
+	DataLoaderWait      int `envconfig:"DATALOADER_WAIT_MS" default:"2"`      // ms
+	DataLoaderBatchSize int `envconfig:"DATALOADER_BATCH_SIZE" default:"100"` // max batch size
 }
 
 func New() (*Config, error) {

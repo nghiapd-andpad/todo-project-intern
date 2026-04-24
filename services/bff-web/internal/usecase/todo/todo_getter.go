@@ -26,6 +26,7 @@ func (u *todoGetter) GetTodoList(ctx context.Context, name string) (*entity.Todo
 	if err != nil {
 		return nil, fmt.Errorf("todoGetter.GetTodoList: %w", err)
 	}
+
 	return result, nil
 }
 
@@ -34,5 +35,6 @@ func (u *todoGetter) GetTodo(ctx context.Context, name string) (*entity.Todo, er
 	if err != nil {
 		return nil, fmt.Errorf("todoGetter.GetTodo: %w", err)
 	}
+
 	return result, nil
 }

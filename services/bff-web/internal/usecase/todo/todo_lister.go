@@ -25,6 +25,7 @@ func (u *todoLister) ListTodoLists(ctx context.Context, parent string, opts gate
 	if err != nil {
 		return nil, fmt.Errorf("todoLister.ListTodoLists: %w", err)
 	}
+
 	return result, nil
 }
 
@@ -33,5 +34,6 @@ func (u *todoLister) ListTodos(ctx context.Context, parent string, opts gateway.
 	if err != nil {
 		return nil, fmt.Errorf("todoLister.ListTodos: %w", err)
 	}
+
 	return result, nil
 }

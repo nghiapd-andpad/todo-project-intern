@@ -55,3 +55,24 @@ func (r *userQueriesRepo) GetByID(ctx context.Context, id entity.UserID) (*entit
 	}
 	return mapper.ModelToEntity(&m), nil
 }
+
+func (r *userQueriesRepo) GetByIDs(ctx context.Context, ids []entity.UserID) ([]*entity.User, error) {
+	var models []model.User
+
+	rawIDs := make([]int64, len(ids))
+	for i, id := range ids {
+		rawIDs[i] = int64(id)
+	}
+
+	err := r.db.WithContext(ctx).Where("id IN ?", rawIDs).Find(&models).Error
+	if err != nil {
+		return nil, fmt.Errorf("db get users by ids: %w", err)
+	}
+
+	entities := make([]*entity.User, len(models))
+	for i, m := range models {
+		entities[i] = mapper.ModelToEntity(&m)
+	}
+
+	return entities, nil
+}

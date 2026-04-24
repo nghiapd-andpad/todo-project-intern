@@ -24,6 +24,7 @@ func (u *todoDeleter) DeleteTodoList(ctx context.Context, name string) error {
 	if err := u.todoGateway.DeleteTodoList(ctx, name); err != nil {
 		return fmt.Errorf("todoDeleter.DeleteTodoList: %w", err)
 	}
+
 	return nil
 }
 
@@ -31,5 +32,6 @@ func (u *todoDeleter) DeleteTodo(ctx context.Context, name string) error {
 	if err := u.todoGateway.DeleteTodo(ctx, name); err != nil {
 		return fmt.Errorf("todoDeleter.DeleteTodo: %w", err)
 	}
+
 	return nil
 }

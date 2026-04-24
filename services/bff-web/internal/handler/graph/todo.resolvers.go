@@ -7,7 +7,9 @@ package graph
 
 import (
 	"context"
+	"strconv"
 
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/dataloader"
@@ -137,12 +139,19 @@ func (r *todoResolver) Creator(ctx context.Context, obj *entity.Todo) (*entity.U
 		return nil, nil
 	}
 
+	uID, err := resourcename.ParseUserResourceName(obj.CreatorID)
+	if err != nil {
+		return nil, err
+	}
+	userIDStr := strconv.FormatInt(uID, 10)
+
 	loaders := dataloader.For(ctx)
-	if loaders == nil {
-		return r.userGetter.GetByID(ctx, obj.CreatorID)
+	if loaders != nil && loaders.UserByID != nil {
+		user, err := loaders.UserByID.Load(ctx, userIDStr)()
+		return user, err
 	}
 
-	return r.userGetter.GetByID(ctx, obj.CreatorID)
+	return r.userGetter.GetByID(ctx, userIDStr)
 }
 
 // Todo returns TodoResolver implementation.

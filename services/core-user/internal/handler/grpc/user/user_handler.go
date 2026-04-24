@@ -58,3 +58,35 @@ func (h *UserHandler) GetUserByEmail(ctx context.Context, req *userv1.GetUserByE
 		User: mapper.UserToPb(out),
 	}, nil
 }
+
+func (h *UserHandler) BatchGetUsers(ctx context.Context, req *userv1.BatchGetUsersRequest) (*userv1.BatchGetUsersResponse, error) {
+	if len(req.GetIds()) == 0 {
+		return &userv1.BatchGetUsersResponse{}, nil
+	}
+
+	// Convert IDs to list of entity.UserID
+	userIDs := make([]entity.UserID, 0, len(req.GetIds()))
+	for _, idStr := range req.GetIds() {
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid user id format: %s", idStr)
+		}
+		userIDs = append(userIDs, entity.UserID(id))
+	}
+
+	// Execute
+	dtos, err := h.userGetter.GetByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, grpcerrors.ToGRPC(err)
+	}
+
+	// Map response
+	pbUsers := make([]*userv1.User, len(dtos))
+	for i, out := range dtos {
+		pbUsers[i] = mapper.UserToPb(out)
+	}
+
+	return &userv1.BatchGetUsersResponse{
+		Users: pbUsers,
+	}, nil
+}

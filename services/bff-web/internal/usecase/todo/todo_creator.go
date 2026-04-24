@@ -25,10 +25,12 @@ func (u *todoCreator) CreateTodoList(ctx context.Context, parent string, display
 	if displayName == "" {
 		return nil, entity.NewInvalidParameter("display_name is required")
 	}
+
 	result, err := u.todoGateway.CreateTodoList(ctx, parent, displayName)
 	if err != nil {
 		return nil, fmt.Errorf("todoCreator.CreateTodoList: %w", err)
 	}
+
 	return result, nil
 }
 
@@ -36,9 +38,11 @@ func (u *todoCreator) CreateTodo(ctx context.Context, parent string, input gatew
 	if input.Title == "" {
 		return nil, entity.NewInvalidParameter("title is required")
 	}
+
 	result, err := u.todoGateway.CreateTodo(ctx, parent, input)
 	if err != nil {
 		return nil, fmt.Errorf("todoCreator.CreateTodo: %w", err)
 	}
+
 	return result, nil
 }

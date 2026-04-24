@@ -26,6 +26,7 @@ func (u *todoUpdater) UpdateTodoList(ctx context.Context, name string, displayNa
 	if err != nil {
 		return nil, fmt.Errorf("todoUpdater.UpdateTodoList: %w", err)
 	}
+
 	return result, nil
 }
 
@@ -34,5 +35,6 @@ func (u *todoUpdater) UpdateTodo(ctx context.Context, name string, input gateway
 	if err != nil {
 		return nil, fmt.Errorf("todoUpdater.UpdateTodo: %w", err)
 	}
+
 	return result, nil
 }

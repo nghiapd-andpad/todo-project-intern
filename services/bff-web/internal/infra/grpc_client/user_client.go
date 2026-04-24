@@ -24,10 +24,13 @@ func NewUserGateway(cfg *config.Config) (gateway.UserGateway, func(), error) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor()),
 	)
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("dial user service: %w", err)
 	}
+
 	client := userv1.NewUserServiceClient(conn)
+
 	return &userGateway{client: client}, func() { conn.Close() }, nil
 }
 
@@ -36,7 +39,24 @@ func (g *userGateway) GetByID(ctx context.Context, id string) (*entity.User, err
 	if err != nil {
 		return nil, fmt.Errorf("userGateway.GetByID: %w", err)
 	}
+
 	return mapper.UserFromPb(resp.User), nil
+}
+
+func (g *userGateway) GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {
+	resp, err := g.client.BatchGetUsers(ctx, &userv1.BatchGetUsersRequest{
+		Ids: ids,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("userGateway.GetByIDs: %w", err)
+	}
+
+	users := make([]*entity.User, len(resp.GetUsers()))
+	for i, pbUser := range resp.GetUsers() {
+		users[i] = mapper.UserFromPb(pbUser)
+	}
+
+	return users, nil
 }
 
 func (g *userGateway) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
@@ -46,6 +66,7 @@ func (g *userGateway) GetByUsername(ctx context.Context, username string) (*enti
 	if err != nil {
 		return nil, fmt.Errorf("userGateway.GetByUsername: %w", err)
 	}
+
 	return mapper.UserFromPb(resp.User), nil
 }
 
@@ -56,5 +77,6 @@ func (g *userGateway) GetByEmail(ctx context.Context, email string) (*entity.Use
 	if err != nil {
 		return nil, fmt.Errorf("userGateway.GetByEmail: %w", err)
 	}
+
 	return mapper.UserFromPb(resp.User), nil
 }
