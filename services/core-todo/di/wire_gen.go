@@ -27,7 +27,7 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	todoGetter := todos.NewTodoGetter(todoQueriesGateway)
 	todoLister := todos.NewTodoLister(todoQueriesGateway)
 	todoUpdater := todos.NewTodoUpdater(todoCommandsGateway, todoQueriesGateway)
-	todoDeleter := todos.NewTodoDeleter(todoCommandsGateway)
+	todoDeleter := todos.NewTodoDeleter(todoCommandsGateway, todoQueriesGateway)
 	todoListCommandsGateway := persistence.NewTodoListCommandsGateway(db)
 	todoListCreator := todos.NewTodoListCreator(todoListCommandsGateway)
 	todoListQueriesGateway := persistence.NewTodoListQueriesGateway(db)

@@ -22,6 +22,7 @@ func (r *mutationResolver) Login(ctx context.Context, username string, password 
 	if err != nil {
 		return nil, err
 	}
+
 	return &AuthPayload{Token: token, User: user}, nil
 }
 

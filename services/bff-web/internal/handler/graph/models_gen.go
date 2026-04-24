@@ -16,7 +16,7 @@ type CreateTodoInput struct {
 	Description *string          `json:"description,omitempty"`
 	Priority    *entity.Priority `json:"priority,omitempty"`
 	DueDate     *string          `json:"dueDate,omitempty"`
-	AssigneeID  *string          `json:"assigneeId,omitempty"`
+	AssigneeID  *string          `json:"assigneeID,omitempty"`
 }
 
 type CreateTodoListInput struct {
@@ -59,7 +59,7 @@ type UpdateTodoInput struct {
 	Status      *entity.TodoStatus `json:"status,omitempty"`
 	Priority    *entity.Priority   `json:"priority,omitempty"`
 	DueDate     *string            `json:"dueDate,omitempty"`
-	AssigneeID  *string            `json:"assigneeId,omitempty"`
+	AssigneeID  *string            `json:"assigneeID,omitempty"`
 }
 
 type UpdateTodoListInput struct {

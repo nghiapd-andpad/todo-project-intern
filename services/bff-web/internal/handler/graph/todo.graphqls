@@ -1,26 +1,3 @@
-type TodoList {
-  name: ID!          # users/{user_id}/todo-lists/{list_id}
-  displayName: String!
-  createdAt: Time!
-  updatedAt: Time!
-}
-
-type Todo {
-  name: ID!          # users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
-  title: String!
-  description: String
-  status: TodoStatus!
-  priority: Priority!
-  dueDate: Time
-  creatorId: String!
-  assigneeId: String
-  createdAt: Time!
-  updatedAt: Time!
-
-  # Field resolver
-  creator: User
-}
-
 enum TodoStatus {
   PENDING
   IN_PROGRESS
@@ -45,19 +22,26 @@ type TodoPage {
   total: Int!
 }
 
-# Input types
-input ListTodoListsInput {
-  pageSize: Int
-  offset:   Int
-  nameSearch: String
+type TodoList {
+  ID: ID!
+  displayName: String!
+  createdAt: Time!
+  updatedAt: Time!
 }
 
-input ListTodosInput {
-  pageSize:    Int
-  offset:      Int
-  status:      TodoStatus
-  priority:    Priority
-  titleSearch: String
+type Todo {
+  ID: ID!
+  todoListID: ID!
+  title: String!
+  description: String
+  status: TodoStatus!
+  priority: Priority!
+  dueDate: Time
+  creatorID: ID!
+  assigneeID: ID
+  createdAt: Time!
+  updatedAt: Time!
+  creator: User
 }
 
 input CreateTodoListInput {
@@ -72,8 +56,8 @@ input CreateTodoInput {
   title:       String!
   description: String
   priority:    Priority
-  dueDate:     String   # "2006-01-02"
-  assigneeId:  String
+  dueDate:     String
+  assigneeID:  ID
 }
 
 input UpdateTodoInput {
@@ -82,27 +66,37 @@ input UpdateTodoInput {
   status:      TodoStatus
   priority:    Priority
   dueDate:     String
-  assigneeId:  String
+  assigneeID:  ID
+}
+
+input ListTodoListsInput {
+  pageSize:   Int
+  offset:     Int
+  nameSearch: String
+}
+
+input ListTodosInput {
+  pageSize:    Int
+  offset:      Int
+  status:      TodoStatus
+  priority:    Priority
+  titleSearch: String
 }
 
 extend type Query {
-  # TodoList
-  todoList(name: ID!): TodoList! @auth
-  todoLists(parent: String!, input: ListTodoListsInput): TodoListPage! @auth
+  todoList(todoListID: ID!): TodoList! @auth
+  todoLists(input: ListTodoListsInput): TodoListPage! @auth
 
-  # Todo
-  todo(name: ID!): Todo! @auth
-  todos(parent: String!, input: ListTodosInput): TodoPage! @auth
+  todo(todoListID: ID!, todoID: ID!): Todo! @auth
+  todos(todoListID: ID!, input: ListTodosInput): TodoPage! @auth
 }
 
 extend type Mutation {
-  # TodoList
-  createTodoList(parent: String!, input: CreateTodoListInput!): TodoList! @auth
-  updateTodoList(name: ID!, input: UpdateTodoListInput!): TodoList! @auth
-  deleteTodoList(name: ID!): Boolean! @auth
+  createTodoList(input: CreateTodoListInput!): TodoList! @auth
+  updateTodoList(todoListID: ID!, input: UpdateTodoListInput!): TodoList! @auth
+  deleteTodoList(todoListID: ID!): Boolean! @auth
 
-  # Todo
-  createTodo(parent: String!, input: CreateTodoInput!): Todo! @auth
-  updateTodo(name: ID!, input: UpdateTodoInput!): Todo! @auth
-  deleteTodo(name: ID!): Boolean! @auth
+  createTodo(todoListID: ID!, input: CreateTodoInput!): Todo! @auth
+  updateTodo(todoListID: ID!, todoID: ID!, input: UpdateTodoInput!): Todo! @auth
+  deleteTodo(todoListID: ID!, todoID: ID!): Boolean! @auth
 }
