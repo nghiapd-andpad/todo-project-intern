@@ -1,3 +1,5 @@
+//go:generate mockgen -destination=mock/todo_commands_mock.go -source=todo_commands.go -package mock
+
 package gateway
 
 import (

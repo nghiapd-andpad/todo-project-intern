@@ -24,3 +24,12 @@ run-core-user:
 
 run-bff-web:
 	cd services/bff-web && go run ./cmd/server/...
+
+mock-core-todo:
+	cd services/core-todo && go generate ./internal/domain/gateway/...
+
+test-unit-core-todo:
+	cd services/core-todo && go test ./internal/usecase/... -v -count=1 -race
+
+test-unit-core-user:
+	cd services/core-user && go test ./internal/usecase/... -v -count=1 -race

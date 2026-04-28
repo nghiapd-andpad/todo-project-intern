@@ -38,7 +38,7 @@ func (s *todoCreator) Create(ctx context.Context, in *input.TodoCreator) (*outpu
 		TodoListID:  in.TodoListID,
 		Title:       in.Title,
 		Description: in.Description,
-		Status:      entity.TodoStatusPending, // default when create new
+		Status:      entity.TodoStatusPending,
 		Priority:    in.Priority,
 		DueDate:     dueDate,
 		AssigneeID:  in.AssigneeID,
