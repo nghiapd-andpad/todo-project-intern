@@ -29,8 +29,13 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	userAuthenticator := user.NewUserAuthenticator(userQueriesGateway, tokenManager)
 	userGetter := user.NewUserGetter(userQueriesGateway)
 	userHandler := user2.NewUserHandler(userCreator, userAuthenticator, userGetter)
-	server := user2.NewGRPCServer(cfg, userHandler)
+	server, cleanup2, err := user2.ProvideGRPCServer(cfg, userHandler)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
 	return server, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }

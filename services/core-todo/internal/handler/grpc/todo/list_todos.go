@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
@@ -11,8 +14,6 @@ import (
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func (h *TodoHandler) ListTodos(ctx context.Context, req *todov1.ListTodosRequest) (*todov1.ListTodosResponse, error) {

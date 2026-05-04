@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"gorm.io/gorm"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
-	"gorm.io/gorm"
 )
 
 type todoListCommandsGateway struct {

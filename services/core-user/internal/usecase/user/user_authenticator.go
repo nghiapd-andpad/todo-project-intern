@@ -1,3 +1,4 @@
+// Package user provides the implementation of user authentication use case for the core-user service.
 package user
 
 import (
@@ -5,11 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/output"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UserAuthenticator interface {

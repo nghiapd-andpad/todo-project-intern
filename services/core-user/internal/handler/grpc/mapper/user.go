@@ -1,3 +1,4 @@
+// Package mapper provides functions to convert between domain entities and gRPC message types.
 package mapper
 
 import (

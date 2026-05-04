@@ -1,3 +1,4 @@
+// Package model contains GORM models for Todo domain.
 package model
 
 import (

@@ -5,12 +5,13 @@ package di
 
 import (
 	"github.com/google/wire"
+	"google.golang.org/grpc"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
 	userHandler "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/user"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/security"
 	userUsecase "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user"
-	"google.golang.org/grpc"
 )
 
 func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
@@ -25,7 +26,7 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 
 		// Handler and gRPC server
 		userHandler.NewUserHandler,
-		userHandler.NewGRPCServer,
+		userHandler.ProvideGRPCServer,
 	)
 	return nil, nil, nil
 }

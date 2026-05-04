@@ -1,11 +1,13 @@
+// Package errors provides utilities for converting application errors to gRPC status errors.
 package errors
 
 import (
 	"errors"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 )
 
 func ToGRPC(err error) error {

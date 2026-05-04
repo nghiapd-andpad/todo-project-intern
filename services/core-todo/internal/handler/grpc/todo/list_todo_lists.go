@@ -4,22 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func (h *TodoHandler) ListTodoLists(ctx context.Context, req *todov1.ListTodoListsRequest) (*todov1.ListTodoListsResponse, error) {
-	// Parse parent: users/{user_id}
-	if req.GetParent() == "" {
-		return nil, status.Error(codes.InvalidArgument, "parent is required")
-	}
-
 	// Parse "users/{user_id}"
 	var userID int64
 	if _, err := fmt.Sscanf(req.GetParent(), "users/%d", &userID); err != nil {

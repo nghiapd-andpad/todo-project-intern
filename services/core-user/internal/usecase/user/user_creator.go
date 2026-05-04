@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/output"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UserCreator interface {

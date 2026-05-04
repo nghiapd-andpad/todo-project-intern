@@ -1,3 +1,4 @@
+// Package user provides use cases related to user management, such as retrieving user information by ID, username, or email.
 package user
 
 import (

@@ -1,3 +1,4 @@
+// Package gateway defines the interfaces for querying user data from the data source.
 package gateway
 
 import (

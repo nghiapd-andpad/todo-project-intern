@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (h *TodoHandler) DeleteTodoList(ctx context.Context, req *todov1.DeleteTodoListRequest) (*emptypb.Empty, error) {
+func (h *TodoHandler) DeleteTodoList(ctx context.Context, req *todov1.DeleteTodoListRequest) (*todov1.DeleteTodoListResponse, error) {
 	parsed, err := resourcename.ParseTodoListResourceName(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid todo list name: %v", err))
@@ -26,5 +26,5 @@ func (h *TodoHandler) DeleteTodoList(ctx context.Context, req *todov1.DeleteTodo
 		return nil, grpcerrors.ToGRPC(err)
 	}
 
-	return &emptypb.Empty{}, nil
+	return &todov1.DeleteTodoListResponse{}, nil
 }

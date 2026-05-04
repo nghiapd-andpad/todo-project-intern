@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func (h *TodoHandler) UpdateTodoList(ctx context.Context, req *todov1.UpdateTodoListRequest) (*todov1.TodoList, error) {
+func (h *TodoHandler) UpdateTodoList(ctx context.Context, req *todov1.UpdateTodoListRequest) (*todov1.UpdateTodoListResponse, error) {
 	if req.GetTodoList() == nil {
 		return nil, status.Error(codes.InvalidArgument, "todo_list is required")
 	}
@@ -44,5 +45,7 @@ func (h *TodoHandler) UpdateTodoList(ctx context.Context, req *todov1.UpdateTodo
 		return nil, grpcerrors.ToGRPC(err)
 	}
 
-	return mapper.TodoListToPb(out.TodoList), nil
+	return &todov1.UpdateTodoListResponse{
+		TodoList: mapper.TodoListToPb(out.TodoList),
+	}, nil
 }

@@ -1,3 +1,4 @@
+// Package middleware implements HTTP middleware for the BFF service, including authentication and other cross-cutting concerns for handling HTTP requests.
 package middleware
 
 import (

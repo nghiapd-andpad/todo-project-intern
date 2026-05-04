@@ -5,11 +5,12 @@ package di
 
 import (
 	"github.com/google/wire"
+	"google.golang.org/grpc"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
 	todousecase "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
-	"google.golang.org/grpc"
 )
 
 func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
@@ -23,7 +24,7 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 
 		// Handler + gRPC server
 		todo.NewTodoHandler,
-		todo.NewGRPCServer,
+		todo.ProvideGRPCServer,
 	)
 	return nil, nil, nil
 }

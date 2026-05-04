@@ -1,26 +1,26 @@
 syntax = "proto3";
 package todo.v1;
 
-import "google/protobuf/timestamp.proto";
+import "buf/validate/validate.proto";
 import "google/protobuf/field_mask.proto";
-import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1;todov1";
 
 service TodosService {
   // TodoList RPCs
-  rpc GetTodoList(GetTodoListRequest) returns (TodoList);
+  rpc GetTodoList(GetTodoListRequest) returns (GetTodoListResponse);
   rpc ListTodoLists(ListTodoListsRequest) returns (ListTodoListsResponse);
-  rpc CreateTodoList(CreateTodoListRequest) returns (TodoList);
-  rpc UpdateTodoList(UpdateTodoListRequest) returns (TodoList);
-  rpc DeleteTodoList(DeleteTodoListRequest) returns (google.protobuf.Empty);
+  rpc CreateTodoList(CreateTodoListRequest) returns (CreateTodoListResponse);
+  rpc UpdateTodoList(UpdateTodoListRequest) returns (UpdateTodoListResponse);
+  rpc DeleteTodoList(DeleteTodoListRequest) returns (DeleteTodoListResponse);
 
   // Todo RPCs
-  rpc GetTodo(GetTodoRequest) returns (Todo);
+  rpc GetTodo(GetTodoRequest) returns (GetTodoResponse);
   rpc ListTodos(ListTodosRequest) returns (ListTodosResponse);
-  rpc CreateTodo(CreateTodoRequest) returns (Todo);
-  rpc UpdateTodo(UpdateTodoRequest) returns (Todo);
-  rpc DeleteTodo(DeleteTodoRequest) returns (google.protobuf.Empty);
+  rpc CreateTodo(CreateTodoRequest) returns (CreateTodoResponse);
+  rpc UpdateTodo(UpdateTodoRequest) returns (UpdateTodoResponse);
+  rpc DeleteTodo(DeleteTodoRequest) returns (DeleteTodoResponse);
 }
 
 enum TodoStatus {
@@ -38,6 +38,8 @@ enum Priority {
   PRIORITY_URGENT = 4;
 }
 
+// Messages for
+
 message TodoList {
   // Format: users/{user_id}/todo-lists/{list_id}
   string name = 1;
@@ -47,13 +49,22 @@ message TodoList {
 }
 
 message GetTodoListRequest {
-  string name = 1; // users/{user_id}/todo-lists/{list_id}
+  // Resource Name: users/{user_id}/todo-lists/{list_id}
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetTodoListResponse {
+  TodoList todo_list = 1;
 }
 
 message ListTodoListsRequest {
-  string parent = 1;     // users/{user_id}
-  int32  page_size = 2;
-  int32  offset = 3;
+  // Parent Resource: users/{user_id}
+  string parent = 1 [(buf.validate.field).string.min_len = 1];
+  int32 page_size = 2 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 20
+  }];
+  int32 offset = 3 [(buf.validate.field).int32 = {gte: 0}];
   string name_search = 4;
 }
 
@@ -63,18 +74,35 @@ message ListTodoListsResponse {
 }
 
 message CreateTodoListRequest {
-  string parent = 1;       // users/{user_id}
-  string display_name = 2;
+  // Parent Resource: users/{user_id}
+  string parent = 1 [(buf.validate.field).string.min_len = 1];
+  string display_name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 255
+  }];
+}
+
+message CreateTodoListResponse {
+  TodoList todo_list = 1;
 }
 
 message UpdateTodoListRequest {
+  TodoList todo_list = 1 [(buf.validate.field).required = true];
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).required = true];
+}
+
+message UpdateTodoListResponse {
   TodoList todo_list = 1;
-  google.protobuf.FieldMask update_mask = 2;
 }
 
 message DeleteTodoListRequest {
-  string name = 1; // users/{user_id}/todo-lists/{list_id}
+  // Resource Name: users/{user_id}/todo-lists/{list_id}
+  string name = 1 [(buf.validate.field).string.min_len = 1];
 }
+
+message DeleteTodoListResponse {}
+
+// Messages for Todo
 
 message Todo {
   // Format: users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
@@ -91,13 +119,22 @@ message Todo {
 }
 
 message GetTodoRequest {
-  string name = 1; // users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+  // Resource Name: users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetTodoResponse {
+  Todo todo = 1;
 }
 
 message ListTodosRequest {
-  string parent = 1;       // users/{user_id}/todo-lists/{list_id}
-  int32  page_size = 2;
-  int32  offset = 3;
+  // Parent Resource: users/{user_id}/todo-lists/{list_id}
+  string parent = 1 [(buf.validate.field).string.min_len = 1];
+  int32 page_size = 2 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 20
+  }];
+  int32 offset = 3 [(buf.validate.field).int32.gte = 0];
   TodoStatus status_filter = 4;
   Priority priority_filter = 5;
   string title_search = 6;
@@ -109,19 +146,35 @@ message ListTodosResponse {
 }
 
 message CreateTodoRequest {
-  string parent = 1;      // users/{user_id}/todo-lists/{list_id}
-  string title = 2;
+  // Parent Resource: users/{user_id}/todo-lists/{list_id}
+  string parent = 1 [(buf.validate.field).string.min_len = 1];
+  string title = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 255
+  }];
   string description = 3;
   Priority priority = 4;
-  string due_date = 5;    // format: "2006-01-02"
+  // format: "2006-01-02"
+  string due_date = 5;
   int64 assignee_id = 6;
 }
 
-message UpdateTodoRequest {
+message CreateTodoResponse {
   Todo todo = 1;
-  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateTodoRequest {
+  Todo todo = 1 [(buf.validate.field).required = true];
+  google.protobuf.FieldMask update_mask = 2 [(buf.validate.field).required = true];
+}
+
+message UpdateTodoResponse {
+  Todo todo = 1;
 }
 
 message DeleteTodoRequest {
-  string name = 1; // users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+  // Resource Name: users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+  string name = 1 [(buf.validate.field).string.min_len = 1];
 }
+
+message DeleteTodoResponse {}

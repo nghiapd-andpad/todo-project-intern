@@ -1,3 +1,4 @@
+// Package todo provides use cases related to todo management, such as creating todo lists and todos.
 package todo
 
 import (

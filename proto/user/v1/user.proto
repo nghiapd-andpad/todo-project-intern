@@ -1,27 +1,34 @@
 syntax = "proto3";
 package user.v1;
 
+import "buf/validate/validate.proto";
+
 option go_package = "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1;userv1";
 
 service UserService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
-  rpc GetUser(GetUserRequest) returns (UserResponse);
-  rpc GetUserByUsername(GetUserByUsernameRequest) returns (UserResponse);
-  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc GetUserByUsername(GetUserByUsernameRequest) returns (GetUserByUsernameResponse);
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailResponse);
   rpc BatchGetUsers(BatchGetUsersRequest) returns (BatchGetUsersResponse);
 }
 
+// Message for User
+
 message User {
-  string id       = 1;
+  string id = 1;
   string username = 2;
-  string email    = 3;
+  string email = 3;
 }
 
 message RegisterRequest {
-  string username = 1;
-  string password = 2;
-  string email    = 3;
+  string username = 1 [(buf.validate.field).string = {
+    min_len: 3
+    max_len: 50
+  }];
+  string password = 2 [(buf.validate.field).string.min_len = 8];
+  string email = 3 [(buf.validate.field).string.email = true];
 }
 
 message RegisterResponse {
@@ -29,33 +36,43 @@ message RegisterResponse {
 }
 
 message LoginRequest {
-  string username = 1;
-  string password = 2;
+  string username = 1 [(buf.validate.field).string.min_len = 1];
+  string password = 2 [(buf.validate.field).string.min_len = 1];
 }
 
 message LoginResponse {
   string access_token = 1;
-  User   user         = 2;
+  User user = 2;
 }
 
 message GetUserRequest {
-  string id = 1; // user id
+  // User id
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetUserResponse {
+  User user = 1;
 }
 
 message GetUserByUsernameRequest {
-  string username = 1;
+  string username = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetUserByUsernameResponse {
+  User user = 1;
 }
 
 message GetUserByEmailRequest {
-  string email = 1;
+  string email = 1 [(buf.validate.field).string.email = true];
 }
 
-message UserResponse {
+message GetUserByEmailResponse {
   User user = 1;
 }
 
 message BatchGetUsersRequest {
-  repeated string ids = 1;
+  // List of user ids
+  repeated string ids = 1 [(buf.validate.field).repeated.min_items = 1];
 }
 
 message BatchGetUsersResponse {

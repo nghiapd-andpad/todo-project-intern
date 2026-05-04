@@ -1,8 +1,13 @@
+// Package grpc_client provides gRPC client implementations for the core service, allowing the BFF to communicate with the core service over gRPC.
 package grpc_client
 
 import (
 	"context"
 	"fmt"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
@@ -10,9 +15,6 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client/mapper"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 type todoGateway struct {
@@ -37,7 +39,7 @@ func (g *todoGateway) GetTodoList(ctx context.Context, name string) (*entity.Tod
 	if err != nil {
 		return nil, err
 	}
-	return mapper.TodoListFromPb(resp), nil
+	return mapper.TodoListFromPb(resp.TodoList), nil
 }
 
 func (g *todoGateway) ListTodoLists(ctx context.Context, parent string, opts gateway.ListTodoListsOptions) (*gateway.TodoListPage, error) {
@@ -68,7 +70,7 @@ func (g *todoGateway) CreateTodoList(ctx context.Context, parent string, display
 	if err != nil {
 		return nil, err
 	}
-	return mapper.TodoListFromPb(resp), nil
+	return mapper.TodoListFromPb(resp.TodoList), nil
 }
 
 func (g *todoGateway) UpdateTodoList(ctx context.Context, name string, displayName *string) (*entity.TodoList, error) {
@@ -84,7 +86,7 @@ func (g *todoGateway) UpdateTodoList(ctx context.Context, name string, displayNa
 	if err != nil {
 		return nil, err
 	}
-	return mapper.TodoListFromPb(resp), nil
+	return mapper.TodoListFromPb(resp.TodoList), nil
 }
 
 func (g *todoGateway) DeleteTodoList(ctx context.Context, name string) error {
@@ -97,7 +99,7 @@ func (g *todoGateway) GetTodo(ctx context.Context, name string) (*entity.Todo, e
 	if err != nil {
 		return nil, err
 	}
-	return mapper.TodoFromPb(resp), nil
+	return mapper.TodoFromPb(resp.Todo), nil
 }
 
 func (g *todoGateway) ListTodos(ctx context.Context, parent string, opts gateway.ListTodosOptions) (*gateway.TodoPage, error) {
@@ -149,7 +151,7 @@ func (g *todoGateway) CreateTodo(ctx context.Context, parent string, input gatew
 	if err != nil {
 		return nil, err
 	}
-	return mapper.TodoFromPb(resp), nil
+	return mapper.TodoFromPb(resp.Todo), nil
 }
 
 func (g *todoGateway) UpdateTodo(ctx context.Context, name string, input gateway.UpdateTodoInput) (*entity.Todo, error) {
@@ -186,7 +188,7 @@ func (g *todoGateway) UpdateTodo(ctx context.Context, name string, input gateway
 	if err != nil {
 		return nil, err
 	}
-	return mapper.TodoFromPb(resp), nil
+	return mapper.TodoFromPb(resp.Todo), nil
 }
 
 func (g *todoGateway) DeleteTodo(ctx context.Context, name string) error {

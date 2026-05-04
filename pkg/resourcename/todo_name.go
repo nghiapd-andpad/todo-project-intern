@@ -1,3 +1,4 @@
+// Package resourcename defines structured resource name types and parsing functions for the core services
 package resourcename
 
 import (

@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	userv1 "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client/mapper"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type authGateway struct {

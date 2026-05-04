@@ -1,12 +1,14 @@
+// Package persistence provides database connection and data access layer for the core-todo service
 package persistence
 
 import (
 	"fmt"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
 
 func NewDatabase(cfg *config.Config) (*gorm.DB, func(), error) {

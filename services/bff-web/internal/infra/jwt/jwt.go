@@ -1,3 +1,4 @@
+// Package jwt provides utilities for handling JWT in the BFF service, including token verification and payload extraction.
 package jwt
 
 import (
@@ -5,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 )
 

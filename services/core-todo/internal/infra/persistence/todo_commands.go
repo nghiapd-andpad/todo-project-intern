@@ -18,7 +18,7 @@ type todoCommandsGateway struct {
 
 var _ gateway.TodoCommandsGateway = (*todoCommandsGateway)(nil)
 
-func NewTodoCommandsGateway(db *gorm.DB) *todoCommandsGateway {
+func NewTodoCommandsGateway(db *gorm.DB) gateway.TodoCommandsGateway {
 	return &todoCommandsGateway{db: db}
 }
 

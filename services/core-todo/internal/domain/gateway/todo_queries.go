@@ -1,5 +1,6 @@
+// Package gateway defines the interfaces for data access and external service communication.
+//
 //go:generate mockgen -destination=mock/todo_queries_mock.go -source=todo_queries.go -package mock
-
 package gateway
 
 import (

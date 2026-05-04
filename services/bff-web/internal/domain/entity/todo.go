@@ -1,3 +1,4 @@
+// Package entity defines the data structures for entities used in the application.
 package entity
 
 import "time"

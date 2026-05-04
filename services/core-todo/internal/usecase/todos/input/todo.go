@@ -1,3 +1,4 @@
+// Package input defines the input data structures for use cases.
 package input
 
 import (

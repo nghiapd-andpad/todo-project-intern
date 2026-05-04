@@ -74,7 +74,7 @@ func TestTodoDeleter_Delete(t *testing.T) {
 			wantErr: true,
 		},
 
-		"error: get db error — delete not called": {
+		"error: get db error - delete not called": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
 					Get(gomock.Any(), todoID).

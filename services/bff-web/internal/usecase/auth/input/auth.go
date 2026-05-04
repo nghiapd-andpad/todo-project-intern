@@ -1,3 +1,4 @@
+// Package input defines the data structures for input parameters used in use cases.
 package input
 
 type RegisterInput struct {

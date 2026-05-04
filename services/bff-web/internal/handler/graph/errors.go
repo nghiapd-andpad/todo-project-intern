@@ -1,13 +1,15 @@
+// Package graph implements the GraphQL server for the BFF service, including schema definitions, resolvers, and error handling for GraphQL operations.
 package graph
 
 import (
 	"context"
 	"errors"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 )
 
 func ErrorPresenter(ctx context.Context, err error) *gqlerror.Error {

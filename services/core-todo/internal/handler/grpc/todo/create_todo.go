@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
@@ -12,11 +15,9 @@ import (
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func (h *TodoHandler) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequest) (*todov1.Todo, error) {
+func (h *TodoHandler) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequest) (*todov1.CreateTodoResponse, error) {
 	// Parse parent resource name
 	parent, err := resourcename.ParseTodoListResourceName(req.GetParent())
 	if err != nil {
@@ -61,5 +62,7 @@ func (h *TodoHandler) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequ
 	}
 
 	// Map response
-	return mapper.TodoToPb(out.Todo), nil
+	return &todov1.CreateTodoResponse{
+		Todo: mapper.TodoToPb(out.Todo),
+	}, nil
 }

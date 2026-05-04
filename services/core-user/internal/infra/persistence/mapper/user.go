@@ -1,3 +1,4 @@
+// Package mapper provides functions to convert between persistence models and domain entities for the user service.
 package mapper
 
 import (

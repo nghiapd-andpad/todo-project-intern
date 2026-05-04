@@ -1,3 +1,4 @@
+// Package mapper provides functions to convert between protobuf messages and domain entities for the core service.
 package mapper
 
 import (

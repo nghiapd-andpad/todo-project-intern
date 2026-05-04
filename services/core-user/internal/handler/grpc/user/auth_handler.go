@@ -10,11 +10,6 @@ import (
 )
 
 func (h *UserHandler) Register(ctx context.Context, req *userv1.RegisterRequest) (*userv1.RegisterResponse, error) {
-	// Validate
-	if req.GetUsername() == "" || req.GetPassword() == "" || req.GetEmail() == "" {
-		return nil, grpcerrors.ToGRPC(nil)
-	}
-
 	// Build input
 	in := &input.UserRegister{
 		Username: req.GetUsername(),

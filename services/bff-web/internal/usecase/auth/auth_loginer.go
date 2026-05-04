@@ -1,3 +1,4 @@
+// Package auth provides use cases related to user authentication, such as login and registration.
 package auth
 
 import (

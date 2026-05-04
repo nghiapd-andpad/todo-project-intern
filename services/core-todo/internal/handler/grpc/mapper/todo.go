@@ -1,10 +1,12 @@
+// Package mapper provides functions to convert between domain entities and gRPC protobuf messages.
 package mapper
 
 import (
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TodoToPb(ent *entity.Todo) *todov1.Todo {

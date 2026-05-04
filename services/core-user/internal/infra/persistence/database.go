@@ -1,12 +1,14 @@
+// Package persistence provides the implementation for database interactions using GORM for the core-user service.
 package persistence
 
 import (
 	"fmt"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence/model"
 )
 
 func NewDatabase(cfg *config.Config) (*gorm.DB, func(), error) {

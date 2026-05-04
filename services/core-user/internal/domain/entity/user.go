@@ -1,3 +1,4 @@
+// Package entity defines the core domain entities for the user service.
 package entity
 
 import (

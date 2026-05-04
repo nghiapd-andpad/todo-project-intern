@@ -1,3 +1,4 @@
+// Package todos contains use cases related to enities Todo and TodoList.
 package todos
 
 import (

@@ -5,6 +5,7 @@ package di
 
 import (
 	"github.com/google/wire"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/graph"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client"

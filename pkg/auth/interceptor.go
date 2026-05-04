@@ -1,3 +1,4 @@
+// Package auth provides authentication and authorization functionalities for gRPC services
 package auth
 
 import (

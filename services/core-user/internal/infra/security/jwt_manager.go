@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 )

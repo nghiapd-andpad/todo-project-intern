@@ -1,3 +1,4 @@
+// Package dataloader implements data loading and batching for entities, allowing efficient retrieval of user data in the BFF service.
 package dataloader
 
 import (
@@ -7,6 +8,7 @@ import (
 	"time"
 
 	"github.com/graph-gophers/dataloader/v7"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	userusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/user"

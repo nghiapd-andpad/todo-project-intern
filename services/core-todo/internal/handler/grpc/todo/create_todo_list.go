@@ -5,21 +5,18 @@ import (
 	"fmt"
 	"strconv"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func (h *TodoHandler) CreateTodoList(ctx context.Context, req *todov1.CreateTodoListRequest) (*todov1.TodoList, error) {
-	if req.GetDisplayName() == "" {
-		return nil, status.Error(codes.InvalidArgument, "display_name is required")
-	}
-
+func (h *TodoHandler) CreateTodoList(ctx context.Context, req *todov1.CreateTodoListRequest) (*todov1.CreateTodoListResponse, error) {
 	// Extract OwnerID from auth context
 	userIDStr, ok := auth.GetUserID(ctx)
 	if !ok {
@@ -38,5 +35,7 @@ func (h *TodoHandler) CreateTodoList(ctx context.Context, req *todov1.CreateTodo
 		return nil, grpcerrors.ToGRPC(err)
 	}
 
-	return mapper.TodoListToPb(out.TodoList), nil
+	return &todov1.CreateTodoListResponse{
+		TodoList: mapper.TodoListToPb(out.TodoList),
+	}, nil
 }

@@ -1,3 +1,4 @@
+// Package gateway defines the interfaces for interacting with external services or data sources.
 package gateway
 
 import (

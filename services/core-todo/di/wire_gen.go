@@ -36,8 +36,13 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	todoListUpdater := todos.NewTodoListUpdater(todoListCommandsGateway, todoListQueriesGateway)
 	todoListDeleter := todos.NewTodoListDeleter(todoListCommandsGateway)
 	todoHandler := todo.NewTodoHandler(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter, todoListCreator, todoListGetter, todoListLister, todoListUpdater, todoListDeleter)
-	server := todo.NewGRPCServer(cfg, todoHandler)
+	server, cleanup2, err := todo.ProvideGRPCServer(cfg, todoHandler)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
 	return server, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }

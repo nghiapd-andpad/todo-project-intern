@@ -1,3 +1,4 @@
+// Package model defines the GORM model for the User entity in the database.
 package model
 
 import (

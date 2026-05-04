@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func (h *TodoHandler) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) (*todov1.Todo, error) {
+func (h *TodoHandler) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequest) (*todov1.UpdateTodoResponse, error) {
 	// Validate
 	if req.GetTodo() == nil {
 		return nil, status.Error(codes.InvalidArgument, "todo is required")
@@ -67,5 +68,7 @@ func (h *TodoHandler) UpdateTodo(ctx context.Context, req *todov1.UpdateTodoRequ
 	}
 
 	// Map response
-	return mapper.TodoToPb(out.Todo), nil
+	return &todov1.UpdateTodoResponse{
+		Todo: mapper.TodoToPb(out.Todo),
+	}, nil
 }

@@ -1,3 +1,4 @@
+// Package entity defines the core domain entities for the todo application.
 package entity
 
 import "time"
