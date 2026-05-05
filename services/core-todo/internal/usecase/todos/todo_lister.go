@@ -22,6 +22,11 @@ func NewTodoLister(todoQueriesGateway gateway.TodoQueriesGateway) TodoLister {
 }
 
 func (s *todoLister) List(ctx context.Context, in *input.TodoLister) (*output.TodoLister, error) {
+	in.Opts.SetDefaults()
+	if err := in.Opts.Validate(); err != nil {
+		return nil, err
+	}
+
 	todos, total, err := s.todoQueriesGateway.List(ctx, in.Opts)
 	if err != nil {
 		return nil, fmt.Errorf("todoLister.List: %w", err)

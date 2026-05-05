@@ -32,11 +32,11 @@ func NewAuthGateway(cfg *config.Config) (gateway.AuthGateway, func(), error) {
 	return &authGateway{client: client}, func() { conn.Close() }, nil
 }
 
-func (g *authGateway) Register(ctx context.Context, username, password, email string) (*entity.User, error) {
+func (g *authGateway) Register(ctx context.Context, input gateway.RegisterInput) (*entity.User, error) {
 	resp, err := g.client.Register(ctx, &userv1.RegisterRequest{
-		Username: username,
-		Password: password,
-		Email:    email,
+		Username: input.Username,
+		Password: input.Password,
+		Email:    input.Email,
 	})
 	if err != nil {
 		return nil, err
@@ -44,10 +44,10 @@ func (g *authGateway) Register(ctx context.Context, username, password, email st
 	return mapper.UserFromPb(resp.User), nil
 }
 
-func (g *authGateway) Login(ctx context.Context, username, password string) (string, *entity.User, error) {
+func (g *authGateway) Login(ctx context.Context, input gateway.LoginInput) (string, *entity.User, error) {
 	resp, err := g.client.Login(ctx, &userv1.LoginRequest{
-		Username: username,
-		Password: password,
+		Username: input.Username,
+		Password: input.Password,
 	})
 	if err != nil {
 		return "", nil, err

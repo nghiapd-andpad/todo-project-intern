@@ -62,10 +62,10 @@ func (g *todoGateway) ListTodoLists(ctx context.Context, parent string, opts gat
 	return &gateway.TodoListPage{TodoLists: lists, Total: resp.Total}, nil
 }
 
-func (g *todoGateway) CreateTodoList(ctx context.Context, parent string, displayName string) (*entity.TodoList, error) {
+func (g *todoGateway) CreateTodoList(ctx context.Context, input gateway.CreateTodoListInput) (*entity.TodoList, error) {
 	resp, err := g.client.CreateTodoList(ctx, &todov1.CreateTodoListRequest{
-		Parent:      parent,
-		DisplayName: displayName,
+		Parent:      input.Parent,
+		DisplayName: input.DisplayName,
 	})
 	if err != nil {
 		return nil, err
@@ -73,13 +73,13 @@ func (g *todoGateway) CreateTodoList(ctx context.Context, parent string, display
 	return mapper.TodoListFromPb(resp.TodoList), nil
 }
 
-func (g *todoGateway) UpdateTodoList(ctx context.Context, name string, displayName *string) (*entity.TodoList, error) {
+func (g *todoGateway) UpdateTodoList(ctx context.Context, input gateway.UpdateTodoListInput) (*entity.TodoList, error) {
 	req := &todov1.UpdateTodoListRequest{
-		TodoList:   &todov1.TodoList{Name: name},
+		TodoList:   &todov1.TodoList{Name: input.Name},
 		UpdateMask: &fieldmaskpb.FieldMask{},
 	}
-	if displayName != nil {
-		req.TodoList.DisplayName = *displayName
+	if input.DisplayName != nil {
+		req.TodoList.DisplayName = *input.DisplayName
 		req.UpdateMask.Paths = append(req.UpdateMask.Paths, "display_name")
 	}
 	resp, err := g.client.UpdateTodoList(ctx, req)

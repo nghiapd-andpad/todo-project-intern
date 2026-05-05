@@ -49,12 +49,22 @@ type UpdateTodoInput struct {
 	AssigneeID  *string
 }
 
+type CreateTodoListInput struct {
+	Parent      string
+	DisplayName string
+}
+
+type UpdateTodoListInput struct {
+	Name        string
+	DisplayName *string
+}
+
 type TodoGateway interface {
 	// TodoList operations
 	GetTodoList(ctx context.Context, name string) (*entity.TodoList, error)
 	ListTodoLists(ctx context.Context, parent string, opts ListTodoListsOptions) (*TodoListPage, error)
-	CreateTodoList(ctx context.Context, parent string, displayName string) (*entity.TodoList, error)
-	UpdateTodoList(ctx context.Context, name string, displayName *string) (*entity.TodoList, error)
+	CreateTodoList(ctx context.Context, input CreateTodoListInput) (*entity.TodoList, error)
+	UpdateTodoList(ctx context.Context, input UpdateTodoListInput) (*entity.TodoList, error)
 	DeleteTodoList(ctx context.Context, name string) error
 
 	// Todo operations

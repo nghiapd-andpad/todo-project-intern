@@ -13,15 +13,15 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
 
-type todoQueriesGateway struct {
+type TodoQueriesGateway struct {
 	db *gorm.DB
 }
 
-func NewTodoQueriesGateway(db *gorm.DB) gateway.TodoQueriesGateway {
-	return &todoQueriesGateway{db: db}
+func NewTodoQueriesGateway(db *gorm.DB) *TodoQueriesGateway {
+	return &TodoQueriesGateway{db: db}
 }
 
-func (g *todoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID) (*entity.Todo, error) {
+func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID) (*entity.Todo, error) {
 	var m model.Todo
 
 	err := g.db.WithContext(ctx).First(&m, int64(todoID)).Error
@@ -35,7 +35,7 @@ func (g *todoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID) (*en
 	return mapper.TodoToEntity(&m), nil
 }
 
-func (g *todoQueriesGateway) List(ctx context.Context, opts gateway.ListTodosOptions) ([]*entity.Todo, int64, error) {
+func (g *TodoQueriesGateway) List(ctx context.Context, opts gateway.ListTodosOptions) ([]*entity.Todo, int64, error) {
 	// Build base query
 	q := g.db.WithContext(ctx).Model(&model.Todo{})
 

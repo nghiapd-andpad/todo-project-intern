@@ -13,15 +13,15 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
 
-type todoListQueriesGateway struct {
+type TodoListQueriesGateway struct {
 	db *gorm.DB
 }
 
-func NewTodoListQueriesGateway(db *gorm.DB) gateway.TodoListQueriesGateway {
-	return &todoListQueriesGateway{db: db}
+func NewTodoListQueriesGateway(db *gorm.DB) *TodoListQueriesGateway {
+	return &TodoListQueriesGateway{db: db}
 }
 
-func (g *todoListQueriesGateway) Get(
+func (g *TodoListQueriesGateway) Get(
 	ctx context.Context,
 	todoListID entity.TodoListID,
 ) (*entity.TodoList, error) {
@@ -38,7 +38,7 @@ func (g *todoListQueriesGateway) Get(
 	return mapper.TodoListToEntity(&m), nil
 }
 
-func (g *todoListQueriesGateway) List(
+func (g *TodoListQueriesGateway) List(
 	ctx context.Context,
 	opts gateway.ListTodoListsOptions,
 ) ([]*entity.TodoList, int64, error) {

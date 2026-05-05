@@ -9,16 +9,24 @@ import (
 	"context"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/input"
 )
 
 // Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, username string, password string, email string) (*entity.User, error) {
-	return r.authUsecase.Register(ctx, username, password, email)
+	return r.authUsecase.Register(ctx, input.RegisterInput{
+		Username: username,
+		Password: password,
+		Email:    email,
+	})
 }
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*AuthPayload, error) {
-	token, user, err := r.loginUsecase.Login(ctx, username, password)
+	token, user, err := r.loginUsecase.Login(ctx, input.LoginInput{
+		Username: username,
+		Password: password,
+	})
 	if err != nil {
 		return nil, err
 	}

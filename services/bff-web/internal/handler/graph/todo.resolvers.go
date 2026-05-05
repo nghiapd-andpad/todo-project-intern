@@ -15,13 +15,18 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/dataloader"
+	inputusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo/input"
 )
 
 // CreateTodoList is the resolver for the createTodoList field.
 func (r *mutationResolver) CreateTodoList(ctx context.Context, input CreateTodoListInput) (*entity.TodoList, error) {
 	userID, _ := auth.GetUserID(ctx)
 	parent := fmt.Sprintf("users/%s", userID)
-	return r.todoCreator.CreateTodoList(ctx, parent, input.DisplayName)
+
+	return r.todoCreator.CreateTodoList(ctx, inputusecase.CreateTodoListInput{
+		Parent:      parent,
+		DisplayName: input.DisplayName,
+	})
 }
 
 // UpdateTodoList is the resolver for the updateTodoList field.
@@ -29,7 +34,10 @@ func (r *mutationResolver) UpdateTodoList(ctx context.Context, todoListID string
 	userID, _ := auth.GetUserID(ctx)
 	name := fmt.Sprintf("users/%s/todo-lists/%s", userID, todoListID)
 
-	return r.todoUpdater.UpdateTodoList(ctx, name, input.DisplayName)
+	return r.todoUpdater.UpdateTodoList(ctx, inputusecase.UpdateTodoListInput{
+		Name:        name,
+		DisplayName: input.DisplayName,
+	})
 }
 
 // DeleteTodoList is the resolver for the deleteTodoList field.
@@ -40,6 +48,7 @@ func (r *mutationResolver) DeleteTodoList(ctx context.Context, todoListID string
 	if err := r.todoDeleter.DeleteTodoList(ctx, name); err != nil {
 		return false, err
 	}
+
 	return true, nil
 }
 
@@ -53,14 +62,23 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, todoListID string, in
 		Description: input.Description,
 		DueDate:     input.DueDate,
 	}
+
 	if input.Priority != nil {
 		p := entity.Priority(*input.Priority)
 		in.Priority = &p
 	}
+
 	if input.AssigneeID != nil {
 		in.AssigneeID = input.AssigneeID
 	}
-	return r.todoCreator.CreateTodo(ctx, parent, in)
+
+	return r.todoCreator.CreateTodo(ctx, parent, inputusecase.CreateTodoInput{
+		Title:       input.Title,
+		Description: input.Description,
+		Priority:    in.Priority,
+		DueDate:     input.DueDate,
+		AssigneeID:  in.AssigneeID,
+	})
 }
 
 // UpdateTodo is the resolver for the updateTodo field.
@@ -74,15 +92,25 @@ func (r *mutationResolver) UpdateTodo(ctx context.Context, todoListID string, to
 		DueDate:     input.DueDate,
 		AssigneeID:  input.AssigneeID,
 	}
+
 	if input.Status != nil {
 		s := entity.TodoStatus(*input.Status)
 		in.Status = &s
 	}
+
 	if input.Priority != nil {
 		p := entity.Priority(*input.Priority)
 		in.Priority = &p
 	}
-	return r.todoUpdater.UpdateTodo(ctx, name, in)
+
+	return r.todoUpdater.UpdateTodo(ctx, name, inputusecase.UpdateTodoInput{
+		Title:       input.Title,
+		Description: input.Description,
+		Status:      in.Status,
+		Priority:    in.Priority,
+		DueDate:     input.DueDate,
+		AssigneeID:  in.AssigneeID,
+	})
 }
 
 // DeleteTodo is the resolver for the deleteTodo field.
@@ -93,6 +121,7 @@ func (r *mutationResolver) DeleteTodo(ctx context.Context, todoListID string, to
 	if err := r.todoDeleter.DeleteTodo(ctx, name); err != nil {
 		return false, err
 	}
+
 	return true, nil
 }
 
@@ -124,6 +153,7 @@ func (r *queryResolver) TodoLists(ctx context.Context, input *ListTodoListsInput
 	if err != nil {
 		return nil, err
 	}
+
 	return &TodoListPage{TodoLists: page.TodoLists, Total: int(page.Total)}, nil
 }
 

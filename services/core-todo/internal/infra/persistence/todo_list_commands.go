@@ -7,20 +7,19 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
 
-type todoListCommandsGateway struct {
+type TodoListCommandsGateway struct {
 	db *gorm.DB
 }
 
-func NewTodoListCommandsGateway(db *gorm.DB) gateway.TodoListCommandsGateway {
-	return &todoListCommandsGateway{db: db}
+func NewTodoListCommandsGateway(db *gorm.DB) *TodoListCommandsGateway {
+	return &TodoListCommandsGateway{db: db}
 }
 
-func (g *todoListCommandsGateway) Create(
+func (g *TodoListCommandsGateway) Create(
 	ctx context.Context,
 	todoList *entity.TodoList,
 ) (*entity.TodoList, error) {
@@ -33,7 +32,7 @@ func (g *todoListCommandsGateway) Create(
 	return mapper.TodoListToEntity(m), nil
 }
 
-func (g *todoListCommandsGateway) Update(
+func (g *TodoListCommandsGateway) Update(
 	ctx context.Context,
 	todoList *entity.TodoList,
 ) (*entity.TodoList, error) {
@@ -46,7 +45,7 @@ func (g *todoListCommandsGateway) Update(
 	return mapper.TodoListToEntity(m), nil
 }
 
-func (g *todoListCommandsGateway) Delete(
+func (g *TodoListCommandsGateway) Delete(
 	ctx context.Context,
 	todoListID entity.TodoListID,
 ) error {

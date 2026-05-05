@@ -61,13 +61,14 @@ func TestTodoCreator_Create(t *testing.T) {
 		"success: create with required fields": {
 			prepare: func(f *fields) {
 				f.mockCommands.EXPECT().
-					Create(gomock.Any(), gomock.AssignableToTypeOf(&entity.Todo{})).
-					DoAndReturn(func(_ context.Context, todo *entity.Todo) (*entity.Todo, error) {
-						assert.Equal(t, entity.TodoStatusPending, todo.Status)
-						assert.Nil(t, todo.DueDate)
-						assert.Nil(t, todo.AssigneeID)
-						return createdEntity, nil
-					})
+					Create(gomock.Any(), &entity.Todo{
+						TodoListID: todoListID,
+						Title:      "Unit Test Create Todo",
+						Status:     entity.TodoStatusPending,
+						Priority:   entity.PriorityMedium,
+						CreatorID:  creatorID,
+					}).
+					Return(createdEntity, nil)
 			},
 			input:    validInput,
 			expected: &output.TodoCreator{Todo: createdEntity},
