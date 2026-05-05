@@ -9,26 +9,43 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
+	todoHandler "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
-	todousecase "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
 )
 
 func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	wire.Build(
+		// Infra
 		persistence.NewDatabase,
-
-		persistence.WireSet,
 
 		persistence.NewTodoCommandsGateway,
 		wire.Bind(new(gateway.TodoCommandsGateway), new(*persistence.TodoCommandsGateway)),
 
-		// Usecases
-		todousecase.WireSet,
+		persistence.NewTodoQueriesGateway,
+		wire.Bind(new(gateway.TodoQueriesGateway), new(*persistence.TodoQueriesGateway)),
 
-		// Handler + gRPC server
-		todo.NewTodoHandler,
-		todo.ProvideGRPCServer,
+		persistence.NewTodoListCommandsGateway,
+		wire.Bind(new(gateway.TodoListCommandsGateway), new(*persistence.TodoListCommandsGateway)),
+
+		persistence.NewTodoListQueriesGateway,
+		wire.Bind(new(gateway.TodoListQueriesGateway), new(*persistence.TodoListQueriesGateway)),
+
+		// Todo Usecase
+		todos.NewTodoCreator,
+		todos.NewTodoGetter,
+		todos.NewTodoLister,
+		todos.NewTodoUpdater,
+		todos.NewTodoDeleter,
+		todos.NewTodoListCreator,
+		todos.NewTodoListGetter,
+		todos.NewTodoListLister,
+		todos.NewTodoListUpdater,
+		todos.NewTodoListDeleter,
+
+		// Handler
+		todoHandler.NewTodoHandler,
+		todoHandler.NewGRPCServer,
 	)
 	return nil, nil, nil
 }
