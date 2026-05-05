@@ -10,19 +10,15 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/output"
 )
 
-type TodoListCreator interface {
-	Create(ctx context.Context, in *input.TodoListCreator) (*output.TodoListCreator, error)
-}
-
-type todoListCreator struct {
+type TodoListCreator struct {
 	todoListCommandsGateway gateway.TodoListCommandsGateway
 }
 
-func NewTodoListCreator(todoListCommandsGateway gateway.TodoListCommandsGateway) TodoListCreator {
-	return &todoListCreator{todoListCommandsGateway: todoListCommandsGateway}
+func NewTodoListCreator(todoListCommandsGateway gateway.TodoListCommandsGateway) *TodoListCreator {
+	return &TodoListCreator{todoListCommandsGateway: todoListCommandsGateway}
 }
 
-func (s *todoListCreator) Create(ctx context.Context, in *input.TodoListCreator) (*output.TodoListCreator, error) {
+func (s *TodoListCreator) Create(ctx context.Context, in *input.TodoListCreator) (*output.TodoListCreator, error) {
 	todoList := &entity.TodoList{
 		Name:    in.Name,
 		OwnerID: in.OwnerID,
@@ -30,7 +26,7 @@ func (s *todoListCreator) Create(ctx context.Context, in *input.TodoListCreator)
 
 	created, err := s.todoListCommandsGateway.Create(ctx, todoList)
 	if err != nil {
-		return nil, fmt.Errorf("todoListCreator.Create: %w", err)
+		return nil, fmt.Errorf("TodoListCreator.Create: %w", err)
 	}
 
 	return &output.TodoListCreator{TodoList: created}, nil

@@ -21,6 +21,8 @@ func NewTodoQueriesGateway(db *gorm.DB) *TodoQueriesGateway {
 	return &TodoQueriesGateway{db: db}
 }
 
+var _ gateway.TodoQueriesGateway = (*TodoQueriesGateway)(nil)
+
 func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID) (*entity.Todo, error) {
 	var m model.Todo
 

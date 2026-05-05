@@ -15,38 +15,78 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/output"
 )
+
+type TodoCreatorUsecase interface {
+	Create(ctx context.Context, in *input.TodoCreator) (*output.TodoCreator, error)
+}
+
+type TodoGetterUsecase interface {
+	Get(ctx context.Context, in *input.TodoGetter) (*output.TodoGetter, error)
+}
+
+type TodoListerUsecase interface {
+	List(ctx context.Context, in *input.TodoLister) (*output.TodoLister, error)
+}
+
+type TodoUpdaterUsecase interface {
+	Update(ctx context.Context, in *input.TodoUpdater) (*output.TodoUpdater, error)
+}
+
+type TodoDeleterUsecase interface {
+	Delete(ctx context.Context, in *input.TodoDeleter) (*output.TodoDeleter, error)
+}
+
+type TodoListCreatorUsecase interface {
+	Create(ctx context.Context, in *input.TodoListCreator) (*output.TodoListCreator, error)
+}
+
+type TodoListGetterUsecase interface {
+	Get(ctx context.Context, in *input.TodoListGetter) (*output.TodoListGetter, error)
+}
+
+type TodoListListerUsecase interface {
+	List(ctx context.Context, in *input.TodoListLister) (*output.TodoListLister, error)
+}
+
+type TodoListUpdaterUsecase interface {
+	Update(ctx context.Context, in *input.TodoListUpdater) (*output.TodoListUpdater, error)
+}
+
+type TodoListDeleterUsecase interface {
+	Delete(ctx context.Context, in *input.TodoListDeleter) (*output.TodoListDeleter, error)
+}
 
 type TodoHandler struct {
 	todov1.UnimplementedTodosServiceServer
 
-	// Todo usecases
-	todoCreator todos.TodoCreator
-	todoGetter  todos.TodoGetter
-	todoLister  todos.TodoLister
-	todoUpdater todos.TodoUpdater
-	todoDeleter todos.TodoDeleter
+	todoCreator TodoCreatorUsecase
+	todoGetter  TodoGetterUsecase
+	todoLister  TodoListerUsecase
+	todoUpdater TodoUpdaterUsecase
+	todoDeleter TodoDeleterUsecase
 
-	// TodoList usecases
-	todoListCreator todos.TodoListCreator
-	todoListGetter  todos.TodoListGetter
-	todoListLister  todos.TodoListLister
-	todoListUpdater todos.TodoListUpdater
-	todoListDeleter todos.TodoListDeleter
+	todoListCreator TodoListCreatorUsecase
+	todoListGetter  TodoListGetterUsecase
+	todoListLister  TodoListListerUsecase
+	todoListUpdater TodoListUpdaterUsecase
+	todoListDeleter TodoListDeleterUsecase
 }
 
 func NewTodoHandler(
-	todoCreator todos.TodoCreator,
-	todoGetter todos.TodoGetter,
-	todoLister todos.TodoLister,
-	todoUpdater todos.TodoUpdater,
-	todoDeleter todos.TodoDeleter,
-	todoListCreator todos.TodoListCreator,
-	todoListGetter todos.TodoListGetter,
-	todoListLister todos.TodoListLister,
-	todoListUpdater todos.TodoListUpdater,
-	todoListDeleter todos.TodoListDeleter,
+	todoCreator TodoCreatorUsecase,
+	todoGetter TodoGetterUsecase,
+	todoLister TodoListerUsecase,
+	todoUpdater TodoUpdaterUsecase,
+	todoDeleter TodoDeleterUsecase,
+
+	todoListCreator TodoListCreatorUsecase,
+	todoListGetter TodoListGetterUsecase,
+	todoListLister TodoListListerUsecase,
+	todoListUpdater TodoListUpdaterUsecase,
+	todoListDeleter TodoListDeleterUsecase,
 ) *TodoHandler {
 	return &TodoHandler{
 		todoCreator:     todoCreator,

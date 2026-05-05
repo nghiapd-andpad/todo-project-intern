@@ -10,11 +10,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/output"
 )
 
-type TodoListUpdater interface {
-	Update(ctx context.Context, in *input.TodoListUpdater) (*output.TodoListUpdater, error)
-}
-
-type todoListUpdater struct {
+type TodoListUpdater struct {
 	todoListCommandsGateway gateway.TodoListCommandsGateway
 	todoListQueriesGateway  gateway.TodoListQueriesGateway
 }
@@ -22,17 +18,17 @@ type todoListUpdater struct {
 func NewTodoListUpdater(
 	todoListCommandsGateway gateway.TodoListCommandsGateway,
 	todoListQueriesGateway gateway.TodoListQueriesGateway,
-) TodoListUpdater {
-	return &todoListUpdater{
+) *TodoListUpdater {
+	return &TodoListUpdater{
 		todoListCommandsGateway: todoListCommandsGateway,
 		todoListQueriesGateway:  todoListQueriesGateway,
 	}
 }
 
-func (s *todoListUpdater) Update(ctx context.Context, in *input.TodoListUpdater) (*output.TodoListUpdater, error) {
+func (s *TodoListUpdater) Update(ctx context.Context, in *input.TodoListUpdater) (*output.TodoListUpdater, error) {
 	todoList, err := s.todoListQueriesGateway.Get(ctx, in.ID)
 	if err != nil {
-		return nil, fmt.Errorf("todoListUpdater.Get: %w", err)
+		return nil, fmt.Errorf("TodoListUpdater.Get: %w", err)
 	}
 	if todoList == nil {
 		return nil, entity.NewNotFound("todo list not found").
@@ -45,7 +41,7 @@ func (s *todoListUpdater) Update(ctx context.Context, in *input.TodoListUpdater)
 
 	updated, err := s.todoListCommandsGateway.Update(ctx, todoList)
 	if err != nil {
-		return nil, fmt.Errorf("todoListUpdater.Update: %w", err)
+		return nil, fmt.Errorf("TodoListUpdater.Update: %w", err)
 	}
 
 	return &output.TodoListUpdater{TodoList: updated}, nil

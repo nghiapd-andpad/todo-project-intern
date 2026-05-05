@@ -9,19 +9,15 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/output"
 )
 
-type TodoLister interface {
-	List(ctx context.Context, in *input.TodoLister) (*output.TodoLister, error)
-}
-
-type todoLister struct {
+type TodoLister struct {
 	todoQueriesGateway gateway.TodoQueriesGateway
 }
 
-func NewTodoLister(todoQueriesGateway gateway.TodoQueriesGateway) TodoLister {
-	return &todoLister{todoQueriesGateway: todoQueriesGateway}
+func NewTodoLister(todoQueriesGateway gateway.TodoQueriesGateway) *TodoLister {
+	return &TodoLister{todoQueriesGateway: todoQueriesGateway}
 }
 
-func (s *todoLister) List(ctx context.Context, in *input.TodoLister) (*output.TodoLister, error) {
+func (s *TodoLister) List(ctx context.Context, in *input.TodoLister) (*output.TodoLister, error) {
 	in.Opts.SetDefaults()
 	if err := in.Opts.Validate(); err != nil {
 		return nil, err
@@ -29,7 +25,7 @@ func (s *todoLister) List(ctx context.Context, in *input.TodoLister) (*output.To
 
 	todos, total, err := s.todoQueriesGateway.List(ctx, in.Opts)
 	if err != nil {
-		return nil, fmt.Errorf("todoLister.List: %w", err)
+		return nil, fmt.Errorf("TodoLister.List: %w", err)
 	}
 
 	return &output.TodoLister{

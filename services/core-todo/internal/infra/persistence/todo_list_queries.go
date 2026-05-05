@@ -21,6 +21,8 @@ func NewTodoListQueriesGateway(db *gorm.DB) *TodoListQueriesGateway {
 	return &TodoListQueriesGateway{db: db}
 }
 
+var _ gateway.TodoListQueriesGateway = (*TodoListQueriesGateway)(nil)
+
 func (g *TodoListQueriesGateway) Get(
 	ctx context.Context,
 	todoListID entity.TodoListID,
@@ -32,7 +34,7 @@ func (g *TodoListQueriesGateway) Get(
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("db get todo: %w", err)
+		return nil, fmt.Errorf("db get todo list: %w", err)
 	}
 
 	return mapper.TodoListToEntity(&m), nil

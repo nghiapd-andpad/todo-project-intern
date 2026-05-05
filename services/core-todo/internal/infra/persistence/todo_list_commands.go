@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
@@ -18,6 +19,8 @@ type TodoListCommandsGateway struct {
 func NewTodoListCommandsGateway(db *gorm.DB) *TodoListCommandsGateway {
 	return &TodoListCommandsGateway{db: db}
 }
+
+var _ gateway.TodoListCommandsGateway = (*TodoListCommandsGateway)(nil)
 
 func (g *TodoListCommandsGateway) Create(
 	ctx context.Context,

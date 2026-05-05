@@ -16,35 +16,48 @@ import (
 
 func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	wire.Build(
-		// Infra
+		// INFRASTRUCTURE
 		persistence.NewDatabase,
 
 		persistence.NewTodoCommandsGateway,
-		wire.Bind(new(gateway.TodoCommandsGateway), new(*persistence.TodoCommandsGateway)),
-
 		persistence.NewTodoQueriesGateway,
-		wire.Bind(new(gateway.TodoQueriesGateway), new(*persistence.TodoQueriesGateway)),
-
 		persistence.NewTodoListCommandsGateway,
-		wire.Bind(new(gateway.TodoListCommandsGateway), new(*persistence.TodoListCommandsGateway)),
-
 		persistence.NewTodoListQueriesGateway,
+
+		wire.Bind(new(gateway.TodoCommandsGateway), new(*persistence.TodoCommandsGateway)),
+		wire.Bind(new(gateway.TodoQueriesGateway), new(*persistence.TodoQueriesGateway)),
+		wire.Bind(new(gateway.TodoListCommandsGateway), new(*persistence.TodoListCommandsGateway)),
 		wire.Bind(new(gateway.TodoListQueriesGateway), new(*persistence.TodoListQueriesGateway)),
 
-		// Todo Usecase
+		// USE CASE
 		todos.NewTodoCreator,
 		todos.NewTodoGetter,
 		todos.NewTodoLister,
 		todos.NewTodoUpdater,
 		todos.NewTodoDeleter,
+
 		todos.NewTodoListCreator,
 		todos.NewTodoListGetter,
 		todos.NewTodoListLister,
 		todos.NewTodoListUpdater,
 		todos.NewTodoListDeleter,
 
-		// Handler
+		wire.Bind(new(todoHandler.TodoCreatorUsecase), new(*todos.TodoCreator)),
+		wire.Bind(new(todoHandler.TodoGetterUsecase), new(*todos.TodoGetter)),
+		wire.Bind(new(todoHandler.TodoListerUsecase), new(*todos.TodoLister)),
+		wire.Bind(new(todoHandler.TodoUpdaterUsecase), new(*todos.TodoUpdater)),
+		wire.Bind(new(todoHandler.TodoDeleterUsecase), new(*todos.TodoDeleter)),
+
+		wire.Bind(new(todoHandler.TodoListCreatorUsecase), new(*todos.TodoListCreator)),
+		wire.Bind(new(todoHandler.TodoListGetterUsecase), new(*todos.TodoListGetter)),
+		wire.Bind(new(todoHandler.TodoListListerUsecase), new(*todos.TodoListLister)),
+		wire.Bind(new(todoHandler.TodoListUpdaterUsecase), new(*todos.TodoListUpdater)),
+		wire.Bind(new(todoHandler.TodoListDeleterUsecase), new(*todos.TodoListDeleter)),
+
+		// HANDLER
 		todoHandler.NewTodoHandler,
+
+		// SERVER
 		todoHandler.NewGRPCServer,
 	)
 	return nil, nil, nil

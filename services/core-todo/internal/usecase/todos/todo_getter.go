@@ -10,22 +10,18 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/output"
 )
 
-type TodoGetter interface {
-	Get(ctx context.Context, in *input.TodoGetter) (*output.TodoGetter, error)
-}
-
-type todoGetter struct {
+type TodoGetter struct {
 	todoQueriesGateway gateway.TodoQueriesGateway
 }
 
-func NewTodoGetter(todoQueriesGateway gateway.TodoQueriesGateway) TodoGetter {
-	return &todoGetter{todoQueriesGateway: todoQueriesGateway}
+func NewTodoGetter(todoQueriesGateway gateway.TodoQueriesGateway) *TodoGetter {
+	return &TodoGetter{todoQueriesGateway: todoQueriesGateway}
 }
 
-func (s *todoGetter) Get(ctx context.Context, in *input.TodoGetter) (*output.TodoGetter, error) {
+func (s *TodoGetter) Get(ctx context.Context, in *input.TodoGetter) (*output.TodoGetter, error) {
 	todo, err := s.todoQueriesGateway.Get(ctx, in.ID)
 	if err != nil {
-		return nil, fmt.Errorf("todoGetter.Get: %w", err)
+		return nil, fmt.Errorf("TodoGetter.Get: %w", err)
 	}
 
 	if todo == nil {
