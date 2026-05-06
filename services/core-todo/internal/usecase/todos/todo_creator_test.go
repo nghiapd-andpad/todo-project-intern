@@ -26,6 +26,7 @@ func TestTodoCreator_Create(t *testing.T) {
 		todoListID = entity.TodoListID(2)
 		creatorID  = entity.UserID(1)
 		validDue   = "2026-05-01"
+		parsedDue  = time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
 
 		createdEntity = &entity.Todo{
 			ID:         entity.TodoID(10),
@@ -78,16 +79,15 @@ func TestTodoCreator_Create(t *testing.T) {
 		"success: create with due_date": {
 			prepare: func(f *fields) {
 				f.mockCommands.EXPECT().
-					Create(gomock.Any(), gomock.AssignableToTypeOf(&entity.Todo{})).
-					DoAndReturn(func(_ context.Context, todo *entity.Todo) (*entity.Todo, error) {
-						assert.NotNil(t, todo.DueDate)
-						assert.Equal(t, 2026, todo.DueDate.Year())
-						assert.Equal(t, time.May, todo.DueDate.Month())
-						assert.Equal(t, 1, todo.DueDate.Day())
-						entityWithDue := *createdEntity
-						entityWithDue.DueDate = todo.DueDate
-						return &entityWithDue, nil
-					})
+					Create(gomock.Any(), &entity.Todo{
+						TodoListID: todoListID,
+						Title:      "Unit Test Create Todo",
+						Status:     entity.TodoStatusPending,
+						Priority:   entity.PriorityMedium,
+						CreatorID:  creatorID,
+						DueDate:    &parsedDue,
+					}).
+					Return(createdEntity, nil)
 			},
 			input: &input.TodoCreator{
 				TodoListID: todoListID,
@@ -96,12 +96,7 @@ func TestTodoCreator_Create(t *testing.T) {
 				CreatorID:  creatorID,
 				DueDate:    &validDue,
 			},
-			expected: &output.TodoCreator{Todo: func() *entity.Todo {
-				e := *createdEntity
-				parsed, _ := time.Parse("2006-01-02", validDue)
-				e.DueDate = &parsed
-				return &e
-			}()},
+			expected: &output.TodoCreator{Todo: createdEntity},
 		},
 
 		// Error path — DueDate wrong format

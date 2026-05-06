@@ -56,13 +56,18 @@ func TestTodoUpdater_Update(t *testing.T) {
 						Get(gomock.Any(), todoID).
 						Return(oldTodo(), nil),
 					f.mockCommands.EXPECT().
-						Update(gomock.Any(), gomock.AssignableToTypeOf(&entity.Todo{})).
-						DoAndReturn(func(_ context.Context, todo *entity.Todo) (*entity.Todo, error) {
-							assert.Equal(t, "New title", todo.Title)
-							assert.Equal(t, entity.TodoStatusPending, todo.Status)
-							assert.Equal(t, entity.PriorityLow, todo.Priority)
-							return todo, nil
-						}),
+						Update(gomock.Any(), &entity.Todo{
+							ID:       todoID,
+							Title:    "New title",
+							Status:   entity.TodoStatusPending,
+							Priority: entity.PriorityLow,
+						}).
+						Return(&entity.Todo{
+							ID:       todoID,
+							Title:    "New title",
+							Status:   entity.TodoStatusPending,
+							Priority: entity.PriorityLow,
+						}, nil),
 				)
 			},
 			input: &input.TodoUpdater{
@@ -84,13 +89,18 @@ func TestTodoUpdater_Update(t *testing.T) {
 						Get(gomock.Any(), todoID).
 						Return(oldTodo(), nil),
 					f.mockCommands.EXPECT().
-						Update(gomock.Any(), gomock.AssignableToTypeOf(&entity.Todo{})).
-						DoAndReturn(func(_ context.Context, todo *entity.Todo) (*entity.Todo, error) {
-							assert.Equal(t, entity.TodoStatusInProgress, todo.Status)
-							assert.Equal(t, "Old title", todo.Title)
-							assert.Equal(t, entity.PriorityLow, todo.Priority)
-							return todo, nil
-						}),
+						Update(gomock.Any(), &entity.Todo{
+							ID:       todoID,
+							Title:    "Old title",
+							Status:   entity.TodoStatusInProgress,
+							Priority: entity.PriorityLow,
+						}).
+						Return(&entity.Todo{
+							ID:       todoID,
+							Title:    "Old title",
+							Status:   entity.TodoStatusInProgress,
+							Priority: entity.PriorityLow,
+						}, nil),
 				)
 			},
 			input: &input.TodoUpdater{

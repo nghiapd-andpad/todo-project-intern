@@ -36,3 +36,7 @@ test-unit-core-todo:
 
 test-unit-core-user:
 	cd services/core-user && go test ./internal/usecase/... -v -count=1 -race
+
+test-unit-core-todo-coverage:
+	cd services/core-todo && go test ./internal/usecase/... -coverprofile=coverage.out -covermode=atomic -count=1
+	cd services/core-todo && gocov convert coverage.out | gocov-html > coverage.html

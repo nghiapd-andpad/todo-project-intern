@@ -52,12 +52,11 @@ func TestTodoListCreator_Create(t *testing.T) {
 		"success: create todo list": {
 			prepare: func(f *fields) {
 				f.mockCommands.EXPECT().
-					Create(gomock.Any(), gomock.AssignableToTypeOf(&entity.TodoList{})).
-					DoAndReturn(func(_ context.Context, tl *entity.TodoList) (*entity.TodoList, error) {
-						assert.Equal(t, "Task 1", tl.Name)
-						assert.Equal(t, ownerID, tl.OwnerID)
-						return createdEntity, nil
-					})
+					Create(gomock.Any(), &entity.TodoList{
+						Name:    "Task 1",
+						OwnerID: ownerID,
+					}).
+					Return(createdEntity, nil)
 			},
 			input:    validInput,
 			expected: &output.TodoListCreator{TodoList: createdEntity},
@@ -66,7 +65,10 @@ func TestTodoListCreator_Create(t *testing.T) {
 		"success: create with empty name": {
 			prepare: func(f *fields) {
 				f.mockCommands.EXPECT().
-					Create(gomock.Any(), gomock.AssignableToTypeOf(&entity.TodoList{})).
+					Create(gomock.Any(), &entity.TodoList{
+						Name:    "",
+						OwnerID: ownerID,
+					}).
 					Return(&entity.TodoList{ID: 2, Name: "", OwnerID: ownerID}, nil)
 			},
 			input: &input.TodoListCreator{
