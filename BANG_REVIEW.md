@@ -15,4 +15,15 @@
 - Cac func new chi nen tao instance cua struct khong nen tra ra interface, vi du [todo_commands.go](services/core-todo/internal/infra/persistence/todo_commands.go)
   - Co the them dong lenh de dam bao struct da implement interface, vi du `var _ gateway.TodoCommandsGateway = (*todoCommandsGateway)(nil)`
 - Trong unit test khong nen mock anything, nen test mock object thuc te duoc goi va tra ve ket qua thuc te, vi du [todo_creator_test.go](services/core-todo/internal/usecase/todos/todo_creator_test.go)
+
+
+# REVIEW 2026-05-08
+## CODE
+- Dang ignore mot so loi  tiem nang khi bypass error/validate, vi du [todo.resolvers.go](services/bff-web/internal/handler/graph/todo.resolvers.go)
+- van con validate trong business code thay vi co the validate trong proto [auth_loginer.go](services/bff-web/internal/usecase/auth/auth_loginer.go)
+- Input params va output khong dong nhat ve kieu du lieu, output la pointer nhung input la value, can dong nhat kieu du lieu, vi du [auth_loginer.go](services/bff-web/internal/usecase/auth/auth_loginer.go)
+- van con nhieu file wire trong mot service, can gom chung vao 1 file, vi du [wire.go](services/bff-web/internal/usecase/todo/wire.go), [wire.go](services/bff-web/internal/usecase/auth/wire.go)
+- dat ten package chua dung chuan Go vi du [auth_client.go](services/bff-web/internal/infra/grpc_client/auth_client.go)
+- Interface va implement cua no dang dat trong cung 1 file, can tach ra, vi du  [todo_queries.go](services/core-todo/internal/domain/gateway/todo_queries.go)
+- Unit test: follow Remote service
 - 
