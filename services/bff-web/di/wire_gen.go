@@ -9,7 +9,7 @@ package di
 import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/graph"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpcclient"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/jwt"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo"
@@ -19,31 +19,30 @@ import (
 // Injectors from wire.go:
 
 func InitializeApp(cfg *config.Config) (*App, func(), error) {
-	authGateway, cleanup, err := grpc_client.NewAuthGateway(cfg)
+	todoGateway, cleanup, err := grpcclient.NewTodoGateway(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
-	registerer := auth.NewRegisterer(authGateway)
-	loginer := auth.NewLoginer(authGateway)
-	todoGateway, cleanup2, err := grpc_client.NewTodoGateway(cfg)
+	todoCreator := todo.NewTodoCreator(todoGateway)
+	todoGetter := todo.NewTodoGetter(todoGateway)
+	todoLister := todo.NewTodoLister(todoGateway)
+	todoUpdater := todo.NewTodoUpdater(todoGateway)
+	todoDeleter := todo.NewTodoDeleter(todoGateway)
+	authGateway, cleanup2, err := grpcclient.NewAuthGateway(cfg)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	todoGetter := todo.NewTodoGetter(todoGateway)
-	todoLister := todo.NewTodoLister(todoGateway)
-	todoCreator := todo.NewTodoCreator(todoGateway)
-	todoUpdater := todo.NewTodoUpdater(todoGateway)
-	todoDeleter := todo.NewTodoDeleter(todoGateway)
-	userGateway, cleanup3, err := grpc_client.NewUserGateway(cfg)
+	registerer := auth.NewRegisterer(authGateway)
+	loginer := auth.NewLoginer(authGateway)
+	userGateway, cleanup3, err := grpcclient.NewUserGateway(cfg)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-	userUsecase := user.NewUserUsecase(userGateway)
-	userGetter := user.ProvideUserGetter(userUsecase)
-	resolver := graph.NewResolver(registerer, loginer, todoGetter, todoLister, todoCreator, todoUpdater, todoDeleter, userGetter)
+	userGetter := user.NewUserGetter(userGateway)
+	resolver := graph.NewResolver(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter, registerer, loginer, userGetter)
 	jwtManager := jwt.NewJwtManager(cfg)
 	app := &App{
 		Resolver:   resolver,

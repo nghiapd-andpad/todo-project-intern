@@ -7,8 +7,9 @@ import (
 	"github.com/google/wire"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/graph"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client"
+	grpcclient "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpcclient"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/jwt"
 	authusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth"
 	todousecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo"
@@ -22,12 +23,46 @@ type App struct {
 
 func InitializeApp(cfg *config.Config) (*App, func(), error) {
 	wire.Build(
-		grpc_client.WireSet,
-		jwt.WireSet,
-		authusecase.WireSet,
-		todousecase.WireSet,
-		userusecase.WireSet,
+		// Infra
+		grpcclient.NewAuthGateway,
+		wire.Bind(new(gateway.AuthGateway), new(*grpcclient.AuthGateway)),
+
+		grpcclient.NewTodoGateway,
+		wire.Bind(new(gateway.TodoGateway), new(*grpcclient.TodoGateway)),
+
+		grpcclient.NewUserGateway,
+		wire.Bind(new(gateway.UserGateway), new(*grpcclient.UserGateway)),
+
+		jwt.NewJwtManager,
+
+		// ── Usecase
+		authusecase.NewRegisterer,
+		wire.Bind(new(graph.AuthRegistererUsecase), new(*authusecase.Registerer)),
+
+		authusecase.NewLoginer,
+		wire.Bind(new(graph.AuthLoginerUsecase), new(*authusecase.Loginer)),
+
+		todousecase.NewTodoCreator,
+		wire.Bind(new(graph.TodoCreatorUsecase), new(*todousecase.TodoCreator)),
+
+		todousecase.NewTodoGetter,
+		wire.Bind(new(graph.TodoGetterUsecase), new(*todousecase.TodoGetter)),
+
+		todousecase.NewTodoLister,
+		wire.Bind(new(graph.TodoListerUsecase), new(*todousecase.TodoLister)),
+
+		todousecase.NewTodoUpdater,
+		wire.Bind(new(graph.TodoUpdaterUsecase), new(*todousecase.TodoUpdater)),
+
+		todousecase.NewTodoDeleter,
+		wire.Bind(new(graph.TodoDeleterUsecase), new(*todousecase.TodoDeleter)),
+
+		userusecase.NewUserGetter,
+		wire.Bind(new(graph.UserGetterUsecase), new(*userusecase.UserGetter)),
+
+		// Handler
 		graph.NewResolver,
+
 		wire.Struct(new(App), "*"),
 	)
 	return nil, nil, nil

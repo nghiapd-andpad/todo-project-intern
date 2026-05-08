@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-// users/{user_id}/todo-lists/{list_id}
+// TodoListResourceName represents the resource name for a todo list: users/{user_id}/todo-lists/{list_id}.
 type TodoListResourceName struct {
 	UserID     int64
 	TodoListID int64
@@ -31,7 +31,7 @@ func ParseTodoListResourceName(name string) (*TodoListResourceName, error) {
 	return &TodoListResourceName{UserID: uID, TodoListID: lID}, nil
 }
 
-// users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+// TodoResourceName represents the resource name for a todo: users/{user_id}/todo-lists/{list_id}/todos/{todo_id}.
 type TodoResourceName struct {
 	UserID     int64
 	TodoListID int64

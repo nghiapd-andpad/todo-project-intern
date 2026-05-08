@@ -4,14 +4,15 @@ package entity
 import "time"
 
 type TodoList struct {
-	Name        string // users/{user_id}/todo-lists/{list_id}
+	ID          string
 	DisplayName string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
 
 type Todo struct {
-	Name        string // users/{user_id}/todo-lists/{list_id}/todos/{todo_id}
+	ID          string
+	TodoListID  string
 	Title       string
 	Description *string
 	Status      TodoStatus

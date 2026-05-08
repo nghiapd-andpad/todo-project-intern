@@ -1,23 +1,44 @@
-# Resource Name: users/{user_id}
-
 type User {
-    id: ID!
-    username: String!
-    email: String!
+  id: ID!
+  username: String!
+  email: String!
 }
 
 type AuthPayload {
-    token: String!
-    user: User!
+  token: String!
+  user: User!
+}
+
+input RegisterInput {
+  username: String!
+  password: String!
+  email: String!
+}
+
+input LoginInput {
+  username: String!
+  password: String!
+}
+
+input GetUserInput {
+  id: ID!
+}
+
+input GetUserByUsernameInput {
+  username: String!
+}
+
+input GetUserByEmailInput {
+  email: String!
 }
 
 extend type Query {
-    userById(id: ID!): User! @auth
-    userByUsername(username: String!): User! @auth
-    userByEmail(email: String!): User! @auth
+  userByID(input: GetUserInput!): User! @auth
+  userByUsername(input: GetUserByUsernameInput!): User! @auth
+  userByEmail(input: GetUserByEmailInput!): User! @auth
 }
 
 extend type Mutation {
-    register(username: String!, password: String!, email: String!): User!
-    login(username: String!, password: String!): AuthPayload!
+  register(input: RegisterInput!): User!
+  login(input: LoginInput!): AuthPayload!
 }

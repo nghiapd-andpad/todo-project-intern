@@ -1,5 +1,5 @@
-// Package grpc_client provides gRPC client implementations for the core service, allowing the BFF to communicate with the core service over gRPC.
-package grpc_client
+// Package grpcclient provides gRPC client implementations for the core service, allowing the BFF to communicate with the core service over gRPC.
+package grpcclient
 
 import (
 	"context"
@@ -14,14 +14,18 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client/mapper"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/output"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpcclient/mapper"
 )
 
-type todoGateway struct {
+type TodoGateway struct {
 	client todov1.TodosServiceClient
 }
 
-func NewTodoGateway(cfg *config.Config) (gateway.TodoGateway, func(), error) {
+var _ gateway.TodoGateway = (*TodoGateway)(nil)
+
+func NewTodoGateway(cfg *config.Config) (*TodoGateway, func(), error) {
 	conn, err := grpc.Dial(
 		cfg.TodoServiceAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -31,18 +35,19 @@ func NewTodoGateway(cfg *config.Config) (gateway.TodoGateway, func(), error) {
 		return nil, nil, fmt.Errorf("dial todo service: %w", err)
 	}
 	client := todov1.NewTodosServiceClient(conn)
-	return &todoGateway{client: client}, func() { conn.Close() }, nil
+	return &TodoGateway{client: client}, func() { conn.Close() }, nil
 }
 
-func (g *todoGateway) GetTodoList(ctx context.Context, name string) (*entity.TodoList, error) {
+func (g *TodoGateway) GetTodoList(ctx context.Context, name string) (*entity.TodoList, error) {
 	resp, err := g.client.GetTodoList(ctx, &todov1.GetTodoListRequest{Name: name})
 	if err != nil {
 		return nil, err
 	}
+
 	return mapper.TodoListFromPb(resp.TodoList), nil
 }
 
-func (g *todoGateway) ListTodoLists(ctx context.Context, parent string, opts gateway.ListTodoListsOptions) (*gateway.TodoListPage, error) {
+func (g *TodoGateway) ListTodoLists(ctx context.Context, parent string, opts input.ListTodoListsOptions) (*output.TodoListPage, error) {
 	req := &todov1.ListTodoListsRequest{
 		Parent:   parent,
 		PageSize: int32(opts.Limit),
@@ -51,18 +56,21 @@ func (g *todoGateway) ListTodoLists(ctx context.Context, parent string, opts gat
 	if opts.NameSearch != nil {
 		req.NameSearch = *opts.NameSearch
 	}
+
 	resp, err := g.client.ListTodoLists(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
 	lists := make([]*entity.TodoList, len(resp.TodoLists))
 	for i, tl := range resp.TodoLists {
 		lists[i] = mapper.TodoListFromPb(tl)
 	}
-	return &gateway.TodoListPage{TodoLists: lists, Total: resp.Total}, nil
+
+	return &output.TodoListPage{TodoLists: lists, Total: resp.Total}, nil
 }
 
-func (g *todoGateway) CreateTodoList(ctx context.Context, input gateway.CreateTodoListInput) (*entity.TodoList, error) {
+func (g *TodoGateway) CreateTodoList(ctx context.Context, input input.CreateTodoListInput) (*entity.TodoList, error) {
 	resp, err := g.client.CreateTodoList(ctx, &todov1.CreateTodoListRequest{
 		Parent:      input.Parent,
 		DisplayName: input.DisplayName,
@@ -70,10 +78,11 @@ func (g *todoGateway) CreateTodoList(ctx context.Context, input gateway.CreateTo
 	if err != nil {
 		return nil, err
 	}
+
 	return mapper.TodoListFromPb(resp.TodoList), nil
 }
 
-func (g *todoGateway) UpdateTodoList(ctx context.Context, input gateway.UpdateTodoListInput) (*entity.TodoList, error) {
+func (g *TodoGateway) UpdateTodoList(ctx context.Context, input input.UpdateTodoListInput) (*entity.TodoList, error) {
 	req := &todov1.UpdateTodoListRequest{
 		TodoList:   &todov1.TodoList{Name: input.Name},
 		UpdateMask: &fieldmaskpb.FieldMask{},
@@ -82,27 +91,30 @@ func (g *todoGateway) UpdateTodoList(ctx context.Context, input gateway.UpdateTo
 		req.TodoList.DisplayName = *input.DisplayName
 		req.UpdateMask.Paths = append(req.UpdateMask.Paths, "display_name")
 	}
+
 	resp, err := g.client.UpdateTodoList(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
 	return mapper.TodoListFromPb(resp.TodoList), nil
 }
 
-func (g *todoGateway) DeleteTodoList(ctx context.Context, name string) error {
+func (g *TodoGateway) DeleteTodoList(ctx context.Context, name string) error {
 	_, err := g.client.DeleteTodoList(ctx, &todov1.DeleteTodoListRequest{Name: name})
 	return err
 }
 
-func (g *todoGateway) GetTodo(ctx context.Context, name string) (*entity.Todo, error) {
+func (g *TodoGateway) GetTodo(ctx context.Context, name string) (*entity.Todo, error) {
 	resp, err := g.client.GetTodo(ctx, &todov1.GetTodoRequest{Name: name})
 	if err != nil {
 		return nil, err
 	}
+
 	return mapper.TodoFromPb(resp.Todo), nil
 }
 
-func (g *todoGateway) ListTodos(ctx context.Context, parent string, opts gateway.ListTodosOptions) (*gateway.TodoPage, error) {
+func (g *TodoGateway) ListTodos(ctx context.Context, parent string, opts input.ListTodosOptions) (*output.TodoPage, error) {
 	req := &todov1.ListTodosRequest{
 		Parent:   parent,
 		PageSize: int32(opts.Limit),
@@ -121,16 +133,18 @@ func (g *todoGateway) ListTodos(ctx context.Context, parent string, opts gateway
 	if err != nil {
 		return nil, err
 	}
+
 	todos := make([]*entity.Todo, len(resp.Todos))
 	for i, t := range resp.Todos {
 		todos[i] = mapper.TodoFromPb(t)
 	}
-	return &gateway.TodoPage{Todos: todos, Total: resp.Total}, nil
+
+	return &output.TodoPage{Todos: todos, Total: resp.Total}, nil
 }
 
-func (g *todoGateway) CreateTodo(ctx context.Context, parent string, input gateway.CreateTodoInput) (*entity.Todo, error) {
+func (g *TodoGateway) CreateTodo(ctx context.Context, input input.CreateTodoInput) (*entity.Todo, error) {
 	req := &todov1.CreateTodoRequest{
-		Parent: parent,
+		Parent: input.Parent,
 		Title:  input.Title,
 	}
 	if input.Description != nil {
@@ -144,19 +158,21 @@ func (g *todoGateway) CreateTodo(ctx context.Context, parent string, input gatew
 	}
 	if input.AssigneeID != nil {
 		var aID int64
-		fmt.Sscanf(*input.AssigneeID, "users/%d", &aID)
+		fmt.Sscanf(*input.AssigneeID, "%d", &aID)
 		req.AssigneeId = aID
 	}
+
 	resp, err := g.client.CreateTodo(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
 	return mapper.TodoFromPb(resp.Todo), nil
 }
 
-func (g *todoGateway) UpdateTodo(ctx context.Context, name string, input gateway.UpdateTodoInput) (*entity.Todo, error) {
+func (g *TodoGateway) UpdateTodo(ctx context.Context, input input.UpdateTodoInput) (*entity.Todo, error) {
 	req := &todov1.UpdateTodoRequest{
-		Todo:       &todov1.Todo{Name: name},
+		Todo:       &todov1.Todo{Name: input.Name},
 		UpdateMask: &fieldmaskpb.FieldMask{},
 	}
 	if input.Title != nil {
@@ -180,18 +196,20 @@ func (g *todoGateway) UpdateTodo(ctx context.Context, name string, input gateway
 	}
 	if input.AssigneeID != nil {
 		var aID int64
-		fmt.Sscanf(*input.AssigneeID, "users/%d", &aID)
+		fmt.Sscanf(*input.AssigneeID, "%d", &aID)
 		req.Todo.AssigneeId = aID
 		req.UpdateMask.Paths = append(req.UpdateMask.Paths, "assignee_id")
 	}
+
 	resp, err := g.client.UpdateTodo(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
 	return mapper.TodoFromPb(resp.Todo), nil
 }
 
-func (g *todoGateway) DeleteTodo(ctx context.Context, name string) error {
+func (g *TodoGateway) DeleteTodo(ctx context.Context, name string) error {
 	_, err := g.client.DeleteTodo(ctx, &todov1.DeleteTodoRequest{Name: name})
 	return err
 }

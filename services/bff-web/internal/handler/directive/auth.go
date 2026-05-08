@@ -10,7 +10,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 )
 
-// check user authenticated? (@auth)
+// Auth check user authenticated.
 func Auth(ctx context.Context, obj interface{}, next graphql.Resolver) (interface{}, error) {
 	userID, ok := authpkg.GetUserID(ctx)
 	if !ok || userID == "" {

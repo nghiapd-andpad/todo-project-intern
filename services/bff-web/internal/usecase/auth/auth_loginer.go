@@ -5,35 +5,31 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
+	inputgateway "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/output"
 )
 
-type Loginer interface {
-	Login(ctx context.Context, input input.LoginInput) (string, *entity.User, error)
-}
-
-type loginer struct {
+type Loginer struct {
 	authGateway gateway.AuthGateway
 }
 
-func NewLoginer(authGateway gateway.AuthGateway) Loginer {
-	return &loginer{authGateway: authGateway}
+func NewLoginer(authGateway gateway.AuthGateway) *Loginer {
+	return &Loginer{authGateway: authGateway}
 }
 
-func (u *loginer) Login(ctx context.Context, input input.LoginInput) (string, *entity.User, error) {
-	if input.Username == "" || input.Password == "" {
-		return "", nil, entity.NewInvalidParameter("username and password are required")
-	}
-
-	token, user, err := u.authGateway.Login(ctx, gateway.LoginInput{
+func (u *Loginer) Login(ctx context.Context, input input.LoginInput) (*output.LoginOutput, error) {
+	data, err := u.authGateway.Login(ctx, inputgateway.LoginInput{
 		Username: input.Username,
 		Password: input.Password,
 	})
 	if err != nil {
-		return "", nil, fmt.Errorf("loginer.Login: %w", err)
+		return nil, fmt.Errorf("Loginer.Login: %w", err)
 	}
 
-	return token, user, nil
+	return &output.LoginOutput{
+		AccessToken: data.AccessToken,
+		User:        data.User,
+	}, nil
 }

@@ -44,59 +44,84 @@ type Todo {
   creator: User
 }
 
+# TodoList Inputs
+
 input CreateTodoListInput {
   displayName: String!
 }
 
 input UpdateTodoListInput {
+  todoListID: ID!
   displayName: String
 }
 
-input CreateTodoInput {
-  title:       String!
-  description: String
-  priority:    Priority
-  dueDate:     String
-  assigneeID:  ID
+input DeleteTodoListInput {
+  todoListID: ID!
 }
 
-input UpdateTodoInput {
-  title:       String
-  description: String
-  status:      TodoStatus
-  priority:    Priority
-  dueDate:     String
-  assigneeID:  ID
+input GetTodoListInput {
+  todoListID: ID!
 }
 
 input ListTodoListsInput {
-  pageSize:   Int
-  offset:     Int
+  pageSize: Int
+  offset: Int
   nameSearch: String
 }
 
+# Todo Inputs
+
+input CreateTodoInput {
+  todoListID: ID!
+  title: String!
+  description: String
+  priority: Priority
+  dueDate: String
+  assigneeID: ID
+}
+
+input UpdateTodoInput {
+  todoListID: ID!
+  todoID: ID!
+  title: String
+  description: String
+  status: TodoStatus
+  priority: Priority
+  dueDate: String
+  assigneeID: ID
+}
+
+input DeleteTodoInput {
+  todoListID: ID!
+  todoID: ID!
+}
+
+input GetTodoInput {
+  todoListID: ID!
+  todoID: ID!
+}
+
 input ListTodosInput {
-  pageSize:    Int
-  offset:      Int
-  status:      TodoStatus
-  priority:    Priority
+  todoListID: ID!
+  pageSize: Int
+  offset: Int
+  status: TodoStatus
+  priority: Priority
   titleSearch: String
 }
 
 extend type Query {
-  todoList(todoListID: ID!): TodoList! @auth
-  todoLists(input: ListTodoListsInput): TodoListPage! @auth
-
-  todo(todoListID: ID!, todoID: ID!): Todo! @auth
-  todos(todoListID: ID!, input: ListTodosInput): TodoPage! @auth
+  todoList(input: GetTodoListInput!): TodoList! @auth
+  todoLists(input: ListTodoListsInput!): TodoListPage! @auth
+  todo(input: GetTodoInput!): Todo! @auth
+  todos(input: ListTodosInput!): TodoPage! @auth
 }
 
 extend type Mutation {
   createTodoList(input: CreateTodoListInput!): TodoList! @auth
-  updateTodoList(todoListID: ID!, input: UpdateTodoListInput!): TodoList! @auth
-  deleteTodoList(todoListID: ID!): Boolean! @auth
-
-  createTodo(todoListID: ID!, input: CreateTodoInput!): Todo! @auth
-  updateTodo(todoListID: ID!, todoID: ID!, input: UpdateTodoInput!): Todo! @auth
-  deleteTodo(todoListID: ID!, todoID: ID!): Boolean! @auth
+  updateTodoList(input: UpdateTodoListInput!): TodoList! @auth
+  deleteTodoList(input: DeleteTodoListInput!): Boolean! @auth
+  createTodo(input: CreateTodoInput!): Todo! @auth
+  updateTodo(input: UpdateTodoInput!): Todo! @auth
+  deleteTodo(input: DeleteTodoInput!): Boolean! @auth
 }

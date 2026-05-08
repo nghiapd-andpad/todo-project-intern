@@ -1,4 +1,4 @@
-package grpc_client
+package grpcclient
 
 import (
 	"context"
@@ -12,14 +12,16 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client/mapper"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpcclient/mapper"
 )
 
-type userGateway struct {
+type UserGateway struct {
 	client userv1.UserServiceClient
 }
 
-func NewUserGateway(cfg *config.Config) (gateway.UserGateway, func(), error) {
+var _ gateway.UserGateway = (*UserGateway)(nil)
+
+func NewUserGateway(cfg *config.Config) (*UserGateway, func(), error) {
 	conn, err := grpc.Dial(
 		cfg.UserServiceAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -32,24 +34,24 @@ func NewUserGateway(cfg *config.Config) (gateway.UserGateway, func(), error) {
 
 	client := userv1.NewUserServiceClient(conn)
 
-	return &userGateway{client: client}, func() { conn.Close() }, nil
+	return &UserGateway{client: client}, func() { conn.Close() }, nil
 }
 
-func (g *userGateway) GetByID(ctx context.Context, id string) (*entity.User, error) {
+func (g *UserGateway) GetByID(ctx context.Context, id string) (*entity.User, error) {
 	resp, err := g.client.GetUser(ctx, &userv1.GetUserRequest{Id: id})
 	if err != nil {
-		return nil, fmt.Errorf("userGateway.GetByID: %w", err)
+		return nil, fmt.Errorf("UserGateway.GetByID: %w", err)
 	}
 
 	return mapper.UserFromPb(resp.User), nil
 }
 
-func (g *userGateway) GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {
+func (g *UserGateway) GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {
 	resp, err := g.client.BatchGetUsers(ctx, &userv1.BatchGetUsersRequest{
 		Ids: ids,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("userGateway.GetByIDs: %w", err)
+		return nil, fmt.Errorf("UserGateway.GetByIDs: %w", err)
 	}
 
 	users := make([]*entity.User, len(resp.GetUsers()))
@@ -60,23 +62,23 @@ func (g *userGateway) GetByIDs(ctx context.Context, ids []string) ([]*entity.Use
 	return users, nil
 }
 
-func (g *userGateway) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
+func (g *UserGateway) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
 	resp, err := g.client.GetUserByUsername(ctx, &userv1.GetUserByUsernameRequest{
 		Username: username,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("userGateway.GetByUsername: %w", err)
+		return nil, fmt.Errorf("UserGateway.GetByUsername: %w", err)
 	}
 
 	return mapper.UserFromPb(resp.User), nil
 }
 
-func (g *userGateway) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+func (g *UserGateway) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	resp, err := g.client.GetUserByEmail(ctx, &userv1.GetUserByEmailRequest{
 		Email: email,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("userGateway.GetByEmail: %w", err)
+		return nil, fmt.Errorf("UserGateway.GetByEmail: %w", err)
 	}
 
 	return mapper.UserFromPb(resp.User), nil

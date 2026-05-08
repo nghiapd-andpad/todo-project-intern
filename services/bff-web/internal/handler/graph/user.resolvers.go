@@ -9,42 +9,50 @@ import (
 	"context"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/input"
+	authinput "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/input"
 )
 
 // Register is the resolver for the register field.
-func (r *mutationResolver) Register(ctx context.Context, username string, password string, email string) (*entity.User, error) {
-	return r.authUsecase.Register(ctx, input.RegisterInput{
-		Username: username,
-		Password: password,
-		Email:    email,
+func (r *mutationResolver) Register(ctx context.Context, input RegisterInput) (*entity.User, error) {
+	if input.Username == "" || input.Password == "" || input.Email == "" {
+		return nil, entity.NewInvalidParameter("username, password and email are required")
+	}
+
+	return r.authRegisterer.Register(ctx, authinput.RegisterInput{
+		Username: input.Username,
+		Password: input.Password,
+		Email:    input.Email,
 	})
 }
 
 // Login is the resolver for the login field.
-func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*AuthPayload, error) {
-	token, user, err := r.loginUsecase.Login(ctx, input.LoginInput{
-		Username: username,
-		Password: password,
+func (r *mutationResolver) Login(ctx context.Context, input LoginInput) (*AuthPayload, error) {
+	if input.Username == "" || input.Password == "" {
+		return nil, entity.NewInvalidParameter("username and password are required")
+	}
+
+	loginOutput, err := r.authLoginer.Login(ctx, authinput.LoginInput{
+		Username: input.Username,
+		Password: input.Password,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &AuthPayload{Token: token, User: user}, nil
+	return &AuthPayload{Token: loginOutput.AccessToken, User: loginOutput.User}, nil
 }
 
 // UserByID is the resolver for the userById field.
-func (r *queryResolver) UserByID(ctx context.Context, id string) (*entity.User, error) {
-	return r.userGetter.GetByID(ctx, id)
+func (r *queryResolver) UserByID(ctx context.Context, input GetUserInput) (*entity.User, error) {
+	return r.userGetter.GetByID(ctx, input.ID)
 }
 
 // UserByUsername is the resolver for the userByUsername field.
-func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*entity.User, error) {
-	return r.userGetter.GetByUsername(ctx, username)
+func (r *queryResolver) UserByUsername(ctx context.Context, input GetUserByUsernameInput) (*entity.User, error) {
+	return r.userGetter.GetByUsername(ctx, input.Username)
 }
 
 // UserByEmail is the resolver for the userByEmail field.
-func (r *queryResolver) UserByEmail(ctx context.Context, email string) (*entity.User, error) {
-	return r.userGetter.GetByEmail(ctx, email)
+func (r *queryResolver) UserByEmail(ctx context.Context, input GetUserByEmailInput) (*entity.User, error) {
+	return r.userGetter.GetByEmail(ctx, input.Email)
 }

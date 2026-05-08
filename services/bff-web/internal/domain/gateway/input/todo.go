@@ -1,16 +1,22 @@
-// Package input defines the input structures for the use cases related to todo lists and todos, encapsulating the data required for creating and updating todo lists and todos.
+// Package input defines the input structures for the gateway operations.
 package input
 
 import "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 
 type CreateTodoListInput struct {
-	// Format: users/{user_id}
+	// Parent is the resource name of the parent, in the format "users/{user_id}".
 	Parent      string
 	DisplayName string
 }
 
+type UpdateTodoListInput struct {
+	// Name is the resource name of the todo list, in the format "users/{user_id}/todo-lists/{list_id}".
+	Name        string
+	DisplayName *string
+}
+
 type CreateTodoInput struct {
-	// Format: users/{user_id}/todo-lists/{todo_list_id}
+	// Parent is the resource name of the parent, in the format "users/{user_id}/todo-lists/{list_id}".
 	Parent      string
 	Title       string
 	Description *string
@@ -20,7 +26,7 @@ type CreateTodoInput struct {
 }
 
 type UpdateTodoInput struct {
-	// Format: users/{user_id}/todo-lists/{todo_list_id}/todos/{todo_id}
+	// Name is the resource name of the todo, in the format "users/{user_id}/todo-lists/{list_id}/todos/{todo_id}".
 	Name        string
 	Title       *string
 	Description *string
@@ -28,11 +34,6 @@ type UpdateTodoInput struct {
 	Priority    *entity.Priority
 	DueDate     *string
 	AssigneeID  *string
-}
-
-type UpdateTodoListInput struct {
-	Name        string
-	DisplayName *string
 }
 
 type ListTodoListsOptions struct {

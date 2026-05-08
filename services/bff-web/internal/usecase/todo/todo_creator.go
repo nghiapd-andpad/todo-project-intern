@@ -7,44 +7,33 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
+	inputgateway "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo/input"
 )
 
-type TodoCreator interface {
-	CreateTodoList(ctx context.Context, input input.CreateTodoListInput) (*entity.TodoList, error)
-	CreateTodo(ctx context.Context, parent string, input input.CreateTodoInput) (*entity.Todo, error)
-}
-
-type todoCreator struct {
+type TodoCreator struct {
 	todoGateway gateway.TodoGateway
 }
 
-func NewTodoCreator(todoGateway gateway.TodoGateway) TodoCreator {
-	return &todoCreator{todoGateway: todoGateway}
+func NewTodoCreator(todoGateway gateway.TodoGateway) *TodoCreator {
+	return &TodoCreator{todoGateway: todoGateway}
 }
 
-func (u *todoCreator) CreateTodoList(ctx context.Context, input input.CreateTodoListInput) (*entity.TodoList, error) {
-	if input.DisplayName == "" {
-		return nil, entity.NewInvalidParameter("display_name is required")
-	}
-
-	result, err := u.todoGateway.CreateTodoList(ctx, gateway.CreateTodoListInput{
+func (u *TodoCreator) CreateTodoList(ctx context.Context, input input.CreateTodoListInput) (*entity.TodoList, error) {
+	result, err := u.todoGateway.CreateTodoList(ctx, inputgateway.CreateTodoListInput{
 		Parent:      input.Parent,
 		DisplayName: input.DisplayName,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("todoCreator.CreateTodoList: %w", err)
+		return nil, fmt.Errorf("TodoCreator.CreateTodoList: %w", err)
 	}
 
 	return result, nil
 }
 
-func (u *todoCreator) CreateTodo(ctx context.Context, parent string, input input.CreateTodoInput) (*entity.Todo, error) {
-	if input.Title == "" {
-		return nil, entity.NewInvalidParameter("title is required")
-	}
-
-	result, err := u.todoGateway.CreateTodo(ctx, parent, gateway.CreateTodoInput{
+func (u *TodoCreator) CreateTodo(ctx context.Context, input input.CreateTodoInput) (*entity.Todo, error) {
+	result, err := u.todoGateway.CreateTodo(ctx, inputgateway.CreateTodoInput{
+		Parent:      input.Parent,
 		Title:       input.Title,
 		Description: input.Description,
 		Priority:    input.Priority,
@@ -52,7 +41,7 @@ func (u *todoCreator) CreateTodo(ctx context.Context, parent string, input input
 		AssigneeID:  input.AssigneeID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("todoCreator.CreateTodo: %w", err)
+		return nil, fmt.Errorf("TodoCreator.CreateTodo: %w", err)
 	}
 
 	return result, nil

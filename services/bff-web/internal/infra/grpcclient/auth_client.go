@@ -1,4 +1,4 @@
-package grpc_client
+package grpcclient
 
 import (
 	"context"
@@ -12,14 +12,18 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpc_client/mapper"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/output"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpcclient/mapper"
 )
 
-type authGateway struct {
+type AuthGateway struct {
 	client userv1.UserServiceClient
 }
 
-func NewAuthGateway(cfg *config.Config) (gateway.AuthGateway, func(), error) {
+var _ gateway.AuthGateway = (*AuthGateway)(nil)
+
+func NewAuthGateway(cfg *config.Config) (*AuthGateway, func(), error) {
 	conn, err := grpc.Dial(
 		cfg.UserServiceAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -29,10 +33,10 @@ func NewAuthGateway(cfg *config.Config) (gateway.AuthGateway, func(), error) {
 		return nil, nil, fmt.Errorf("dial user service: %w", err)
 	}
 	client := userv1.NewUserServiceClient(conn)
-	return &authGateway{client: client}, func() { conn.Close() }, nil
+	return &AuthGateway{client: client}, func() { conn.Close() }, nil
 }
 
-func (g *authGateway) Register(ctx context.Context, input gateway.RegisterInput) (*entity.User, error) {
+func (g *AuthGateway) Register(ctx context.Context, input input.RegisterInput) (*entity.User, error) {
 	resp, err := g.client.Register(ctx, &userv1.RegisterRequest{
 		Username: input.Username,
 		Password: input.Password,
@@ -41,16 +45,21 @@ func (g *authGateway) Register(ctx context.Context, input gateway.RegisterInput)
 	if err != nil {
 		return nil, err
 	}
+
 	return mapper.UserFromPb(resp.User), nil
 }
 
-func (g *authGateway) Login(ctx context.Context, input gateway.LoginInput) (string, *entity.User, error) {
+func (g *AuthGateway) Login(ctx context.Context, input input.LoginInput) (*output.LoginOutput, error) {
 	resp, err := g.client.Login(ctx, &userv1.LoginRequest{
 		Username: input.Username,
 		Password: input.Password,
 	})
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
-	return resp.AccessToken, mapper.UserFromPb(resp.User), nil
+
+	return &output.LoginOutput{
+		AccessToken: resp.AccessToken,
+		User:        mapper.UserFromPb(resp.User),
+	}, nil
 }

@@ -23,21 +23,8 @@ func ErrorPresenter(ctx context.Context, err error) *gqlerror.Error {
 		}
 	}
 
-	// gRPC status error
-	if st, ok := status.FromError(err); ok && st.Code() != codes.OK {
-		code := grpcCodeToExtension(st.Code())
-		return &gqlerror.Error{
-			Message: st.Message(),
-			Extensions: map[string]interface{}{
-				"code": code,
-			},
-		}
-	}
-
-	// Unwrap gRPC error
-	unwrapped := err
-	for unwrapped != nil {
-		if st, ok := status.FromError(unwrapped); ok && st.Code() != codes.OK {
+	for err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() != codes.OK {
 			return &gqlerror.Error{
 				Message: st.Message(),
 				Extensions: map[string]interface{}{
@@ -45,7 +32,7 @@ func ErrorPresenter(ctx context.Context, err error) *gqlerror.Error {
 				},
 			}
 		}
-		unwrapped = errors.Unwrap(unwrapped)
+		err = errors.Unwrap(err)
 	}
 
 	return &gqlerror.Error{

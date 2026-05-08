@@ -17,10 +17,8 @@ func UnaryClientInterceptor() grpc.UnaryClientInterceptor {
 		invoker grpc.UnaryInvoker,
 		opts ...grpc.CallOption,
 	) error {
-		// get userID and roles from context
 		userID, ok := GetUserID(ctx)
 		if ok && userID != "" {
-			// get metadata
 			md, ok := metadata.FromOutgoingContext(ctx)
 			if !ok {
 				md = metadata.New(make(map[string]string))
@@ -28,14 +26,14 @@ func UnaryClientInterceptor() grpc.UnaryClientInterceptor {
 				md = md.Copy()
 			}
 
-			// inject userID and roles into metadata
+			// Inject userID and roles into metadata.
 			md.Set("x-user-id", userID)
 
 			if roles, ok := GetRoles(ctx); ok && len(roles) > 0 {
 				md.Set("x-user-roles", strings.Join(roles, ","))
 			}
 
-			// 4. Inject new metadata into context
+			// Inject new metadata into context.
 			ctx = metadata.NewOutgoingContext(ctx, md)
 		}
 

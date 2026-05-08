@@ -12,6 +12,7 @@ type AuthPayload struct {
 }
 
 type CreateTodoInput struct {
+	TodoListID  string           `json:"todoListID"`
 	Title       string           `json:"title"`
 	Description *string          `json:"description,omitempty"`
 	Priority    *entity.Priority `json:"priority,omitempty"`
@@ -23,6 +24,36 @@ type CreateTodoListInput struct {
 	DisplayName string `json:"displayName"`
 }
 
+type DeleteTodoInput struct {
+	TodoListID string `json:"todoListID"`
+	TodoID     string `json:"todoID"`
+}
+
+type DeleteTodoListInput struct {
+	TodoListID string `json:"todoListID"`
+}
+
+type GetTodoInput struct {
+	TodoListID string `json:"todoListID"`
+	TodoID     string `json:"todoID"`
+}
+
+type GetTodoListInput struct {
+	TodoListID string `json:"todoListID"`
+}
+
+type GetUserByEmailInput struct {
+	Email string `json:"email"`
+}
+
+type GetUserByUsernameInput struct {
+	Username string `json:"username"`
+}
+
+type GetUserInput struct {
+	ID string `json:"id"`
+}
+
 type ListTodoListsInput struct {
 	PageSize   *int    `json:"pageSize,omitempty"`
 	Offset     *int    `json:"offset,omitempty"`
@@ -30,6 +61,7 @@ type ListTodoListsInput struct {
 }
 
 type ListTodosInput struct {
+	TodoListID  string             `json:"todoListID"`
 	PageSize    *int               `json:"pageSize,omitempty"`
 	Offset      *int               `json:"offset,omitempty"`
 	Status      *entity.TodoStatus `json:"status,omitempty"`
@@ -37,10 +69,21 @@ type ListTodosInput struct {
 	TitleSearch *string            `json:"titleSearch,omitempty"`
 }
 
+type LoginInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type Mutation struct {
 }
 
 type Query struct {
+}
+
+type RegisterInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
 }
 
 type TodoListPage struct {
@@ -54,6 +97,8 @@ type TodoPage struct {
 }
 
 type UpdateTodoInput struct {
+	TodoListID  string             `json:"todoListID"`
+	TodoID      string             `json:"todoID"`
 	Title       *string            `json:"title,omitempty"`
 	Description *string            `json:"description,omitempty"`
 	Status      *entity.TodoStatus `json:"status,omitempty"`
@@ -63,5 +108,6 @@ type UpdateTodoInput struct {
 }
 
 type UpdateTodoListInput struct {
+	TodoListID  string  `json:"todoListID"`
 	DisplayName *string `json:"displayName,omitempty"`
 }

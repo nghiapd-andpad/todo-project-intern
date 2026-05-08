@@ -5,35 +5,33 @@ import (
 	"fmt"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo/mapper"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo/output"
 )
 
-type TodoLister interface {
-	ListTodoLists(ctx context.Context, parent string, opts gateway.ListTodoListsOptions) (*gateway.TodoListPage, error)
-	ListTodos(ctx context.Context, parent string, opts gateway.ListTodosOptions) (*gateway.TodoPage, error)
-}
-
-type todoLister struct {
+type TodoLister struct {
 	todoGateway gateway.TodoGateway
 }
 
-func NewTodoLister(todoGateway gateway.TodoGateway) TodoLister {
-	return &todoLister{todoGateway: todoGateway}
+func NewTodoLister(todoGateway gateway.TodoGateway) *TodoLister {
+	return &TodoLister{todoGateway: todoGateway}
 }
 
-func (u *todoLister) ListTodoLists(ctx context.Context, parent string, opts gateway.ListTodoListsOptions) (*gateway.TodoListPage, error) {
-	result, err := u.todoGateway.ListTodoLists(ctx, parent, opts)
+func (u *TodoLister) ListTodoLists(ctx context.Context, parent string, opts input.ListTodoListsOptions) (*output.TodoListPage, error) {
+	result, err := u.todoGateway.ListTodoLists(ctx, parent, mapper.ListTodoListsOptionsToGateway(opts))
 	if err != nil {
-		return nil, fmt.Errorf("todoLister.ListTodoLists: %w", err)
+		return nil, fmt.Errorf("TodoLister.ListTodoLists: %w", err)
 	}
 
-	return result, nil
+	return mapper.TodoListPageToUsecase(result), nil
 }
 
-func (u *todoLister) ListTodos(ctx context.Context, parent string, opts gateway.ListTodosOptions) (*gateway.TodoPage, error) {
-	result, err := u.todoGateway.ListTodos(ctx, parent, opts)
+func (u *TodoLister) ListTodos(ctx context.Context, parent string, opts input.ListTodosOptions) (*output.TodoPage, error) {
+	result, err := u.todoGateway.ListTodos(ctx, parent, mapper.ListTodosOptionsToGateway(opts))
 	if err != nil {
-		return nil, fmt.Errorf("todoLister.ListTodos: %w", err)
+		return nil, fmt.Errorf("TodoLister.ListTodos: %w", err)
 	}
 
-	return result, nil
+	return mapper.TodoPageToUsecase(result), nil
 }

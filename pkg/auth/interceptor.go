@@ -21,7 +21,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			return handler(ctx, req)
 		}
 
-		// get user ID and roles from metadata
+		// Get user ID and roles from metadata.
 		userIDs := md.Get("x-user-id")
 		var userID string
 		if len(userIDs) > 0 {
@@ -34,7 +34,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			roles = strings.Split(rolesHeader[0], ",")
 		}
 
-		// Inject user ID and roles into context
+		// Inject user ID and roles into context.
 		newCtx := SetUserContext(ctx, userID, roles)
 		return handler(newCtx, req)
 	}
