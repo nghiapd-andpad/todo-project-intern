@@ -53,6 +53,7 @@ func TestTodoGetter_Get(t *testing.T) {
 			},
 			input:    &input.TodoGetter{ID: entity.TodoID(1)},
 			expected: &output.TodoGetter{Todo: todo},
+			wantErr:  false,
 		},
 
 		"error: todo not found — infra returns nil,nil": {

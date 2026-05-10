@@ -56,6 +56,7 @@ func TestTodoLister_List(t *testing.T) {
 				},
 			},
 			expected: &output.TodoLister{Todos: todoList, Total: 2},
+			wantErr:  false,
 		},
 
 		"success: empty list": {
@@ -66,6 +67,7 @@ func TestTodoLister_List(t *testing.T) {
 			},
 			input:    &input.TodoLister{Opts: gateway.ListTodosOptions{}},
 			expected: &output.TodoLister{Todos: []*entity.Todo{}, Total: 0},
+			wantErr:  false,
 		},
 
 		"success: list with status filter": {
@@ -88,6 +90,7 @@ func TestTodoLister_List(t *testing.T) {
 				},
 			},
 			expected: &output.TodoLister{Todos: todoList[:1], Total: 1},
+			wantErr:  false,
 		},
 
 		"error: db error": {

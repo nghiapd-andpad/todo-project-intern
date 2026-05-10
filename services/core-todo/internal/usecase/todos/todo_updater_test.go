@@ -80,6 +80,7 @@ func TestTodoUpdater_Update(t *testing.T) {
 				Status:   entity.TodoStatusPending,
 				Priority: entity.PriorityLow,
 			}},
+			wantErr: false,
 		},
 
 		"success: update status only": {
@@ -113,6 +114,7 @@ func TestTodoUpdater_Update(t *testing.T) {
 				Status:   entity.TodoStatusInProgress,
 				Priority: entity.PriorityLow,
 			}},
+			wantErr: false,
 		},
 
 		"error: invalid due_date format": {

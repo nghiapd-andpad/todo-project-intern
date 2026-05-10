@@ -45,7 +45,8 @@ func TestTodoDeleter_Delete(t *testing.T) {
 						Return(nil),
 				)
 			},
-			input: &input.TodoDeleter{ID: todoID},
+			input:   &input.TodoDeleter{ID: todoID},
+			wantErr: false,
 		},
 
 		"error: todo not found — delete not called": {

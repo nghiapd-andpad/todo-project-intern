@@ -37,7 +37,8 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 					Delete(gomock.Any(), todoListID).
 					Return(nil)
 			},
-			input: &input.TodoListDeleter{ID: todoListID},
+			input:   &input.TodoListDeleter{ID: todoListID},
+			wantErr: false,
 		},
 		"error: db error": {
 			prepare: func(f *fields) {

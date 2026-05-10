@@ -57,6 +57,7 @@ func TestTodoListLister_List(t *testing.T) {
 				},
 			},
 			expected: &output.TodoListLister{TodoLists: todoLists, Total: 2},
+			wantErr:  false,
 		},
 		"success: empty": {
 			prepare: func(f *fields) {
@@ -66,6 +67,7 @@ func TestTodoListLister_List(t *testing.T) {
 			},
 			input:    &input.TodoListLister{Opts: gateway.ListTodoListsOptions{}},
 			expected: &output.TodoListLister{TodoLists: []*entity.TodoList{}, Total: 0},
+			wantErr:  false,
 		},
 		"success: with name search": {
 			prepare: func(f *fields) {
@@ -85,6 +87,7 @@ func TestTodoListLister_List(t *testing.T) {
 				},
 			},
 			expected: &output.TodoListLister{TodoLists: todoLists[:1], Total: 1},
+			wantErr:  false,
 		},
 		"error: db error": {
 			prepare: func(f *fields) {

@@ -71,6 +71,7 @@ func TestTodoCreator_Create(t *testing.T) {
 					}).
 					Return(createdEntity, nil)
 			},
+			wantErr:  false,
 			input:    validInput,
 			expected: &output.TodoCreator{Todo: createdEntity},
 		},
@@ -96,6 +97,7 @@ func TestTodoCreator_Create(t *testing.T) {
 				CreatorID:  creatorID,
 				DueDate:    &validDue,
 			},
+			wantErr:  false,
 			expected: &output.TodoCreator{Todo: createdEntity},
 		},
 

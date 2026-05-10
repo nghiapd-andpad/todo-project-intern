@@ -28,7 +28,6 @@ func TestTodoListUpdater_Update(t *testing.T) {
 		newName    = "New Name"
 	)
 
-	// Factory — tránh shared mutable state
 	freshList := func() *entity.TodoList {
 		return &entity.TodoList{
 			ID:        todoListID,
@@ -60,7 +59,7 @@ func TestTodoListUpdater_Update(t *testing.T) {
 					f.mockCommands.EXPECT().
 						Update(gomock.Any(), &entity.TodoList{
 							ID:        todoListID,
-							Name:      "New Name", // đã được update
+							Name:      "New Name",
 							OwnerID:   ownerID,
 							CreatedAt: now,
 							UpdatedAt: now,
@@ -82,6 +81,7 @@ func TestTodoListUpdater_Update(t *testing.T) {
 				CreatedAt: now,
 				UpdatedAt: now,
 			}},
+			wantErr: false,
 		},
 		"success: nil name — name unchanged": {
 			prepare: func(f *fields) {
@@ -90,12 +90,13 @@ func TestTodoListUpdater_Update(t *testing.T) {
 						Get(gomock.Any(), todoListID).
 						Return(freshList(), nil),
 					f.mockCommands.EXPECT().
-						Update(gomock.Any(), freshList()). // Name vẫn là "Old Name"
+						Update(gomock.Any(), freshList()).
 						Return(freshList(), nil),
 				)
 			},
 			input:    &input.TodoListUpdater{ID: todoListID, Name: nil},
 			expected: &output.TodoListUpdater{TodoList: freshList()},
+			wantErr:  false,
 		},
 		"error: not found": {
 			prepare: func(f *fields) {

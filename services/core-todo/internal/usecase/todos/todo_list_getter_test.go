@@ -52,6 +52,7 @@ func TestTodoListGetter_Get(t *testing.T) {
 			},
 			input:    &input.TodoListGetter{ID: todoListID},
 			expected: &output.TodoListGetter{TodoList: todoList},
+			wantErr:  false,
 		},
 
 		"error: not found — infra returns nil,nil": {

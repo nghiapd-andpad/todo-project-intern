@@ -60,6 +60,7 @@ func TestTodoListCreator_Create(t *testing.T) {
 			},
 			input:    validInput,
 			expected: &output.TodoListCreator{TodoList: createdEntity},
+			wantErr:  false,
 		},
 
 		"success: create with empty name": {
@@ -78,6 +79,7 @@ func TestTodoListCreator_Create(t *testing.T) {
 			expected: &output.TodoListCreator{
 				TodoList: &entity.TodoList{ID: 2, Name: "", OwnerID: ownerID},
 			},
+			wantErr: false,
 		},
 
 		"error: db error": {
