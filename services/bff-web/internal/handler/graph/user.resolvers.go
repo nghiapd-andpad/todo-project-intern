@@ -18,7 +18,7 @@ func (r *mutationResolver) Register(ctx context.Context, input RegisterInput) (*
 		return nil, entity.NewInvalidParameter("username, password and email are required")
 	}
 
-	return r.authRegisterer.Register(ctx, authinput.RegisterInput{
+	return r.authRegisterer.Register(ctx, &authinput.RegisterInput{
 		Username: input.Username,
 		Password: input.Password,
 		Email:    input.Email,
@@ -31,7 +31,7 @@ func (r *mutationResolver) Login(ctx context.Context, input LoginInput) (*AuthPa
 		return nil, entity.NewInvalidParameter("username and password are required")
 	}
 
-	loginOutput, err := r.authLoginer.Login(ctx, authinput.LoginInput{
+	loginOutput, err := r.authLoginer.Login(ctx, &authinput.LoginInput{
 		Username: input.Username,
 		Password: input.Password,
 	})

@@ -18,7 +18,7 @@ func NewTodoLister(todoGateway gateway.TodoGateway) *TodoLister {
 	return &TodoLister{todoGateway: todoGateway}
 }
 
-func (u *TodoLister) ListTodoLists(ctx context.Context, parent string, opts input.ListTodoListsOptions) (*output.TodoListPage, error) {
+func (u *TodoLister) ListTodoLists(ctx context.Context, parent string, opts *input.ListTodoListsOptions) (*output.TodoListPage, error) {
 	result, err := u.todoGateway.ListTodoLists(ctx, parent, mapper.ListTodoListsOptionsToGateway(opts))
 	if err != nil {
 		return nil, fmt.Errorf("TodoLister.ListTodoLists: %w", err)
@@ -27,7 +27,7 @@ func (u *TodoLister) ListTodoLists(ctx context.Context, parent string, opts inpu
 	return mapper.TodoListPageToUsecase(result), nil
 }
 
-func (u *TodoLister) ListTodos(ctx context.Context, parent string, opts input.ListTodosOptions) (*output.TodoPage, error) {
+func (u *TodoLister) ListTodos(ctx context.Context, parent string, opts *input.ListTodosOptions) (*output.TodoPage, error) {
 	result, err := u.todoGateway.ListTodos(ctx, parent, mapper.ListTodosOptionsToGateway(opts))
 	if err != nil {
 		return nil, fmt.Errorf("TodoLister.ListTodos: %w", err)

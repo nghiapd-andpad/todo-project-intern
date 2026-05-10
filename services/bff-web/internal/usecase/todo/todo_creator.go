@@ -19,7 +19,7 @@ func NewTodoCreator(todoGateway gateway.TodoGateway) *TodoCreator {
 	return &TodoCreator{todoGateway: todoGateway}
 }
 
-func (u *TodoCreator) CreateTodoList(ctx context.Context, input input.CreateTodoListInput) (*entity.TodoList, error) {
+func (u *TodoCreator) CreateTodoList(ctx context.Context, input *input.CreateTodoListInput) (*entity.TodoList, error) {
 	result, err := u.todoGateway.CreateTodoList(ctx, inputgateway.CreateTodoListInput{
 		Parent:      input.Parent,
 		DisplayName: input.DisplayName,
@@ -31,7 +31,7 @@ func (u *TodoCreator) CreateTodoList(ctx context.Context, input input.CreateTodo
 	return result, nil
 }
 
-func (u *TodoCreator) CreateTodo(ctx context.Context, input input.CreateTodoInput) (*entity.Todo, error) {
+func (u *TodoCreator) CreateTodo(ctx context.Context, input *input.CreateTodoInput) (*entity.Todo, error) {
 	result, err := u.todoGateway.CreateTodo(ctx, inputgateway.CreateTodoInput{
 		Parent:      input.Parent,
 		Title:       input.Title,

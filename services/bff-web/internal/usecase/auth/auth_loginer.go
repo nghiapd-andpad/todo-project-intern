@@ -19,7 +19,7 @@ func NewLoginer(authGateway gateway.AuthGateway) *Loginer {
 	return &Loginer{authGateway: authGateway}
 }
 
-func (u *Loginer) Login(ctx context.Context, input input.LoginInput) (*output.LoginOutput, error) {
+func (u *Loginer) Login(ctx context.Context, input *input.LoginInput) (*output.LoginOutput, error) {
 	data, err := u.authGateway.Login(ctx, inputgateway.LoginInput{
 		Username: input.Username,
 		Password: input.Password,

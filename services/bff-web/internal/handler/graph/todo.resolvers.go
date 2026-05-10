@@ -30,7 +30,7 @@ func (r *mutationResolver) CreateTodoList(ctx context.Context, input CreateTodoL
 
 	parent := fmt.Sprintf("users/%s", userID)
 
-	return r.todoCreator.CreateTodoList(ctx, inputusecase.CreateTodoListInput{
+	return r.todoCreator.CreateTodoList(ctx, &inputusecase.CreateTodoListInput{
 		Parent:      parent,
 		DisplayName: input.DisplayName,
 	})
@@ -45,7 +45,7 @@ func (r *mutationResolver) UpdateTodoList(ctx context.Context, input UpdateTodoL
 
 	name := fmt.Sprintf("users/%s/todo-lists/%s", userID, input.TodoListID)
 
-	return r.todoUpdater.UpdateTodoList(ctx, inputusecase.UpdateTodoListInput{
+	return r.todoUpdater.UpdateTodoList(ctx, &inputusecase.UpdateTodoListInput{
 		Name:        name,
 		DisplayName: input.DisplayName,
 	})
@@ -78,7 +78,7 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input CreateTodoInput
 		return nil, fmt.Errorf("user ID not found in context")
 	}
 
-	in := inputusecase.CreateTodoInput{
+	in := &inputusecase.CreateTodoInput{
 		Parent:      fmt.Sprintf("users/%s/todo-lists/%s", userID, input.TodoListID),
 		Title:       input.Title,
 		Description: input.Description,
@@ -102,7 +102,7 @@ func (r *mutationResolver) UpdateTodo(ctx context.Context, input UpdateTodoInput
 		return nil, fmt.Errorf("user ID not found in context")
 	}
 
-	in := inputusecase.UpdateTodoInput{
+	in := &inputusecase.UpdateTodoInput{
 		Name:        fmt.Sprintf("users/%s/todo-lists/%s/todos/%s", userID, input.TodoListID, input.TodoID),
 		Title:       input.Title,
 		Description: input.Description,
@@ -158,7 +158,7 @@ func (r *queryResolver) TodoLists(ctx context.Context, input ListTodoListsInput)
 
 	parent := fmt.Sprintf("users/%s", userID)
 
-	opts := inputusecase.ListTodoListsOptions{Limit: 20}
+	opts := &inputusecase.ListTodoListsOptions{Limit: 20}
 	if input.PageSize != nil {
 		opts.Limit = *input.PageSize
 	}
@@ -196,7 +196,7 @@ func (r *queryResolver) Todos(ctx context.Context, input ListTodosInput) (*TodoP
 
 	parent := fmt.Sprintf("users/%s/todo-lists/%s", userID, input.TodoListID)
 
-	opts := inputusecase.ListTodosOptions{Limit: 20}
+	opts := &inputusecase.ListTodosOptions{Limit: 20}
 	if input.PageSize != nil {
 		opts.Limit = *input.PageSize
 	}

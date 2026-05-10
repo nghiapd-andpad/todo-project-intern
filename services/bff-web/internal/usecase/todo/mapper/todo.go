@@ -8,7 +8,7 @@ import (
 	outputusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo/output"
 )
 
-func ListTodoListsOptionsToGateway(opts intputusecase.ListTodoListsOptions) inputgateway.ListTodoListsOptions {
+func ListTodoListsOptionsToGateway(opts *intputusecase.ListTodoListsOptions) inputgateway.ListTodoListsOptions {
 	return inputgateway.ListTodoListsOptions{
 		NameSearch: opts.NameSearch,
 		Offset:     opts.Offset,
@@ -16,7 +16,7 @@ func ListTodoListsOptionsToGateway(opts intputusecase.ListTodoListsOptions) inpu
 	}
 }
 
-func ListTodosOptionsToGateway(opts intputusecase.ListTodosOptions) inputgateway.ListTodosOptions {
+func ListTodosOptionsToGateway(opts *intputusecase.ListTodosOptions) inputgateway.ListTodosOptions {
 	return inputgateway.ListTodosOptions{
 		Status:      opts.Status,
 		Priority:    opts.Priority,

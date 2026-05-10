@@ -11,8 +11,8 @@ import (
 )
 
 type TodoCreatorUsecase interface {
-	CreateTodoList(ctx context.Context, in todoinput.CreateTodoListInput) (*entity.TodoList, error)
-	CreateTodo(ctx context.Context, in todoinput.CreateTodoInput) (*entity.Todo, error)
+	CreateTodoList(ctx context.Context, in *todoinput.CreateTodoListInput) (*entity.TodoList, error)
+	CreateTodo(ctx context.Context, in *todoinput.CreateTodoInput) (*entity.Todo, error)
 }
 
 type TodoGetterUsecase interface {
@@ -21,13 +21,13 @@ type TodoGetterUsecase interface {
 }
 
 type TodoListerUsecase interface {
-	ListTodoLists(ctx context.Context, parent string, opts todoinput.ListTodoListsOptions) (*todooutput.TodoListPage, error)
-	ListTodos(ctx context.Context, parent string, opts todoinput.ListTodosOptions) (*todooutput.TodoPage, error)
+	ListTodoLists(ctx context.Context, parent string, opts *todoinput.ListTodoListsOptions) (*todooutput.TodoListPage, error)
+	ListTodos(ctx context.Context, parent string, opts *todoinput.ListTodosOptions) (*todooutput.TodoPage, error)
 }
 
 type TodoUpdaterUsecase interface {
-	UpdateTodoList(ctx context.Context, in todoinput.UpdateTodoListInput) (*entity.TodoList, error)
-	UpdateTodo(ctx context.Context, in todoinput.UpdateTodoInput) (*entity.Todo, error)
+	UpdateTodoList(ctx context.Context, in *todoinput.UpdateTodoListInput) (*entity.TodoList, error)
+	UpdateTodo(ctx context.Context, in *todoinput.UpdateTodoInput) (*entity.Todo, error)
 }
 
 type TodoDeleterUsecase interface {
@@ -36,11 +36,11 @@ type TodoDeleterUsecase interface {
 }
 
 type AuthRegistererUsecase interface {
-	Register(ctx context.Context, in authinput.RegisterInput) (*entity.User, error)
+	Register(ctx context.Context, in *authinput.RegisterInput) (*entity.User, error)
 }
 
 type AuthLoginerUsecase interface {
-	Login(ctx context.Context, in authinput.LoginInput) (*authoutput.LoginOutput, error)
+	Login(ctx context.Context, in *authinput.LoginInput) (*authoutput.LoginOutput, error)
 }
 
 type UserGetterUsecase interface {

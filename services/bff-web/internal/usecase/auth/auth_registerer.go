@@ -18,7 +18,7 @@ func NewRegisterer(authGateway gateway.AuthGateway) *Registerer {
 	return &Registerer{authGateway: authGateway}
 }
 
-func (u *Registerer) Register(ctx context.Context, input input.RegisterInput) (*entity.User, error) {
+func (u *Registerer) Register(ctx context.Context, input *input.RegisterInput) (*entity.User, error) {
 	user, err := u.authGateway.Register(ctx, inputgateway.RegisterInput{
 		Username: input.Username,
 		Password: input.Password,
