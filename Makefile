@@ -31,10 +31,13 @@ run-bff-web:
 mock-core-todo:
 	cd services/core-todo && go generate ./internal/domain/gateway/...
 
-test-unit-core-todo:
+test-usecase-core-todo:
 	cd services/core-todo && go test ./internal/usecase/... -v -count=1 -race
 
-test-unit-core-user:
+test-handler-core-todo:
+	cd services/core-todo && go test ./internal/handler/... -v -count=1 -race
+
+test-usecase-core-user:
 	cd services/core-user && go test ./internal/usecase/... -v -count=1 -race
 
 test-unit-core-todo-coverage:

@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
@@ -16,13 +17,13 @@ import (
 )
 
 func (h *TodoHandler) ListTodoLists(ctx context.Context, req *todov1.ListTodoListsRequest) (*todov1.ListTodoListsResponse, error) {
-	// Parse "users/{user_id}"
-	var userID int64
-	if _, err := fmt.Sscanf(req.GetParent(), "users/%d", &userID); err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid parent format: %s", req.GetParent()))
+	parsed, err := resourcename.ParseUserResourceName(req.GetParent())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid parent: %v", err))
 	}
 
-	ownerID := entity.UserID(userID)
+	ownerID := entity.UserID(parsed)
+
 	opts := gateway.ListTodoListsOptions{
 		OwnerID: &ownerID,
 		Offset:  int(req.GetOffset()),
