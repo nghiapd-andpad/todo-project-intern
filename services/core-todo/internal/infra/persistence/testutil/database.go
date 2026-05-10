@@ -2,6 +2,8 @@
 package testutil
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
@@ -18,7 +20,14 @@ import (
 func NewTestDB(t *testing.T, cfg *config.Config) *gorm.DB {
 	t.Helper()
 
-	dbName := fmt.Sprintf("todo_test_%d", time.Now().UnixNano())
+	// create 4 random bytes
+	randomBytes := make([]byte, 4)
+	if _, err := rand.Read(randomBytes); err != nil {
+		t.Fatalf("failed to generate random string: %v", err)
+	}
+	randomSuffix := hex.EncodeToString(randomBytes)
+
+	dbName := fmt.Sprintf("todo_test_%d_%s", time.Now().UnixNano(), randomSuffix)
 
 	adminDSN := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True",
