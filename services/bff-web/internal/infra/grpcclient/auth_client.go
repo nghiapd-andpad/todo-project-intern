@@ -24,7 +24,7 @@ type AuthGateway struct {
 var _ gateway.AuthGateway = (*AuthGateway)(nil)
 
 func NewAuthGateway(cfg *config.Config) (*AuthGateway, func(), error) {
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		cfg.UserServiceAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor()),

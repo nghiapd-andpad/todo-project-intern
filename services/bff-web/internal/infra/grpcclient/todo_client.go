@@ -26,7 +26,7 @@ type TodoGateway struct {
 var _ gateway.TodoGateway = (*TodoGateway)(nil)
 
 func NewTodoGateway(cfg *config.Config) (*TodoGateway, func(), error) {
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		cfg.TodoServiceAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor()),

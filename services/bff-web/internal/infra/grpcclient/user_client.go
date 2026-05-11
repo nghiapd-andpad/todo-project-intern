@@ -22,7 +22,7 @@ type UserGateway struct {
 var _ gateway.UserGateway = (*UserGateway)(nil)
 
 func NewUserGateway(cfg *config.Config) (*UserGateway, func(), error) {
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		cfg.UserServiceAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(auth.UnaryClientInterceptor()),
