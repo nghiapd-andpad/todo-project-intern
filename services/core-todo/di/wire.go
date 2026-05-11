@@ -9,9 +9,10 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
-	todoHandler "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/service"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase"
 )
 
 func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
@@ -30,35 +31,35 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 		wire.Bind(new(gateway.TodoListQueriesGateway), new(*persistence.TodoListQueriesGateway)),
 
 		// USE CASE
-		todos.NewTodoCreator,
-		todos.NewTodoGetter,
-		todos.NewTodoLister,
-		todos.NewTodoUpdater,
-		todos.NewTodoDeleter,
+		service.NewTodoCreator,
+		service.NewTodoGetter,
+		service.NewTodoLister,
+		service.NewTodoUpdater,
+		service.NewTodoDeleter,
 
-		todos.NewTodoListCreator,
-		todos.NewTodoListGetter,
-		todos.NewTodoListLister,
-		todos.NewTodoListUpdater,
-		todos.NewTodoListDeleter,
+		service.NewTodoListCreator,
+		service.NewTodoListGetter,
+		service.NewTodoListLister,
+		service.NewTodoListUpdater,
+		service.NewTodoListDeleter,
 
-		wire.Bind(new(todoHandler.TodoCreatorUsecase), new(*todos.TodoCreator)),
-		wire.Bind(new(todoHandler.TodoGetterUsecase), new(*todos.TodoGetter)),
-		wire.Bind(new(todoHandler.TodoListerUsecase), new(*todos.TodoLister)),
-		wire.Bind(new(todoHandler.TodoUpdaterUsecase), new(*todos.TodoUpdater)),
-		wire.Bind(new(todoHandler.TodoDeleterUsecase), new(*todos.TodoDeleter)),
+		wire.Bind(new(usecase.TodoCreator), new(*service.TodoCreator)),
+		wire.Bind(new(usecase.TodoGetter), new(*service.TodoGetter)),
+		wire.Bind(new(usecase.TodoLister), new(*service.TodoLister)),
+		wire.Bind(new(usecase.TodoUpdater), new(*service.TodoUpdater)),
+		wire.Bind(new(usecase.TodoDeleter), new(*service.TodoDeleter)),
 
-		wire.Bind(new(todoHandler.TodoListCreatorUsecase), new(*todos.TodoListCreator)),
-		wire.Bind(new(todoHandler.TodoListGetterUsecase), new(*todos.TodoListGetter)),
-		wire.Bind(new(todoHandler.TodoListListerUsecase), new(*todos.TodoListLister)),
-		wire.Bind(new(todoHandler.TodoListUpdaterUsecase), new(*todos.TodoListUpdater)),
-		wire.Bind(new(todoHandler.TodoListDeleterUsecase), new(*todos.TodoListDeleter)),
+		wire.Bind(new(usecase.TodoListCreator), new(*service.TodoListCreator)),
+		wire.Bind(new(usecase.TodoListGetter), new(*service.TodoListGetter)),
+		wire.Bind(new(usecase.TodoListLister), new(*service.TodoListLister)),
+		wire.Bind(new(usecase.TodoListUpdater), new(*service.TodoListUpdater)),
+		wire.Bind(new(usecase.TodoListDeleter), new(*service.TodoListDeleter)),
 
 		// HANDLER
-		todoHandler.NewTodoHandler,
+		handler.NewTodoHandler,
 
 		// SERVER
-		todoHandler.NewGRPCServer,
+		handler.NewGRPCServer,
 	)
 	return nil, nil, nil
 }

@@ -8,9 +8,9 @@ package di
 
 import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/todo"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/service"
 	"google.golang.org/grpc"
 )
 
@@ -22,21 +22,21 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 		return nil, nil, err
 	}
 	todoCommandsGateway := persistence.NewTodoCommandsGateway(db)
-	todoCreator := todos.NewTodoCreator(todoCommandsGateway)
+	todoCreator := service.NewTodoCreator(todoCommandsGateway)
 	todoQueriesGateway := persistence.NewTodoQueriesGateway(db)
-	todoGetter := todos.NewTodoGetter(todoQueriesGateway)
-	todoLister := todos.NewTodoLister(todoQueriesGateway)
-	todoUpdater := todos.NewTodoUpdater(todoCommandsGateway, todoQueriesGateway)
-	todoDeleter := todos.NewTodoDeleter(todoCommandsGateway, todoQueriesGateway)
+	todoGetter := service.NewTodoGetter(todoQueriesGateway)
+	todoLister := service.NewTodoLister(todoQueriesGateway)
+	todoUpdater := service.NewTodoUpdater(todoCommandsGateway, todoQueriesGateway)
+	todoDeleter := service.NewTodoDeleter(todoCommandsGateway, todoQueriesGateway)
 	todoListCommandsGateway := persistence.NewTodoListCommandsGateway(db)
-	todoListCreator := todos.NewTodoListCreator(todoListCommandsGateway)
+	todoListCreator := service.NewTodoListCreator(todoListCommandsGateway)
 	todoListQueriesGateway := persistence.NewTodoListQueriesGateway(db)
-	todoListGetter := todos.NewTodoListGetter(todoListQueriesGateway)
-	todoListLister := todos.NewTodoListLister(todoListQueriesGateway)
-	todoListUpdater := todos.NewTodoListUpdater(todoListCommandsGateway, todoListQueriesGateway)
-	todoListDeleter := todos.NewTodoListDeleter(todoListCommandsGateway)
-	todoHandler := todo.NewTodoHandler(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter, todoListCreator, todoListGetter, todoListLister, todoListUpdater, todoListDeleter)
-	server, err := todo.NewGRPCServer(cfg, todoHandler)
+	todoListGetter := service.NewTodoListGetter(todoListQueriesGateway)
+	todoListLister := service.NewTodoListLister(todoListQueriesGateway)
+	todoListUpdater := service.NewTodoListUpdater(todoListCommandsGateway, todoListQueriesGateway)
+	todoListDeleter := service.NewTodoListDeleter(todoListCommandsGateway)
+	todoHandler := handler.NewTodoHandler(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter, todoListCreator, todoListGetter, todoListLister, todoListUpdater, todoListDeleter)
+	server, err := handler.NewGRPCServer(cfg, todoHandler)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
