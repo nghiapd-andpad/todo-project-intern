@@ -18,6 +18,10 @@ type Config struct {
 	DBName     string `envconfig:"DB_NAME" default:"todos"`
 	ServerPort string `envconfig:"SERVER_PORT" default:"50051"`
 	AppEnv     string `envconfig:"APP_ENV" default:"development"`
+
+	// Feature flags
+	TodoBlacklistEnabled bool     `envconfig:"TODO_BLACKLIST_ENABLED"`
+	TodoTitleBlacklist   []string `envconfig:"TODO_TITLE_BLACKLIST"`
 }
 
 func New() (*Config, error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/mock"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/service"
@@ -45,6 +46,15 @@ func TestTodoCreator_Create(t *testing.T) {
 			Priority:   entity.PriorityMedium,
 			CreatorID:  creatorID,
 		}
+
+		defaultCfg = &config.Config{
+			TodoBlacklistEnabled: false,
+		}
+
+		blacklistCfg = &config.Config{
+			TodoBlacklistEnabled: true,
+			TodoTitleBlacklist:   []string{"spam", "troll"},
+		}
 	)
 
 	type fields struct {
@@ -52,6 +62,7 @@ func TestTodoCreator_Create(t *testing.T) {
 	}
 
 	tests := map[string]struct {
+		cfg      *config.Config
 		prepare  func(f *fields)
 		input    *input.TodoCreator
 		expected *output.TodoCreator
@@ -60,6 +71,7 @@ func TestTodoCreator_Create(t *testing.T) {
 	}{
 		// Happy path — verify required fields
 		"success: create with required fields": {
+			cfg: defaultCfg,
 			prepare: func(f *fields) {
 				f.mockCommands.EXPECT().
 					Create(gomock.Any(), &entity.Todo{
@@ -78,6 +90,7 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		// Happy path — parse DueDate
 		"success: create with due_date": {
+			cfg: defaultCfg,
 			prepare: func(f *fields) {
 				f.mockCommands.EXPECT().
 					Create(gomock.Any(), &entity.Todo{
@@ -103,6 +116,7 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		// Error path — DueDate wrong format
 		"error: invalid due_date format": {
+			cfg: defaultCfg,
 			prepare: func(f *fields) {
 			},
 			input: &input.TodoCreator{
@@ -117,6 +131,7 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		// Error path — gateway DB error
 		"error: gateway db error": {
+			cfg: defaultCfg,
 			prepare: func(f *fields) {
 				f.mockCommands.EXPECT().
 					Create(gomock.Any(), gomock.Any()).
@@ -124,6 +139,65 @@ func TestTodoCreator_Create(t *testing.T) {
 			},
 			input:   validInput,
 			wantErr: true,
+		},
+
+		// Feature flag ON
+		"success: flag ON, title valid and not blocked": {
+			cfg: blacklistCfg,
+			prepare: func(f *fields) {
+				f.mockCommands.EXPECT().
+					Create(gomock.Any(), gomock.Any()).
+					Return(createdEntity, nil)
+			},
+			input: &input.TodoCreator{
+				TodoListID: todoListID,
+				Title:      "Task 1",
+				Priority:   entity.PriorityMedium,
+				CreatorID:  creatorID,
+			},
+			expected: &output.TodoCreator{Todo: createdEntity},
+		},
+
+		"error: flag ON, title contains blacklisted words": {
+			cfg:     blacklistCfg,
+			prepare: func(f *fields) {},
+			input: &input.TodoCreator{
+				TodoListID: todoListID,
+				Title:      "spam ahihi",
+				Priority:   entity.PriorityMedium,
+				CreatorID:  creatorID,
+			},
+			wantErr: true,
+			errCode: entity.ErrInvalidParameter,
+		},
+
+		"error: flag ON, title bypass in uppercase still gets blocked.": {
+			cfg:     blacklistCfg,
+			prepare: func(f *fields) {},
+			input: &input.TodoCreator{
+				TodoListID: todoListID,
+				Title:      "SPAm Ahihi",
+				Priority:   entity.PriorityMedium,
+				CreatorID:  creatorID,
+			},
+			wantErr: true,
+			errCode: entity.ErrInvalidParameter,
+		},
+
+		"success: flag OFF, titles containing prohibited words can still be created.": {
+			cfg: defaultCfg,
+			prepare: func(f *fields) {
+				f.mockCommands.EXPECT().
+					Create(gomock.Any(), gomock.Any()).
+					Return(createdEntity, nil)
+			},
+			input: &input.TodoCreator{
+				TodoListID: todoListID,
+				Title:      "spam ahihi",
+				Priority:   entity.PriorityMedium,
+				CreatorID:  creatorID,
+			},
+			expected: &output.TodoCreator{Todo: createdEntity},
 		},
 	}
 
@@ -135,7 +209,7 @@ func TestTodoCreator_Create(t *testing.T) {
 			f := &fields{mockCommands: mock.NewMockTodoCommandsGateway(ctrl)}
 			tt.prepare(f)
 
-			sut := service.NewTodoCreator(f.mockCommands)
+			sut := service.NewTodoCreator(f.mockCommands, tt.cfg)
 			got, err := sut.Create(ctx, tt.input)
 
 			if tt.wantErr {

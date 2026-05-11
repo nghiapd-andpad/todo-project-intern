@@ -4,23 +4,40 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/output"
 )
 
+// type TodoCreator struct {
+// 	todoCommandsGateway gateway.TodoCommandsGateway
+// }
+
 type TodoCreator struct {
 	todoCommandsGateway gateway.TodoCommandsGateway
+	cfg                 *config.Config
 }
 
-func NewTodoCreator(todoCommandsGateway gateway.TodoCommandsGateway) *TodoCreator {
-	return &TodoCreator{todoCommandsGateway: todoCommandsGateway}
+func NewTodoCreator(todoCommandsGateway gateway.TodoCommandsGateway, cfg *config.Config) *TodoCreator {
+	return &TodoCreator{
+		todoCommandsGateway: todoCommandsGateway,
+		cfg:                 cfg,
+	}
 }
 
 func (s *TodoCreator) Create(ctx context.Context, in *input.TodoCreator) (*output.TodoCreator, error) {
+	// Add feature balcklist
+	if s.cfg.TodoBlacklistEnabled {
+		if err := s.checkBlacklist(in.Title); err != nil {
+			return nil, err
+		}
+	}
+
 	var dueDate *time.Time
 	if in.DueDate != nil {
 		parsed, err := time.Parse("2006-01-02", *in.DueDate)
@@ -48,4 +65,15 @@ func (s *TodoCreator) Create(ctx context.Context, in *input.TodoCreator) (*outpu
 	}
 
 	return &output.TodoCreator{Todo: created}, nil
+}
+
+func (s *TodoCreator) checkBlacklist(title string) error {
+	titleLower := strings.ToLower(title)
+	for _, blocked := range s.cfg.TodoTitleBlacklist {
+		if strings.Contains(titleLower, strings.ToLower(blocked)) {
+			return entity.NewInvalidParameter("todo title contains a blacklisted word").
+				WithDetail("title", title)
+		}
+	}
+	return nil
 }
