@@ -4,6 +4,7 @@ package grpcclient
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -158,7 +159,10 @@ func (g *TodoGateway) CreateTodo(ctx context.Context, input input.CreateTodoInpu
 	}
 	if input.AssigneeID != nil {
 		var aID int64
-		fmt.Sscanf(*input.AssigneeID, "%d", &aID)
+		aID, err := strconv.ParseInt(*input.AssigneeID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid assignee_id: %w", err)
+		}
 		req.AssigneeId = aID
 	}
 
@@ -196,7 +200,10 @@ func (g *TodoGateway) UpdateTodo(ctx context.Context, input input.UpdateTodoInpu
 	}
 	if input.AssigneeID != nil {
 		var aID int64
-		fmt.Sscanf(*input.AssigneeID, "%d", &aID)
+		aID, err := strconv.ParseInt(*input.AssigneeID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid assignee_id: %w", err)
+		}
 		req.Todo.AssigneeId = aID
 		req.UpdateMask.Paths = append(req.UpdateMask.Paths, "assignee_id")
 	}
