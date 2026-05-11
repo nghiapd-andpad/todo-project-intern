@@ -15,14 +15,14 @@ func CreateTodoList(t *testing.T, db *gorm.DB, name string, ownerID entity.UserI
 	t.Helper()
 
 	repo := persistence.NewTodoListCommandsGateway(db)
-	tl, err := repo.Create(context.Background(), &entity.TodoList{
+	todoList, err := repo.Create(context.Background(), &entity.TodoList{
 		Name:    name,
 		OwnerID: ownerID,
 	})
 	if err != nil {
 		t.Fatalf("fixture CreateTodoList: %v", err)
 	}
-	return tl
+	return todoList
 }
 
 // CreateTodo inserts a Todo fixture and returns the created entity.

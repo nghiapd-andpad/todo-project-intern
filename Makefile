@@ -39,11 +39,7 @@ test-handler-core-todo:
 
 test-integration-core-todo:
 	cd services/core-todo && \
-	  TEST_DB_USER=root \
-	  TEST_DB_PASSWORD=root \
-	  TEST_DB_HOST=localhost \
-	  TEST_DB_PORT=3306 \
-	  go test ./internal/handler/... -v -count=1 -race -timeout 120s -tags integration
+	go test -v -tags integration ./test/integration/...
 	  
 test-usecase-core-user:
 	cd services/core-user && go test ./internal/usecase/... -v -count=1 -race
