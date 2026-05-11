@@ -85,12 +85,3 @@ func NewGRPCServer(cfg *config.Config, handler *TodoHandler) (*grpc.Server, erro
 	reflection.Register(s)
 	return s, nil
 }
-
-func ProvideGRPCServer(cfg *config.Config, handler *TodoHandler) (*grpc.Server, func(), error) {
-	s, err := NewGRPCServer(cfg, handler)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return s, func() {}, nil
-}

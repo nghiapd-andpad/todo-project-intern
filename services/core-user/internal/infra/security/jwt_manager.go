@@ -11,7 +11,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 )
 
-type jwtManager struct {
+type JWTManager struct {
 	secretKey []byte
 }
 
@@ -21,13 +21,13 @@ type UserClaims struct {
 	Roles  []string `json:"roles"`
 }
 
-func NewJWTManager(cfg *config.Config) gateway.TokenManager {
-	return &jwtManager{
+func NewJWTManager(cfg *config.Config) *JWTManager {
+	return &JWTManager{
 		secretKey: []byte(cfg.JWTSecret),
 	}
 }
 
-func (j *jwtManager) Generate(
+func (j *JWTManager) Generate(
 	ctx context.Context,
 	payload gateway.TokenPayload,
 	duration time.Duration,

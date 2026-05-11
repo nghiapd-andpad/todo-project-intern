@@ -1,4 +1,4 @@
-package user
+package service
 
 import (
 	"context"
@@ -8,15 +8,11 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/input"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/output"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/output"
 )
 
-type UserCreator interface {
-	Register(ctx context.Context, in *input.UserRegister) (*output.UserRegister, error)
-}
-
-type userCreator struct {
+type UserCreator struct {
 	userCommandsGateway gateway.UserCommandsGateway
 	userQueriesGateway  gateway.UserQueriesGateway
 }
@@ -24,14 +20,14 @@ type userCreator struct {
 func NewUserCreator(
 	userCommandsGateway gateway.UserCommandsGateway,
 	userQueriesGateway gateway.UserQueriesGateway,
-) UserCreator {
-	return &userCreator{
+) *UserCreator {
+	return &UserCreator{
 		userCommandsGateway: userCommandsGateway,
 		userQueriesGateway:  userQueriesGateway,
 	}
 }
 
-func (u *userCreator) Register(ctx context.Context, in *input.UserRegister) (*output.UserRegister, error) {
+func (u *UserCreator) Register(ctx context.Context, in *input.UserRegister) (*output.UserRegister, error) {
 	// Check username duplicate
 	existing, err := u.userQueriesGateway.GetByUsername(ctx, in.Username)
 	if err != nil {

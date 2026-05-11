@@ -1,5 +1,5 @@
-// Package user provides gRPC handlers for user-related operations.
-package user
+// Package handler provides gRPC handlers for user-related operations.
+package handler
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	userv1 "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
-	usecase "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase"
 )
 
 type UserHandler struct {
@@ -61,13 +61,4 @@ func NewGRPCServer(cfg *config.Config, handler *UserHandler) (*grpc.Server, erro
 	userv1.RegisterUserServiceServer(s, handler)
 	reflection.Register(s)
 	return s, nil
-}
-
-func ProvideGRPCServer(cfg *config.Config, handler *UserHandler) (*grpc.Server, func(), error) {
-	s, err := NewGRPCServer(cfg, handler)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return s, func() {}, nil
 }

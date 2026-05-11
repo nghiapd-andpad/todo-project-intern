@@ -3,7 +3,7 @@ package mapper
 
 import (
 	userv1 "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/output"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/output"
 )
 
 func UserToPb(u *output.UserDTO) *userv1.User {

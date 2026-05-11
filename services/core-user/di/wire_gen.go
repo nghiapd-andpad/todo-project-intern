@@ -8,10 +8,10 @@ package di
 
 import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
-	user2 "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/user"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/security"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/service"
 	"google.golang.org/grpc"
 )
 
@@ -24,18 +24,17 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	}
 	userCommandsGateway := persistence.NewUserCommandsGateway(db)
 	userQueriesGateway := persistence.NewUserQueryGateway(db)
-	userCreator := user.NewUserCreator(userCommandsGateway, userQueriesGateway)
-	tokenManager := security.NewJWTManager(cfg)
-	userAuthenticator := user.NewUserAuthenticator(userQueriesGateway, tokenManager)
-	userGetter := user.NewUserGetter(userQueriesGateway)
-	userHandler := user2.NewUserHandler(userCreator, userAuthenticator, userGetter)
-	server, cleanup2, err := user2.ProvideGRPCServer(cfg, userHandler)
+	userCreator := service.NewUserCreator(userCommandsGateway, userQueriesGateway)
+	jwtManager := security.NewJWTManager(cfg)
+	userAuthenticator := service.NewUserAuthenticator(userQueriesGateway, jwtManager, cfg)
+	userGetter := service.NewUserGetter(userQueriesGateway)
+	userHandler := handler.NewUserHandler(userCreator, userAuthenticator, userGetter)
+	server, err := handler.NewGRPCServer(cfg, userHandler)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
 	return server, func() {
-		cleanup2()
 		cleanup()
 	}, nil
 }

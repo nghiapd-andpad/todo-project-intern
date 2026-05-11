@@ -8,20 +8,19 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence/model"
 )
 
-type userQueriesRepo struct {
+type UserQueriesGateway struct {
 	db *gorm.DB
 }
 
-func NewUserQueryGateway(db *gorm.DB) gateway.UserQueriesGateway {
-	return &userQueriesRepo{db: db}
+func NewUserQueryGateway(db *gorm.DB) *UserQueriesGateway {
+	return &UserQueriesGateway{db: db}
 }
 
-func (r *userQueriesRepo) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
+func (r *UserQueriesGateway) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
 	var m model.User
 	err := r.db.WithContext(ctx).Where("username = ?", username).First(&m).Error
 	if err != nil {
@@ -33,7 +32,7 @@ func (r *userQueriesRepo) GetByUsername(ctx context.Context, username string) (*
 	return mapper.ModelToEntity(&m), nil
 }
 
-func (r *userQueriesRepo) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+func (r *UserQueriesGateway) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	var m model.User
 	err := r.db.WithContext(ctx).Where("email = ?", email).First(&m).Error
 	if err != nil {
@@ -45,7 +44,7 @@ func (r *userQueriesRepo) GetByEmail(ctx context.Context, email string) (*entity
 	return mapper.ModelToEntity(&m), nil
 }
 
-func (r *userQueriesRepo) GetByID(ctx context.Context, id entity.UserID) (*entity.User, error) {
+func (r *UserQueriesGateway) GetByID(ctx context.Context, id entity.UserID) (*entity.User, error) {
 	var m model.User
 	err := r.db.WithContext(ctx).First(&m, int64(id)).Error
 	if err != nil {
@@ -57,7 +56,7 @@ func (r *userQueriesRepo) GetByID(ctx context.Context, id entity.UserID) (*entit
 	return mapper.ModelToEntity(&m), nil
 }
 
-func (r *userQueriesRepo) GetByIDs(ctx context.Context, ids []entity.UserID) ([]*entity.User, error) {
+func (r *UserQueriesGateway) GetByIDs(ctx context.Context, ids []entity.UserID) ([]*entity.User, error) {
 	var models []model.User
 
 	rawIDs := make([]int64, len(ids))

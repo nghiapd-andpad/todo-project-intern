@@ -1,4 +1,4 @@
-package user
+package handler
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 
 	userv1 "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
-	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/errors"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/mapper"
+	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/errors"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/mapper"
 )
 
 func (h *UserHandler) GetUser(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {

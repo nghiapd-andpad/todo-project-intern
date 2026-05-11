@@ -20,7 +20,8 @@ type Config struct {
 	UserServiceAddr string `envconfig:"USER_SERVICE_ADDR" default:"localhost:50052"`
 
 	// JWT secret
-	JWTSecret string `envconfig:"JWT_SECRET" default:"secret_key"`
+	JWTSecret      string `envconfig:"JWT_SECRET" default:"secret_key"`
+	JWTExpireHours int    `envconfig:"JWT_EXPIRE_HOURS" default:"24"`
 
 	// DataLoader
 	DataLoaderWait      int `envconfig:"DATALOADER_WAIT_MS" default:"2"`      // ms

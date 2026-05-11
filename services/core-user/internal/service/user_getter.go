@@ -1,4 +1,4 @@
-package user
+package service
 
 import (
 	"context"
@@ -6,25 +6,18 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/output"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/output"
 )
 
-type UserGetter interface {
-	GetByID(ctx context.Context, id entity.UserID) (*output.UserDTO, error)
-	GetByIDs(ctx context.Context, ids []entity.UserID) ([]*output.UserDTO, error)
-	GetByUsername(ctx context.Context, username string) (*output.UserDTO, error)
-	GetByEmail(ctx context.Context, email string) (*output.UserDTO, error)
-}
-
-type userGetter struct {
+type UserGetter struct {
 	userQueriesGateway gateway.UserQueriesGateway
 }
 
-func NewUserGetter(userQueriesGateway gateway.UserQueriesGateway) UserGetter {
-	return &userGetter{userQueriesGateway: userQueriesGateway}
+func NewUserGetter(userQueriesGateway gateway.UserQueriesGateway) *UserGetter {
+	return &UserGetter{userQueriesGateway: userQueriesGateway}
 }
 
-func (u *userGetter) GetByID(ctx context.Context, id entity.UserID) (*output.UserDTO, error) {
+func (u *UserGetter) GetByID(ctx context.Context, id entity.UserID) (*output.UserDTO, error) {
 	userEnt, err := u.userQueriesGateway.GetByID(ctx, id)
 
 	if err != nil {
@@ -42,7 +35,7 @@ func (u *userGetter) GetByID(ctx context.Context, id entity.UserID) (*output.Use
 	}, nil
 }
 
-func (u *userGetter) GetByIDs(ctx context.Context, ids []entity.UserID) ([]*output.UserDTO, error) {
+func (u *UserGetter) GetByIDs(ctx context.Context, ids []entity.UserID) ([]*output.UserDTO, error) {
 	userEntities, err := u.userQueriesGateway.GetByIDs(ctx, ids)
 	if err != nil {
 		return nil, fmt.Errorf("userGetter.GetByIDs: %w", err)
@@ -63,7 +56,7 @@ func (u *userGetter) GetByIDs(ctx context.Context, ids []entity.UserID) ([]*outp
 	return dtos, nil
 }
 
-func (u *userGetter) GetByUsername(ctx context.Context, username string) (*output.UserDTO, error) {
+func (u *UserGetter) GetByUsername(ctx context.Context, username string) (*output.UserDTO, error) {
 	userEnt, err := u.userQueriesGateway.GetByUsername(ctx, username)
 
 	if err != nil {
@@ -81,7 +74,7 @@ func (u *userGetter) GetByUsername(ctx context.Context, username string) (*outpu
 	}, nil
 }
 
-func (u *userGetter) GetByEmail(ctx context.Context, email string) (*output.UserDTO, error) {
+func (u *UserGetter) GetByEmail(ctx context.Context, email string) (*output.UserDTO, error) {
 	userEnt, err := u.userQueriesGateway.GetByEmail(ctx, email)
 
 	if err != nil {

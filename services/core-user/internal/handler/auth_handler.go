@@ -1,12 +1,12 @@
-package user
+package handler
 
 import (
 	"context"
 
 	userv1 "github.com/nghiapd-andpad/todo-project-intern/proto/user/v1"
-	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/errors"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/grpc/mapper"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/input"
+	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/errors"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler/mapper"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/input"
 )
 
 func (h *UserHandler) Register(ctx context.Context, req *userv1.RegisterRequest) (*userv1.RegisterResponse, error) {

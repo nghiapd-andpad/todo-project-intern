@@ -22,8 +22,8 @@ type Config struct {
 	AppEnv     string `envconfig:"APP_ENV" default:"development"`
 
 	// JWT Security Config (Bổ sung cho Auth)
-	JWTSecret        string `envconfig:"JWT_SECRET" default:"secret_key"`
-	JWTExpirationHrs int    `envconfig:"JWT_EXPIRATION_HRS" default:"24"`
+	JWTSecret      string `envconfig:"JWT_SECRET" default:"secret_key"`
+	JWTExpireHours int    `envconfig:"JWT_EXPIRATION_HRS" default:"24"`
 }
 
 func New() (*Config, error) {

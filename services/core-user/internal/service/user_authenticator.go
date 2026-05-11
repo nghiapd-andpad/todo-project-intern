@@ -1,5 +1,4 @@
-// Package user provides the implementation of user authentication use case for the core-user service.
-package user
+package service
 
 import (
 	"context"
@@ -8,32 +7,32 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/input"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/user/output"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase/output"
 )
 
-type UserAuthenticator interface {
-	Login(ctx context.Context, in *input.UserLogin) (*output.UserLogin, error)
-}
-
-type userAuthenticator struct {
+type UserAuthenticator struct {
 	userQueriesGateway gateway.UserQueriesGateway
 	tokenManager       gateway.TokenManager
+	cfg                *config.Config
 }
 
 func NewUserAuthenticator(
 	userQueriesGateway gateway.UserQueriesGateway,
 	tokenManager gateway.TokenManager,
-) UserAuthenticator {
-	return &userAuthenticator{
+	cfg *config.Config,
+) *UserAuthenticator {
+	return &UserAuthenticator{
 		userQueriesGateway: userQueriesGateway,
 		tokenManager:       tokenManager,
+		cfg:                cfg,
 	}
 }
 
-func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*output.UserLogin, error) {
+func (u *UserAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*output.UserLogin, error) {
 	// Get user by username
 	userEnt, err := u.userQueriesGateway.GetByUsername(ctx, in.Username)
 	if err != nil {
@@ -49,10 +48,12 @@ func (u *userAuthenticator) Login(ctx context.Context, in *input.UserLogin) (*ou
 	}
 
 	// Generate JWT
+	duration := time.Duration(u.cfg.JWTExpireHours) * time.Hour
+
 	token, err := u.tokenManager.Generate(ctx, gateway.TokenPayload{
 		UserID: userEnt.ID,
 		Roles:  []string{"user"},
-	}, 24*time.Hour)
+	}, duration)
 	if err != nil {
 		return nil, fmt.Errorf("userAuthenticator.Login generate token: %w", err)
 	}
