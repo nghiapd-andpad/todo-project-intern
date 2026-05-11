@@ -7,3 +7,8 @@ type LoginOutput struct {
 	AccessToken string
 	User        *entity.User
 }
+
+type RegisterOutput struct {
+	Username string
+	Email    string
+}

@@ -11,9 +11,10 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/graph"
 	grpcclient "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpcclient"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/jwt"
-	authusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth"
-	todousecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo"
-	userusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/user"
+	authservice "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/service/auth"
+	todoservice "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/service/todo"
+	userservice "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/service/user"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase"
 )
 
 type App struct {
@@ -36,29 +37,29 @@ func InitializeApp(cfg *config.Config) (*App, func(), error) {
 		jwt.NewJwtManager,
 
 		// ── Usecase
-		authusecase.NewRegisterer,
-		wire.Bind(new(graph.AuthRegistererUsecase), new(*authusecase.Registerer)),
+		authservice.NewRegisterer,
+		wire.Bind(new(usecase.AuthRegisterer), new(*authservice.Registerer)),
 
-		authusecase.NewLoginer,
-		wire.Bind(new(graph.AuthLoginerUsecase), new(*authusecase.Loginer)),
+		authservice.NewLoginer,
+		wire.Bind(new(usecase.AuthLoginer), new(*authservice.Loginer)),
 
-		todousecase.NewTodoCreator,
-		wire.Bind(new(graph.TodoCreatorUsecase), new(*todousecase.TodoCreator)),
+		todoservice.NewTodoCreator,
+		wire.Bind(new(usecase.TodoCreator), new(*todoservice.TodoCreator)),
 
-		todousecase.NewTodoGetter,
-		wire.Bind(new(graph.TodoGetterUsecase), new(*todousecase.TodoGetter)),
+		todoservice.NewTodoGetter,
+		wire.Bind(new(usecase.TodoGetter), new(*todoservice.TodoGetter)),
 
-		todousecase.NewTodoLister,
-		wire.Bind(new(graph.TodoListerUsecase), new(*todousecase.TodoLister)),
+		todoservice.NewTodoLister,
+		wire.Bind(new(usecase.TodoLister), new(*todoservice.TodoLister)),
 
-		todousecase.NewTodoUpdater,
-		wire.Bind(new(graph.TodoUpdaterUsecase), new(*todousecase.TodoUpdater)),
+		todoservice.NewTodoUpdater,
+		wire.Bind(new(usecase.TodoUpdater), new(*todoservice.TodoUpdater)),
 
-		todousecase.NewTodoDeleter,
-		wire.Bind(new(graph.TodoDeleterUsecase), new(*todousecase.TodoDeleter)),
+		todoservice.NewTodoDeleter,
+		wire.Bind(new(usecase.TodoDeleter), new(*todoservice.TodoDeleter)),
 
-		userusecase.NewUserGetter,
-		wire.Bind(new(graph.UserGetterUsecase), new(*userusecase.UserGetter)),
+		userservice.NewUserGetter,
+		wire.Bind(new(usecase.UserGetter), new(*userservice.UserGetter)),
 
 		// Handler
 		graph.NewResolver,

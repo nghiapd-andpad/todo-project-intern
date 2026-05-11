@@ -9,24 +9,32 @@ import (
 	"context"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
-	authinput "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/input"
+	authinput "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/input"
 )
 
 // Register is the resolver for the register field.
-func (r *mutationResolver) Register(ctx context.Context, input RegisterInput) (*entity.User, error) {
+func (r *mutationResolver) Register(ctx context.Context, input RegisterInput) (*RegisterOutput, error) {
 	if input.Username == "" || input.Password == "" || input.Email == "" {
 		return nil, entity.NewInvalidParameter("username, password and email are required")
 	}
 
-	return r.authRegisterer.Register(ctx, &authinput.RegisterInput{
+	res, err := r.authRegisterer.Register(ctx, &authinput.RegisterInput{
 		Username: input.Username,
 		Password: input.Password,
 		Email:    input.Email,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &RegisterOutput{
+		Username: res.Username,
+		Email:    res.Email,
+	}, nil
 }
 
 // Login is the resolver for the login field.
-func (r *mutationResolver) Login(ctx context.Context, input LoginInput) (*AuthPayload, error) {
+func (r *mutationResolver) Login(ctx context.Context, input LoginInput) (*LoginOutput, error) {
 	if input.Username == "" || input.Password == "" {
 		return nil, entity.NewInvalidParameter("username and password are required")
 	}
@@ -39,20 +47,42 @@ func (r *mutationResolver) Login(ctx context.Context, input LoginInput) (*AuthPa
 		return nil, err
 	}
 
-	return &AuthPayload{Token: loginOutput.AccessToken, User: loginOutput.User}, nil
+	return &LoginOutput{
+		AccessToken: loginOutput.AccessToken,
+		User: &User{
+			ID:       loginOutput.User.ID,
+			Username: loginOutput.User.Username,
+			Email:    loginOutput.User.Email,
+		},
+	}, nil
 }
 
 // UserByID is the resolver for the userById field.
-func (r *queryResolver) UserByID(ctx context.Context, input GetUserInput) (*entity.User, error) {
-	return r.userGetter.GetByID(ctx, input.ID)
+func (r *queryResolver) UserByID(ctx context.Context, input GetUserInput) (*User, error) {
+	user, err := r.userGetter.GetByID(ctx, input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLUser(user), nil
 }
 
 // UserByUsername is the resolver for the userByUsername field.
-func (r *queryResolver) UserByUsername(ctx context.Context, input GetUserByUsernameInput) (*entity.User, error) {
-	return r.userGetter.GetByUsername(ctx, input.Username)
+func (r *queryResolver) UserByUsername(ctx context.Context, input GetUserByUsernameInput) (*User, error) {
+	user, err := r.userGetter.GetByUsername(ctx, input.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLUser(user), nil
 }
 
 // UserByEmail is the resolver for the userByEmail field.
-func (r *queryResolver) UserByEmail(ctx context.Context, input GetUserByEmailInput) (*entity.User, error) {
-	return r.userGetter.GetByEmail(ctx, input.Email)
+func (r *queryResolver) UserByEmail(ctx context.Context, input GetUserByEmailInput) (*User, error) {
+	user, err := r.userGetter.GetByEmail(ctx, input.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLUser(user), nil
 }

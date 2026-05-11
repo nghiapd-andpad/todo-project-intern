@@ -37,7 +37,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/", playground.Handler("GraphQL Playground", "/graphql"))
 	mux.Handle("/graphql", authmw.AuthMiddleware(app.JwtManager)(
-		dataloader.Middleware(app.Resolver.GetUserGetter(), cfg)(srv),
+		dataloader.Middleware(app.Resolver.UserGetter(), cfg)(srv),
 	))
 
 	addr := ":" + cfg.ServerPort

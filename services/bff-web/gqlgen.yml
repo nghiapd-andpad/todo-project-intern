@@ -22,20 +22,8 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Time
 
-  Todo:
-    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.Todo
-    fields:
-      creator:
-        resolver: true
-
-  TodoList:
-    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.TodoList
-
   TodoStatus:
     model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.TodoStatus
 
   Priority:
     model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.Priority
-
-  User:
-    model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.User

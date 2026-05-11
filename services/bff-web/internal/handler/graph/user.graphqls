@@ -4,9 +4,14 @@ type User {
   email: String!
 }
 
-type AuthPayload {
-  token: String!
+type LoginOutput {
+  accessToken: String!
   user: User!
+}
+
+type RegisterOutput {
+  username: String!
+  email: String!
 }
 
 input RegisterInput {
@@ -39,6 +44,6 @@ extend type Query {
 }
 
 extend type Mutation {
-  register(input: RegisterInput!): User!
-  login(input: LoginInput!): AuthPayload!
+  register(input: RegisterInput!): RegisterOutput!
+  login(input: LoginInput!): LoginOutput!
 }

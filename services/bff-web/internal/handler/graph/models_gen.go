@@ -3,13 +3,10 @@
 package graph
 
 import (
+	"time"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 )
-
-type AuthPayload struct {
-	Token string       `json:"token"`
-	User  *entity.User `json:"user"`
-}
 
 type CreateTodoInput struct {
 	TodoListID  string           `json:"todoListID"`
@@ -74,6 +71,11 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
+type LoginOutput struct {
+	AccessToken string `json:"accessToken"`
+	User        *User  `json:"user"`
+}
+
 type Mutation struct {
 }
 
@@ -86,14 +88,41 @@ type RegisterInput struct {
 	Email    string `json:"email"`
 }
 
+type RegisterOutput struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+type Todo struct {
+	ID          string            `json:"ID"`
+	TodoListID  string            `json:"todoListID"`
+	Title       string            `json:"title"`
+	Description *string           `json:"description,omitempty"`
+	Status      entity.TodoStatus `json:"status"`
+	Priority    entity.Priority   `json:"priority"`
+	DueDate     *time.Time        `json:"dueDate,omitempty"`
+	CreatorID   string            `json:"creatorID"`
+	AssigneeID  *string           `json:"assigneeID,omitempty"`
+	CreatedAt   time.Time         `json:"createdAt"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
+	Creator     *User             `json:"creator,omitempty"`
+}
+
+type TodoList struct {
+	ID          string    `json:"ID"`
+	DisplayName string    `json:"displayName"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
 type TodoListPage struct {
-	TodoLists []*entity.TodoList `json:"todoLists"`
-	Total     int                `json:"total"`
+	TodoLists []*TodoList `json:"todoLists"`
+	Total     int         `json:"total"`
 }
 
 type TodoPage struct {
-	Todos []*entity.Todo `json:"todos"`
-	Total int            `json:"total"`
+	Todos []*Todo `json:"todos"`
+	Total int     `json:"total"`
 }
 
 type UpdateTodoInput struct {
@@ -110,4 +139,10 @@ type UpdateTodoInput struct {
 type UpdateTodoListInput struct {
 	TodoListID  string  `json:"todoListID"`
 	DisplayName *string `json:"displayName,omitempty"`
+}
+
+type User struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }

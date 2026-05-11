@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
 	inputgateway "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/input"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/output"
 )
 
 type Registerer struct {
@@ -18,7 +18,7 @@ func NewRegisterer(authGateway gateway.AuthGateway) *Registerer {
 	return &Registerer{authGateway: authGateway}
 }
 
-func (u *Registerer) Register(ctx context.Context, input *input.RegisterInput) (*entity.User, error) {
+func (u *Registerer) Register(ctx context.Context, input *input.RegisterInput) (*output.RegisterOutput, error) {
 	user, err := u.authGateway.Register(ctx, inputgateway.RegisterInput{
 		Username: input.Username,
 		Password: input.Password,
@@ -28,5 +28,8 @@ func (u *Registerer) Register(ctx context.Context, input *input.RegisterInput) (
 		return nil, fmt.Errorf("Registerer.Register: %w", err)
 	}
 
-	return user, nil
+	return &output.RegisterOutput{
+		Username: user.Username,
+		Email:    user.Email,
+	}, nil
 }

@@ -31,7 +31,6 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
-	Todo() TodoResolver
 }
 
 type DirectiveRoot struct {
@@ -39,9 +38,9 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	AuthPayload struct {
-		Token func(childComplexity int) int
-		User  func(childComplexity int) int
+	LoginOutput struct {
+		AccessToken func(childComplexity int) int
+		User        func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -63,6 +62,11 @@ type ComplexityRoot struct {
 		UserByEmail    func(childComplexity int, input GetUserByEmailInput) int
 		UserByID       func(childComplexity int, input GetUserInput) int
 		UserByUsername func(childComplexity int, input GetUserByUsernameInput) int
+	}
+
+	RegisterOutput struct {
+		Email    func(childComplexity int) int
+		Username func(childComplexity int) int
 	}
 
 	Todo struct {
@@ -105,26 +109,23 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateTodoList(ctx context.Context, input CreateTodoListInput) (*entity.TodoList, error)
-	UpdateTodoList(ctx context.Context, input UpdateTodoListInput) (*entity.TodoList, error)
+	CreateTodoList(ctx context.Context, input CreateTodoListInput) (*TodoList, error)
+	UpdateTodoList(ctx context.Context, input UpdateTodoListInput) (*TodoList, error)
 	DeleteTodoList(ctx context.Context, input DeleteTodoListInput) (bool, error)
-	CreateTodo(ctx context.Context, input CreateTodoInput) (*entity.Todo, error)
-	UpdateTodo(ctx context.Context, input UpdateTodoInput) (*entity.Todo, error)
+	CreateTodo(ctx context.Context, input CreateTodoInput) (*Todo, error)
+	UpdateTodo(ctx context.Context, input UpdateTodoInput) (*Todo, error)
 	DeleteTodo(ctx context.Context, input DeleteTodoInput) (bool, error)
-	Register(ctx context.Context, input RegisterInput) (*entity.User, error)
-	Login(ctx context.Context, input LoginInput) (*AuthPayload, error)
+	Register(ctx context.Context, input RegisterInput) (*RegisterOutput, error)
+	Login(ctx context.Context, input LoginInput) (*LoginOutput, error)
 }
 type QueryResolver interface {
-	TodoList(ctx context.Context, input GetTodoListInput) (*entity.TodoList, error)
+	TodoList(ctx context.Context, input GetTodoListInput) (*TodoList, error)
 	TodoLists(ctx context.Context, input ListTodoListsInput) (*TodoListPage, error)
-	Todo(ctx context.Context, input GetTodoInput) (*entity.Todo, error)
+	Todo(ctx context.Context, input GetTodoInput) (*Todo, error)
 	Todos(ctx context.Context, input ListTodosInput) (*TodoPage, error)
-	UserByID(ctx context.Context, input GetUserInput) (*entity.User, error)
-	UserByUsername(ctx context.Context, input GetUserByUsernameInput) (*entity.User, error)
-	UserByEmail(ctx context.Context, input GetUserByEmailInput) (*entity.User, error)
-}
-type TodoResolver interface {
-	Creator(ctx context.Context, obj *entity.Todo) (*entity.User, error)
+	UserByID(ctx context.Context, input GetUserInput) (*User, error)
+	UserByUsername(ctx context.Context, input GetUserByUsernameInput) (*User, error)
+	UserByEmail(ctx context.Context, input GetUserByEmailInput) (*User, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -141,18 +142,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
-	case "AuthPayload.token":
-		if e.ComplexityRoot.AuthPayload.Token == nil {
+	case "LoginOutput.accessToken":
+		if e.ComplexityRoot.LoginOutput.AccessToken == nil {
 			break
 		}
 
-		return e.ComplexityRoot.AuthPayload.Token(childComplexity), true
-	case "AuthPayload.user":
-		if e.ComplexityRoot.AuthPayload.User == nil {
+		return e.ComplexityRoot.LoginOutput.AccessToken(childComplexity), true
+	case "LoginOutput.user":
+		if e.ComplexityRoot.LoginOutput.User == nil {
 			break
 		}
 
-		return e.ComplexityRoot.AuthPayload.User(childComplexity), true
+		return e.ComplexityRoot.LoginOutput.User(childComplexity), true
 
 	case "Mutation.createTodo":
 		if e.ComplexityRoot.Mutation.CreateTodo == nil {
@@ -320,6 +321,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.UserByUsername(childComplexity, args["input"].(GetUserByUsernameInput)), true
+
+	case "RegisterOutput.email":
+		if e.ComplexityRoot.RegisterOutput.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RegisterOutput.Email(childComplexity), true
+	case "RegisterOutput.username":
+		if e.ComplexityRoot.RegisterOutput.Username == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RegisterOutput.Username(childComplexity), true
 
 	case "Todo.assigneeID":
 		if e.ComplexityRoot.Todo.AssigneeID == nil {
@@ -811,14 +825,14 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _AuthPayload_token(ctx context.Context, field graphql.CollectedField, obj *AuthPayload) (ret graphql.Marshaler) {
+func (ec *executionContext) _LoginOutput_accessToken(ctx context.Context, field graphql.CollectedField, obj *LoginOutput) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_AuthPayload_token,
+		ec.fieldContext_LoginOutput_accessToken,
 		func(ctx context.Context) (any, error) {
-			return obj.Token, nil
+			return obj.AccessToken, nil
 		},
 		nil,
 		ec.marshalNString2string,
@@ -827,9 +841,9 @@ func (ec *executionContext) _AuthPayload_token(ctx context.Context, field graphq
 	)
 }
 
-func (ec *executionContext) fieldContext_AuthPayload_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LoginOutput_accessToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AuthPayload",
+		Object:     "LoginOutput",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -840,25 +854,25 @@ func (ec *executionContext) fieldContext_AuthPayload_token(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _AuthPayload_user(ctx context.Context, field graphql.CollectedField, obj *AuthPayload) (ret graphql.Marshaler) {
+func (ec *executionContext) _LoginOutput_user(ctx context.Context, field graphql.CollectedField, obj *LoginOutput) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_AuthPayload_user,
+		ec.fieldContext_LoginOutput_user,
 		func(ctx context.Context) (any, error) {
 			return obj.User, nil
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_AuthPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_LoginOutput_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "AuthPayload",
+		Object:     "LoginOutput",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -892,7 +906,7 @@ func (ec *executionContext) _Mutation_createTodoList(ctx context.Context, field 
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.TodoList
+					var zeroVal *TodoList
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -901,7 +915,7 @@ func (ec *executionContext) _Mutation_createTodoList(ctx context.Context, field 
 			next = directive1
 			return next
 		},
-		ec.marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoList,
+		ec.marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoList,
 		true,
 		true,
 	)
@@ -956,7 +970,7 @@ func (ec *executionContext) _Mutation_updateTodoList(ctx context.Context, field 
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.TodoList
+					var zeroVal *TodoList
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -965,7 +979,7 @@ func (ec *executionContext) _Mutation_updateTodoList(ctx context.Context, field 
 			next = directive1
 			return next
 		},
-		ec.marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoList,
+		ec.marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoList,
 		true,
 		true,
 	)
@@ -1074,7 +1088,7 @@ func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field grap
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.Todo
+					var zeroVal *Todo
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -1083,7 +1097,7 @@ func (ec *executionContext) _Mutation_createTodo(ctx context.Context, field grap
 			next = directive1
 			return next
 		},
-		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodo,
+		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodo,
 		true,
 		true,
 	)
@@ -1154,7 +1168,7 @@ func (ec *executionContext) _Mutation_updateTodo(ctx context.Context, field grap
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.Todo
+					var zeroVal *Todo
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -1163,7 +1177,7 @@ func (ec *executionContext) _Mutation_updateTodo(ctx context.Context, field grap
 			next = directive1
 			return next
 		},
-		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodo,
+		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodo,
 		true,
 		true,
 	)
@@ -1284,7 +1298,7 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 			return ec.Resolvers.Mutation().Register(ctx, fc.Args["input"].(RegisterInput))
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser,
+		ec.marshalNRegisterOutput2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐRegisterOutput,
 		true,
 		true,
 	)
@@ -1298,14 +1312,12 @@ func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
 			case "username":
-				return ec.fieldContext_User_username(ctx, field)
+				return ec.fieldContext_RegisterOutput_username(ctx, field)
 			case "email":
-				return ec.fieldContext_User_email(ctx, field)
+				return ec.fieldContext_RegisterOutput_email(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type RegisterOutput", field.Name)
 		},
 	}
 	defer func() {
@@ -1333,7 +1345,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 			return ec.Resolvers.Mutation().Login(ctx, fc.Args["input"].(LoginInput))
 		},
 		nil,
-		ec.marshalNAuthPayload2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐAuthPayload,
+		ec.marshalNLoginOutput2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐLoginOutput,
 		true,
 		true,
 	)
@@ -1347,12 +1359,12 @@ func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, fie
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "token":
-				return ec.fieldContext_AuthPayload_token(ctx, field)
+			case "accessToken":
+				return ec.fieldContext_LoginOutput_accessToken(ctx, field)
 			case "user":
-				return ec.fieldContext_AuthPayload_user(ctx, field)
+				return ec.fieldContext_LoginOutput_user(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AuthPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type LoginOutput", field.Name)
 		},
 	}
 	defer func() {
@@ -1384,7 +1396,7 @@ func (ec *executionContext) _Query_todoList(ctx context.Context, field graphql.C
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.TodoList
+					var zeroVal *TodoList
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -1393,7 +1405,7 @@ func (ec *executionContext) _Query_todoList(ctx context.Context, field graphql.C
 			next = directive1
 			return next
 		},
-		ec.marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoList,
+		ec.marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoList,
 		true,
 		true,
 	)
@@ -1508,7 +1520,7 @@ func (ec *executionContext) _Query_todo(ctx context.Context, field graphql.Colle
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.Todo
+					var zeroVal *Todo
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -1517,7 +1529,7 @@ func (ec *executionContext) _Query_todo(ctx context.Context, field graphql.Colle
 			next = directive1
 			return next
 		},
-		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodo,
+		ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodo,
 		true,
 		true,
 	)
@@ -1648,7 +1660,7 @@ func (ec *executionContext) _Query_userByID(ctx context.Context, field graphql.C
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.User
+					var zeroVal *User
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -1657,7 +1669,7 @@ func (ec *executionContext) _Query_userByID(ctx context.Context, field graphql.C
 			next = directive1
 			return next
 		},
-		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser,
 		true,
 		true,
 	)
@@ -1710,7 +1722,7 @@ func (ec *executionContext) _Query_userByUsername(ctx context.Context, field gra
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.User
+					var zeroVal *User
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -1719,7 +1731,7 @@ func (ec *executionContext) _Query_userByUsername(ctx context.Context, field gra
 			next = directive1
 			return next
 		},
-		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser,
 		true,
 		true,
 	)
@@ -1772,7 +1784,7 @@ func (ec *executionContext) _Query_userByEmail(ctx context.Context, field graphq
 
 			directive1 := func(ctx context.Context) (any, error) {
 				if ec.Directives.Auth == nil {
-					var zeroVal *entity.User
+					var zeroVal *User
 					return zeroVal, errors.New("directive auth is not implemented")
 				}
 				return ec.Directives.Auth(ctx, nil, directive0)
@@ -1781,7 +1793,7 @@ func (ec *executionContext) _Query_userByEmail(ctx context.Context, field graphq
 			next = directive1
 			return next
 		},
-		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser,
 		true,
 		true,
 	)
@@ -1927,7 +1939,65 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_ID(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _RegisterOutput_username(ctx context.Context, field graphql.CollectedField, obj *RegisterOutput) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RegisterOutput_username,
+		func(ctx context.Context) (any, error) {
+			return obj.Username, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RegisterOutput_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegisterOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegisterOutput_email(ctx context.Context, field graphql.CollectedField, obj *RegisterOutput) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RegisterOutput_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RegisterOutput_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegisterOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Todo_ID(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1956,7 +2026,7 @@ func (ec *executionContext) fieldContext_Todo_ID(_ context.Context, field graphq
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_todoListID(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_todoListID(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -1985,7 +2055,7 @@ func (ec *executionContext) fieldContext_Todo_todoListID(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_title(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_title(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2014,7 +2084,7 @@ func (ec *executionContext) fieldContext_Todo_title(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_description(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_description(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2043,7 +2113,7 @@ func (ec *executionContext) fieldContext_Todo_description(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_status(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_status(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2072,7 +2142,7 @@ func (ec *executionContext) fieldContext_Todo_status(_ context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_priority(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_priority(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2101,7 +2171,7 @@ func (ec *executionContext) fieldContext_Todo_priority(_ context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_dueDate(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_dueDate(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2130,7 +2200,7 @@ func (ec *executionContext) fieldContext_Todo_dueDate(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_creatorID(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_creatorID(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2159,7 +2229,7 @@ func (ec *executionContext) fieldContext_Todo_creatorID(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_assigneeID(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_assigneeID(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2188,7 +2258,7 @@ func (ec *executionContext) fieldContext_Todo_assigneeID(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_createdAt(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_createdAt(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2217,7 +2287,7 @@ func (ec *executionContext) fieldContext_Todo_createdAt(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_updatedAt(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2246,17 +2316,17 @@ func (ec *executionContext) fieldContext_Todo_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_creator(ctx context.Context, field graphql.CollectedField, obj *entity.Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_creator(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		ec.fieldContext_Todo_creator,
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.Todo().Creator(ctx, obj)
+			return obj.Creator, nil
 		},
 		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser,
+		ec.marshalOUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser,
 		true,
 		false,
 	)
@@ -2266,8 +2336,8 @@ func (ec *executionContext) fieldContext_Todo_creator(_ context.Context, field g
 	fc = &graphql.FieldContext{
 		Object:     "Todo",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2283,7 +2353,7 @@ func (ec *executionContext) fieldContext_Todo_creator(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _TodoList_ID(ctx context.Context, field graphql.CollectedField, obj *entity.TodoList) (ret graphql.Marshaler) {
+func (ec *executionContext) _TodoList_ID(ctx context.Context, field graphql.CollectedField, obj *TodoList) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2312,7 +2382,7 @@ func (ec *executionContext) fieldContext_TodoList_ID(_ context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _TodoList_displayName(ctx context.Context, field graphql.CollectedField, obj *entity.TodoList) (ret graphql.Marshaler) {
+func (ec *executionContext) _TodoList_displayName(ctx context.Context, field graphql.CollectedField, obj *TodoList) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2341,7 +2411,7 @@ func (ec *executionContext) fieldContext_TodoList_displayName(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _TodoList_createdAt(ctx context.Context, field graphql.CollectedField, obj *entity.TodoList) (ret graphql.Marshaler) {
+func (ec *executionContext) _TodoList_createdAt(ctx context.Context, field graphql.CollectedField, obj *TodoList) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2370,7 +2440,7 @@ func (ec *executionContext) fieldContext_TodoList_createdAt(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _TodoList_updatedAt(ctx context.Context, field graphql.CollectedField, obj *entity.TodoList) (ret graphql.Marshaler) {
+func (ec *executionContext) _TodoList_updatedAt(ctx context.Context, field graphql.CollectedField, obj *TodoList) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2409,7 +2479,7 @@ func (ec *executionContext) _TodoListPage_todoLists(ctx context.Context, field g
 			return obj.TodoLists, nil
 		},
 		nil,
-		ec.marshalNTodoList2ᚕᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoListᚄ,
+		ec.marshalNTodoList2ᚕᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoListᚄ,
 		true,
 		true,
 	)
@@ -2477,7 +2547,7 @@ func (ec *executionContext) _TodoPage_todos(ctx context.Context, field graphql.C
 			return obj.Todos, nil
 		},
 		nil,
-		ec.marshalNTodo2ᚕᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoᚄ,
+		ec.marshalNTodo2ᚕᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoᚄ,
 		true,
 		true,
 	)
@@ -2551,7 +2621,7 @@ func (ec *executionContext) fieldContext_TodoPage_total(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2580,7 +2650,7 @@ func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphq
 	return fc, nil
 }
 
-func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -2609,7 +2679,7 @@ func (ec *executionContext) fieldContext_User_username(_ context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *entity.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -4717,24 +4787,24 @@ func (ec *executionContext) unmarshalInputUpdateTodoListInput(ctx context.Contex
 
 // region    **************************** object.gotpl ****************************
 
-var authPayloadImplementors = []string{"AuthPayload"}
+var loginOutputImplementors = []string{"LoginOutput"}
 
-func (ec *executionContext) _AuthPayload(ctx context.Context, sel ast.SelectionSet, obj *AuthPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, authPayloadImplementors)
+func (ec *executionContext) _LoginOutput(ctx context.Context, sel ast.SelectionSet, obj *LoginOutput) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, loginOutputImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("AuthPayload")
-		case "token":
-			out.Values[i] = ec._AuthPayload_token(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("LoginOutput")
+		case "accessToken":
+			out.Values[i] = ec._LoginOutput_accessToken(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "user":
-			out.Values[i] = ec._AuthPayload_user(ctx, field, obj)
+			out.Values[i] = ec._LoginOutput_user(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5063,9 +5133,53 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var registerOutputImplementors = []string{"RegisterOutput"}
+
+func (ec *executionContext) _RegisterOutput(ctx context.Context, sel ast.SelectionSet, obj *RegisterOutput) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registerOutputImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegisterOutput")
+		case "username":
+			out.Values[i] = ec._RegisterOutput_username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._RegisterOutput_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var todoImplementors = []string{"Todo"}
 
-func (ec *executionContext) _Todo(ctx context.Context, sel ast.SelectionSet, obj *entity.Todo) graphql.Marshaler {
+func (ec *executionContext) _Todo(ctx context.Context, sel ast.SelectionSet, obj *Todo) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, todoImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -5077,82 +5191,51 @@ func (ec *executionContext) _Todo(ctx context.Context, sel ast.SelectionSet, obj
 		case "ID":
 			out.Values[i] = ec._Todo_ID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "todoListID":
 			out.Values[i] = ec._Todo_todoListID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "title":
 			out.Values[i] = ec._Todo_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "description":
 			out.Values[i] = ec._Todo_description(ctx, field, obj)
 		case "status":
 			out.Values[i] = ec._Todo_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "priority":
 			out.Values[i] = ec._Todo_priority(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "dueDate":
 			out.Values[i] = ec._Todo_dueDate(ctx, field, obj)
 		case "creatorID":
 			out.Values[i] = ec._Todo_creatorID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "assigneeID":
 			out.Values[i] = ec._Todo_assigneeID(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Todo_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Todo_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "creator":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Todo_creator(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			out.Values[i] = ec._Todo_creator(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5178,7 +5261,7 @@ func (ec *executionContext) _Todo(ctx context.Context, sel ast.SelectionSet, obj
 
 var todoListImplementors = []string{"TodoList"}
 
-func (ec *executionContext) _TodoList(ctx context.Context, sel ast.SelectionSet, obj *entity.TodoList) graphql.Marshaler {
+func (ec *executionContext) _TodoList(ctx context.Context, sel ast.SelectionSet, obj *TodoList) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, todoListImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -5320,7 +5403,7 @@ func (ec *executionContext) _TodoPage(ctx context.Context, sel ast.SelectionSet,
 
 var userImplementors = []string{"User"}
 
-func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *entity.User) graphql.Marshaler {
+func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *User) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -5702,20 +5785,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthPayload2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v AuthPayload) graphql.Marshaler {
-	return ec._AuthPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAuthPayload2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v *AuthPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AuthPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5824,6 +5893,20 @@ func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋnghiapdᚑandpad
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNLoginOutput2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐLoginOutput(ctx context.Context, sel ast.SelectionSet, v LoginOutput) graphql.Marshaler {
+	return ec._LoginOutput(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLoginOutput2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐLoginOutput(ctx context.Context, sel ast.SelectionSet, v *LoginOutput) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LoginOutput(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNPriority2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐPriority(ctx context.Context, v any) (entity.Priority, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := entity.Priority(tmp)
@@ -5844,6 +5927,20 @@ func (ec *executionContext) marshalNPriority2githubᚗcomᚋnghiapdᚑandpadᚋt
 func (ec *executionContext) unmarshalNRegisterInput2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐRegisterInput(ctx context.Context, v any) (RegisterInput, error) {
 	res, err := ec.unmarshalInputRegisterInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRegisterOutput2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐRegisterOutput(ctx context.Context, sel ast.SelectionSet, v RegisterOutput) graphql.Marshaler {
+	return ec._RegisterOutput(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRegisterOutput2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐRegisterOutput(ctx context.Context, sel ast.SelectionSet, v *RegisterOutput) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RegisterOutput(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -5878,15 +5975,15 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTodo2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodo(ctx context.Context, sel ast.SelectionSet, v entity.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodo(ctx context.Context, sel ast.SelectionSet, v Todo) graphql.Marshaler {
 	return ec._Todo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*entity.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*Todo) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodo(ctx, sel, v[i])
+		return ec.marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodo(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -5898,7 +5995,7 @@ func (ec *executionContext) marshalNTodo2ᚕᚖgithubᚗcomᚋnghiapdᚑandpad�
 	return ret
 }
 
-func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodo(ctx context.Context, sel ast.SelectionSet, v *entity.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodo(ctx context.Context, sel ast.SelectionSet, v *Todo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -5908,15 +6005,15 @@ func (ec *executionContext) marshalNTodo2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋto
 	return ec._Todo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTodoList2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoList(ctx context.Context, sel ast.SelectionSet, v entity.TodoList) graphql.Marshaler {
+func (ec *executionContext) marshalNTodoList2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoList(ctx context.Context, sel ast.SelectionSet, v TodoList) graphql.Marshaler {
 	return ec._TodoList(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTodoList2ᚕᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoListᚄ(ctx context.Context, sel ast.SelectionSet, v []*entity.TodoList) graphql.Marshaler {
+func (ec *executionContext) marshalNTodoList2ᚕᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoListᚄ(ctx context.Context, sel ast.SelectionSet, v []*TodoList) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoList(ctx, sel, v[i])
+		return ec.marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoList(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -5928,7 +6025,7 @@ func (ec *executionContext) marshalNTodoList2ᚕᚖgithubᚗcomᚋnghiapdᚑandp
 	return ret
 }
 
-func (ec *executionContext) marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐTodoList(ctx context.Context, sel ast.SelectionSet, v *entity.TodoList) graphql.Marshaler {
+func (ec *executionContext) marshalNTodoList2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐTodoList(ctx context.Context, sel ast.SelectionSet, v *TodoList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -5993,11 +6090,11 @@ func (ec *executionContext) unmarshalNUpdateTodoListInput2githubᚗcomᚋnghiapd
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v entity.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser(ctx context.Context, sel ast.SelectionSet, v User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v *entity.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -6288,7 +6385,7 @@ func (ec *executionContext) marshalOTodoStatus2ᚖgithubᚗcomᚋnghiapdᚑandpa
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋdomainᚋentityᚐUser(ctx context.Context, sel ast.SelectionSet, v *entity.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

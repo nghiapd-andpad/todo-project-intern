@@ -11,9 +11,9 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/graph"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/grpcclient"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/jwt"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/user"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/service/auth"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/service/todo"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/service/user"
 )
 
 // Injectors from wire.go:

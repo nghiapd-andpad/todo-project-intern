@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
 	inputgateway "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/input"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/mapper"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/output"
 )
 
 type TodoUpdater struct {
@@ -18,7 +19,7 @@ func NewTodoUpdater(todoGateway gateway.TodoGateway) *TodoUpdater {
 	return &TodoUpdater{todoGateway: todoGateway}
 }
 
-func (u *TodoUpdater) UpdateTodoList(ctx context.Context, input *input.UpdateTodoListInput) (*entity.TodoList, error) {
+func (u *TodoUpdater) UpdateTodoList(ctx context.Context, input *input.UpdateTodoListInput) (*output.TodoListOutput, error) {
 	result, err := u.todoGateway.UpdateTodoList(ctx, inputgateway.UpdateTodoListInput{
 		Name:        input.Name,
 		DisplayName: input.DisplayName,
@@ -27,10 +28,10 @@ func (u *TodoUpdater) UpdateTodoList(ctx context.Context, input *input.UpdateTod
 		return nil, fmt.Errorf("TodoUpdater.UpdateTodoList: %w", err)
 	}
 
-	return result, nil
+	return mapper.ToTodoListOutput(result), nil
 }
 
-func (u *TodoUpdater) UpdateTodo(ctx context.Context, input *input.UpdateTodoInput) (*entity.Todo, error) {
+func (u *TodoUpdater) UpdateTodo(ctx context.Context, input *input.UpdateTodoInput) (*output.TodoOutput, error) {
 	result, err := u.todoGateway.UpdateTodo(ctx, inputgateway.UpdateTodoInput{
 		Title:       input.Title,
 		Description: input.Description,
@@ -43,5 +44,5 @@ func (u *TodoUpdater) UpdateTodo(ctx context.Context, input *input.UpdateTodoInp
 		return nil, fmt.Errorf("TodoUpdater.UpdateTodo: %w", err)
 	}
 
-	return result, nil
+	return mapper.ToTodoOutput(result), nil
 }

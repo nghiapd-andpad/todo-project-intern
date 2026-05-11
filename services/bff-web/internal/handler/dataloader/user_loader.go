@@ -8,10 +8,10 @@ import (
 	"github.com/graph-gophers/dataloader/v7"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/output"
 )
 
-type UserByIDLoader = dataloader.Loader[string, *entity.User]
+type UserByIDLoader = dataloader.Loader[string, *output.UserOutput]
 
 type Loaders struct {
 	UserByID *UserByIDLoader
@@ -22,7 +22,7 @@ type contextKey string
 const loadersKey contextKey = "dataloaders"
 
 type UserFetcher interface {
-	GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error)
+	GetByIDs(ctx context.Context, ids []string) ([]*output.UserOutput, error)
 }
 
 // Middleware injects per-request dataloaders into context.
@@ -45,27 +45,27 @@ func For(ctx context.Context) *Loaders {
 }
 
 func newUserByIDLoader(ctx context.Context, fetcher UserFetcher) *UserByIDLoader {
-	batchFn := func(ctx context.Context, ids []string) []*dataloader.Result[*entity.User] {
+	batchFn := func(ctx context.Context, ids []string) []*dataloader.Result[*output.UserOutput] {
 		users, err := fetcher.GetByIDs(ctx, ids)
-		results := make([]*dataloader.Result[*entity.User], len(ids))
+		results := make([]*dataloader.Result[*output.UserOutput], len(ids))
 
 		if err != nil {
 			for i := range ids {
-				results[i] = &dataloader.Result[*entity.User]{Error: err}
+				results[i] = &dataloader.Result[*output.UserOutput]{Error: err}
 			}
 			return results
 		}
 
-		byID := make(map[string]*entity.User, len(users))
+		byID := make(map[string]*output.UserOutput, len(users))
 		for _, u := range users {
 			byID[u.ID] = u
 		}
 
 		for i, id := range ids {
 			if u, ok := byID[id]; ok {
-				results[i] = &dataloader.Result[*entity.User]{Data: u}
+				results[i] = &dataloader.Result[*output.UserOutput]{Data: u}
 			} else {
-				results[i] = &dataloader.Result[*entity.User]{Data: nil}
+				results[i] = &dataloader.Result[*output.UserOutput]{Data: nil}
 			}
 		}
 		return results

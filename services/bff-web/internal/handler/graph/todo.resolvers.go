@@ -8,17 +8,14 @@ package graph
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
-	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/dataloader"
-	inputusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/todo/input"
+	inputusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/input"
 )
 
 // CreateTodoList is the resolver for the createTodoList field.
-func (r *mutationResolver) CreateTodoList(ctx context.Context, input CreateTodoListInput) (*entity.TodoList, error) {
+func (r *mutationResolver) CreateTodoList(ctx context.Context, input CreateTodoListInput) (*TodoList, error) {
 	if input.DisplayName == "" {
 		return nil, entity.NewInvalidParameter("display_name is required")
 	}
@@ -30,14 +27,19 @@ func (r *mutationResolver) CreateTodoList(ctx context.Context, input CreateTodoL
 
 	parent := fmt.Sprintf("users/%s", userID)
 
-	return r.todoCreator.CreateTodoList(ctx, &inputusecase.CreateTodoListInput{
+	res, err := r.todoCreator.CreateTodoList(ctx, &inputusecase.CreateTodoListInput{
 		Parent:      parent,
 		DisplayName: input.DisplayName,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLTodoList(res), nil
 }
 
 // UpdateTodoList is the resolver for the updateTodoList field.
-func (r *mutationResolver) UpdateTodoList(ctx context.Context, input UpdateTodoListInput) (*entity.TodoList, error) {
+func (r *mutationResolver) UpdateTodoList(ctx context.Context, input UpdateTodoListInput) (*TodoList, error) {
 	userID, ok := auth.GetUserID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("user ID not found in context")
@@ -45,10 +47,15 @@ func (r *mutationResolver) UpdateTodoList(ctx context.Context, input UpdateTodoL
 
 	name := fmt.Sprintf("users/%s/todo-lists/%s", userID, input.TodoListID)
 
-	return r.todoUpdater.UpdateTodoList(ctx, &inputusecase.UpdateTodoListInput{
+	res, err := r.todoUpdater.UpdateTodoList(ctx, &inputusecase.UpdateTodoListInput{
 		Name:        name,
 		DisplayName: input.DisplayName,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLTodoList(res), nil
 }
 
 // DeleteTodoList is the resolver for the deleteTodoList field.
@@ -68,7 +75,7 @@ func (r *mutationResolver) DeleteTodoList(ctx context.Context, input DeleteTodoL
 }
 
 // CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input CreateTodoInput) (*entity.Todo, error) {
+func (r *mutationResolver) CreateTodo(ctx context.Context, input CreateTodoInput) (*Todo, error) {
 	if input.Title == "" {
 		return nil, entity.NewInvalidParameter("title is required")
 	}
@@ -92,11 +99,16 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input CreateTodoInput
 		in.AssigneeID = input.AssigneeID
 	}
 
-	return r.todoCreator.CreateTodo(ctx, in)
+	res, err := r.todoCreator.CreateTodo(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLTodo(res), nil
 }
 
 // UpdateTodo is the resolver for the updateTodo field.
-func (r *mutationResolver) UpdateTodo(ctx context.Context, input UpdateTodoInput) (*entity.Todo, error) {
+func (r *mutationResolver) UpdateTodo(ctx context.Context, input UpdateTodoInput) (*Todo, error) {
 	userID, ok := auth.GetUserID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("user ID not found in context")
@@ -118,7 +130,12 @@ func (r *mutationResolver) UpdateTodo(ctx context.Context, input UpdateTodoInput
 		in.Priority = &p
 	}
 
-	return r.todoUpdater.UpdateTodo(ctx, in)
+	res, err := r.todoUpdater.UpdateTodo(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLTodo(res), nil
 }
 
 // DeleteTodo is the resolver for the deleteTodo field.
@@ -138,7 +155,7 @@ func (r *mutationResolver) DeleteTodo(ctx context.Context, input DeleteTodoInput
 }
 
 // TodoList is the resolver for the todoList field.
-func (r *queryResolver) TodoList(ctx context.Context, input GetTodoListInput) (*entity.TodoList, error) {
+func (r *queryResolver) TodoList(ctx context.Context, input GetTodoListInput) (*TodoList, error) {
 	userID, ok := auth.GetUserID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("user ID not found in context")
@@ -146,7 +163,12 @@ func (r *queryResolver) TodoList(ctx context.Context, input GetTodoListInput) (*
 
 	name := fmt.Sprintf("users/%s/todo-lists/%s", userID, input.TodoListID)
 
-	return r.todoGetter.GetTodoList(ctx, name)
+	res, err := r.todoGetter.GetTodoList(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLTodoList(res), nil
 }
 
 // TodoLists is the resolver for the todoLists field.
@@ -172,11 +194,11 @@ func (r *queryResolver) TodoLists(ctx context.Context, input ListTodoListsInput)
 		return nil, err
 	}
 
-	return &TodoListPage{TodoLists: page.TodoLists, Total: int(page.Total)}, nil
+	return ToGraphQLTodoListPage(page), nil
 }
 
 // Todo is the resolver for the todo field.
-func (r *queryResolver) Todo(ctx context.Context, input GetTodoInput) (*entity.Todo, error) {
+func (r *queryResolver) Todo(ctx context.Context, input GetTodoInput) (*Todo, error) {
 	userID, ok := auth.GetUserID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("user ID not found in context")
@@ -184,7 +206,12 @@ func (r *queryResolver) Todo(ctx context.Context, input GetTodoInput) (*entity.T
 
 	name := fmt.Sprintf("users/%s/todo-lists/%s/todos/%s", userID, input.TodoListID, input.TodoID)
 
-	return r.todoGetter.GetTodo(ctx, name)
+	res, err := r.todoGetter.GetTodo(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLTodo(res), nil
 }
 
 // Todos is the resolver for the todos field.
@@ -218,11 +245,26 @@ func (r *queryResolver) Todos(ctx context.Context, input ListTodosInput) (*TodoP
 		return nil, err
 	}
 
-	return &TodoPage{Todos: page.Todos, Total: int(page.Total)}, nil
+	return ToGraphQLTodoPage(page), nil
 }
 
-// Creator is the resolver for the creator field.
-func (r *todoResolver) Creator(ctx context.Context, obj *entity.Todo) (*entity.User, error) {
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *todoResolver) DueDate(ctx context.Context, obj *Todo) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: DueDate - dueDate"))
+}
+func (r *todoResolver) CreatedAt(ctx context.Context, obj *Todo) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: CreatedAt - createdAt"))
+}
+func (r *todoResolver) UpdatedAt(ctx context.Context, obj *Todo) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: UpdatedAt - updatedAt"))
+}
+func (r *todoResolver) Creator(ctx context.Context, obj *Todo) (*User, error) {
 	if obj.CreatorID == "" {
 		return nil, nil
 	}
@@ -236,13 +278,28 @@ func (r *todoResolver) Creator(ctx context.Context, obj *entity.Todo) (*entity.U
 	loaders := dataloader.For(ctx)
 	if loaders != nil && loaders.UserByID != nil {
 		user, err := loaders.UserByID.Load(ctx, userIDStr)()
-		return user, err
+		if err != nil {
+			return nil, err
+		}
+
+		return ToGraphQLUser(user), nil
 	}
 
-	return r.userGetter.GetByID(ctx, userIDStr)
+	res, err := r.userGetter.GetByID(ctx, userIDStr)
+	if err != nil {
+		return nil, err
+	}
+
+	return ToGraphQLUser(res), nil
 }
-
-// Todo returns TodoResolver implementation.
+func (r *todoListResolver) CreatedAt(ctx context.Context, obj *TodoList) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: CreatedAt - createdAt"))
+}
+func (r *todoListResolver) UpdatedAt(ctx context.Context, obj *TodoList) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: UpdatedAt - updatedAt"))
+}
 func (r *Resolver) Todo() TodoResolver { return &todoResolver{r} }
-
+func (r *Resolver) TodoList() TodoListResolver { return &todoListResolver{r} }
 type todoResolver struct{ *Resolver }
+type todoListResolver struct{ *Resolver }
+*/

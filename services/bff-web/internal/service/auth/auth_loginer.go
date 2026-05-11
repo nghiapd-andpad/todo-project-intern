@@ -7,8 +7,8 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway"
 	inputgateway "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/gateway/input"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/input"
-	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/auth/output"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/output"
 )
 
 type Loginer struct {
