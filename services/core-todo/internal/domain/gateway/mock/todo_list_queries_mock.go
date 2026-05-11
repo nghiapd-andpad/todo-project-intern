@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	entity "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	gateway "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	input "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -58,7 +58,7 @@ func (mr *MockTodoListQueriesGatewayMockRecorder) Get(ctx, todoListID any) *gomo
 }
 
 // List mocks base method.
-func (m *MockTodoListQueriesGateway) List(ctx context.Context, opts gateway.ListTodoListsOptions) ([]*entity.TodoList, int64, error) {
+func (m *MockTodoListQueriesGateway) List(ctx context.Context, opts *input.ListTodoListsOptions) ([]*entity.TodoList, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx, opts)
 	ret0, _ := ret[0].([]*entity.TodoList)

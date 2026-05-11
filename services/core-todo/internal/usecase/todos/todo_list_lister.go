@@ -18,7 +18,7 @@ func NewTodoListLister(todoListQueriesGateway gateway.TodoListQueriesGateway) *T
 }
 
 func (s *TodoListLister) List(ctx context.Context, in *input.TodoListLister) (*output.TodoListLister, error) {
-	todoLists, total, err := s.todoListQueriesGateway.List(ctx, in.Opts)
+	todoLists, total, err := s.todoListQueriesGateway.List(ctx, &in.Opts)
 	if err != nil {
 		return nil, fmt.Errorf("TodoListLister.List: %w", err)
 	}

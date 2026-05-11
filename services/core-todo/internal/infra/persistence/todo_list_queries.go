@@ -9,6 +9,7 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
@@ -42,7 +43,7 @@ func (g *TodoListQueriesGateway) Get(
 
 func (g *TodoListQueriesGateway) List(
 	ctx context.Context,
-	opts gateway.ListTodoListsOptions,
+	opts *gatewayinput.ListTodoListsOptions,
 ) ([]*entity.TodoList, int64, error) {
 	q := g.db.WithContext(ctx).Model(&model.TodoList{})
 

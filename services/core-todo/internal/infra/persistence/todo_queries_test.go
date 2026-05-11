@@ -9,138 +9,266 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/testutil"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/testutil"
 )
 
 func TestTodoQueriesGateway_Get(t *testing.T) {
 	t.Parallel()
 
-	t.Run("success: found todo", func(t *testing.T) {
-		t.Parallel()
+	tests := map[string]struct {
+		setup func(t *testing.T) (*gorm.DB, *entity.Todo)
+		test  func(
+			t *testing.T,
+			repo *persistence.TodoQueriesGateway,
+			existingTodo *entity.Todo,
+		)
+	}{
+		"success: found todo": {
+			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
+				cfg := testutil.NewTestConfig(t)
 
-		// load config
-		cfg, err := config.New()
-		require.NoError(t, err)
+				db := testutil.NewTestDB(t, cfg)
 
-		db := testutil.NewTestDB(t, cfg)
-		queryRepo := persistence.NewTodoQueriesGateway(db)
+				existingTodo := testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Unit Test Todo",
+					entity.UserID(1),
+				)
 
-		created := testutil.CreateTodo(t, db, entity.TodoListID(1), "Unit Test Todo", entity.UserID(1))
+				return db, existingTodo
+			},
+			test: func(
+				t *testing.T,
+				repo *persistence.TodoQueriesGateway,
+				existingTodo *entity.Todo,
+			) {
+				got, err := repo.Get(
+					context.Background(),
+					existingTodo.ID,
+				)
 
-		got, err := queryRepo.Get(context.Background(), created.ID)
+				require.NoError(t, err)
+				require.NotNil(t, got)
 
-		require.NoError(t, err)
-		require.NotNil(t, got)
-		assert.Equal(t, created.ID, got.ID)
-		assert.Equal(t, "Unit Test Todo", got.Title)
-	})
+				assert.Equal(t, existingTodo.ID, got.ID)
+				assert.Equal(t, "Unit Test Todo", got.Title)
+			},
+		},
 
-	t.Run("not found: returns nil nil", func(t *testing.T) {
-		t.Parallel()
+		"not found: returns nil nil": {
+			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
+				cfg := testutil.NewTestConfig(t)
 
-		// load config
-		cfg, err := config.New()
-		require.NoError(t, err)
+				db := testutil.NewTestDB(t, cfg)
 
-		db := testutil.NewTestDB(t, cfg)
-		queryRepo := persistence.NewTodoQueriesGateway(db)
+				return db, nil
+			},
+			test: func(
+				t *testing.T,
+				repo *persistence.TodoQueriesGateway,
+				_ *entity.Todo,
+			) {
+				got, err := repo.Get(
+					context.Background(),
+					entity.TodoID(9999),
+				)
 
-		got, err := queryRepo.Get(context.Background(), entity.TodoID(9999))
+				assert.NoError(t, err)
+				assert.Nil(t, got)
+			},
+		},
+	}
 
-		// not error
-		assert.NoError(t, err)
-		assert.Nil(t, got)
-	})
+	for name, tt := range tests {
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			db, existingTodo := tt.setup(t)
+
+			repo := persistence.NewTodoQueriesGateway(db)
+
+			tt.test(t, repo, existingTodo)
+		})
+	}
 }
 
 func TestTodoQueriesGateway_List(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		setup     func(t *testing.T, db *gorm.DB)
-		opts      gateway.ListTodosOptions
+		setup     func(t *testing.T) *gorm.DB
+		opts      gatewayinput.ListTodosOptions
 		wantLen   int
 		wantTotal int64
 	}{
 		"success: list by todo_list_id": {
-			setup: func(t *testing.T, db *gorm.DB) {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
 				for i := 0; i < 3; i++ {
-					testutil.CreateTodo(t, db,
+					testutil.CreateTodo(
+						t,
+						db,
 						entity.TodoListID(1),
 						fmt.Sprintf("Todo %d", i),
 						entity.UserID(1),
 					)
 				}
-				testutil.CreateTodo(t, db, entity.TodoListID(2), "Other List", entity.UserID(1))
+
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(2),
+					"Other List",
+					entity.UserID(1),
+				)
+
+				return db
 			},
-			opts: gateway.ListTodosOptions{
-				TodoListID: todoListIDPtr(entity.TodoListID(1)),
+			opts: gatewayinput.ListTodosOptions{
+				TodoListID: testutil.TodoListIDPtr(entity.TodoListID(1)),
 				Limit:      10,
 			},
 			wantLen:   3,
 			wantTotal: 3,
 		},
-		"success: filter by status PENDING": {
-			setup: func(t *testing.T, db *gorm.DB) {
+
+		"success: filter by status pending": {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
 				cmdRepo := persistence.NewTodoCommandsGateway(db)
 
-				testutil.CreateTodo(t, db, entity.TodoListID(1), "Pending 1", entity.UserID(1))
-				testutil.CreateTodo(t, db, entity.TodoListID(1), "Pending 2", entity.UserID(1))
-				done := testutil.CreateTodo(t, db, entity.TodoListID(1), "Done", entity.UserID(1))
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Pending 1",
+					entity.UserID(1),
+				)
 
-				// update status to DONE
-				done.Status = entity.TodoStatusDone
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Pending 2",
+					entity.UserID(1),
+				)
 
-				cmdRepo.Update(context.Background(), done)
+				doneTodo := testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Done",
+					entity.UserID(1),
+				)
+
+				doneTodo.Status = entity.TodoStatusDone
+
+				_, err := cmdRepo.Update(
+					context.Background(),
+					doneTodo,
+				)
+				require.NoError(t, err)
+
+				return db
 			},
-			opts: gateway.ListTodosOptions{
-				TodoListID: todoListIDPtr(entity.TodoListID(1)),
-				Status:     todoStatusPtr(entity.TodoStatusPending),
+			opts: gatewayinput.ListTodosOptions{
+				TodoListID: testutil.TodoListIDPtr(entity.TodoListID(1)),
+				Status:     testutil.TodoStatusPtr(entity.TodoStatusPending),
 				Limit:      10,
 			},
 			wantLen:   2,
 			wantTotal: 2,
 		},
+
 		"success: pagination": {
-			setup: func(t *testing.T, db *gorm.DB) {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
 				for i := 0; i < 5; i++ {
-					testutil.CreateTodo(t, db,
+					testutil.CreateTodo(
+						t,
+						db,
 						entity.TodoListID(1),
 						fmt.Sprintf("Todo %d", i),
 						entity.UserID(1),
 					)
 				}
+
+				return db
 			},
-			opts: gateway.ListTodosOptions{
-				TodoListID: todoListIDPtr(entity.TodoListID(1)),
+			opts: gatewayinput.ListTodosOptions{
+				TodoListID: testutil.TodoListIDPtr(entity.TodoListID(1)),
 				Limit:      3,
 				Offset:     3,
 			},
 			wantLen:   2,
 			wantTotal: 5,
 		},
+
 		"success: title search": {
-			setup: func(t *testing.T, db *gorm.DB) {
-				testutil.CreateTodo(t, db, entity.TodoListID(1), "todo 1", entity.UserID(1))
-				testutil.CreateTodo(t, db, entity.TodoListID(1), "todo 2", entity.UserID(1))
-				testutil.CreateTodo(t, db, entity.TodoListID(1), "task 3", entity.UserID(1))
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"todo 1",
+					entity.UserID(1),
+				)
+
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"todo 2",
+					entity.UserID(1),
+				)
+
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"task 3",
+					entity.UserID(1),
+				)
+
+				return db
 			},
-			opts: gateway.ListTodosOptions{
-				TodoListID:  todoListIDPtr(entity.TodoListID(1)),
-				TitleSearch: strPtr("todo"),
+			opts: gatewayinput.ListTodosOptions{
+				TodoListID:  testutil.TodoListIDPtr(entity.TodoListID(1)),
+				TitleSearch: testutil.StrPtr("todo"),
 				Limit:       10,
 			},
 			wantLen:   2,
 			wantTotal: 2,
 		},
+
 		"success: empty list": {
-			setup: func(t *testing.T, db *gorm.DB) {},
-			opts: gateway.ListTodosOptions{
-				TodoListID: todoListIDPtr(entity.TodoListID(1)),
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				return testutil.NewTestDB(t, cfg)
+			},
+			opts: gatewayinput.ListTodosOptions{
+				TodoListID: testutil.TodoListIDPtr(entity.TodoListID(1)),
 				Limit:      10,
 			},
 			wantLen:   0,
@@ -149,26 +277,24 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			// load config
-			cfg, err := config.New()
+			db := tt.setup(t)
+
+			repo := persistence.NewTodoQueriesGateway(db)
+
+			got, total, err := repo.List(
+				context.Background(),
+				&tt.opts,
+			)
+
 			require.NoError(t, err)
 
-			db := testutil.NewTestDB(t, cfg)
-			tt.setup(t, db)
-			queryRepo := persistence.NewTodoQueriesGateway(db)
-
-			got, total, err := queryRepo.List(context.Background(), tt.opts)
-
-			require.NoError(t, err)
 			assert.Len(t, got, tt.wantLen)
 			assert.Equal(t, tt.wantTotal, total)
 		})
 	}
 }
-
-// helper functions
-func todoListIDPtr(id entity.TodoListID) *entity.TodoListID { return &id }
-func todoStatusPtr(s entity.TodoStatus) *entity.TodoStatus  { return &s }

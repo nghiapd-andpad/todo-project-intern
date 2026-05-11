@@ -10,7 +10,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/errors"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/grpc/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
@@ -25,7 +25,7 @@ func (h *TodoHandler) ListTodos(ctx context.Context, req *todov1.ListTodosReques
 
 	// Build opts filters
 	listID := entity.TodoListID(parent.TodoListID)
-	opts := gateway.ListTodosOptions{
+	opts := gatewayinput.ListTodosOptions{
 		TodoListID: &listID,
 		Offset:     int(req.GetOffset()),
 		Limit:      int(req.GetPageSize()),

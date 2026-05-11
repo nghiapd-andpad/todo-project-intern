@@ -9,6 +9,7 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
@@ -37,7 +38,7 @@ func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID) (*en
 	return mapper.TodoToEntity(&m), nil
 }
 
-func (g *TodoQueriesGateway) List(ctx context.Context, opts gateway.ListTodosOptions) ([]*entity.Todo, int64, error) {
+func (g *TodoQueriesGateway) List(ctx context.Context, opts *gatewayinput.ListTodosOptions) ([]*entity.Todo, int64, error) {
 	// Build base query
 	q := g.db.WithContext(ctx).Model(&model.Todo{})
 

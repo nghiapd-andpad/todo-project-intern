@@ -10,7 +10,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/mock"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
@@ -43,14 +43,14 @@ func TestTodoLister_List(t *testing.T) {
 		"success: list todos": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
-					List(gomock.Any(), gateway.ListTodosOptions{
+					List(gomock.Any(), gatewayinput.ListTodosOptions{
 						TodoListID: &todoListID,
 						Limit:      20,
 					}).
 					Return(todoList, int64(2), nil)
 			},
 			input: &input.TodoLister{
-				Opts: gateway.ListTodosOptions{
+				Opts: gatewayinput.ListTodosOptions{
 					TodoListID: &todoListID,
 					Limit:      20,
 				},
@@ -65,7 +65,7 @@ func TestTodoLister_List(t *testing.T) {
 					List(gomock.Any(), gomock.Any()).
 					Return([]*entity.Todo{}, int64(0), nil)
 			},
-			input:    &input.TodoLister{Opts: gateway.ListTodosOptions{}},
+			input:    &input.TodoLister{Opts: gatewayinput.ListTodosOptions{}},
 			expected: &output.TodoLister{Todos: []*entity.Todo{}, Total: 0},
 			wantErr:  false,
 		},
@@ -73,7 +73,7 @@ func TestTodoLister_List(t *testing.T) {
 		"success: list with status filter": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
-					List(gomock.Any(), gateway.ListTodosOptions{
+					List(gomock.Any(), gatewayinput.ListTodosOptions{
 						TodoListID: &todoListID,
 						Status:     &pending,
 						Limit:      10,
@@ -82,7 +82,7 @@ func TestTodoLister_List(t *testing.T) {
 					Return(todoList[:1], int64(1), nil)
 			},
 			input: &input.TodoLister{
-				Opts: gateway.ListTodosOptions{
+				Opts: gatewayinput.ListTodosOptions{
 					TodoListID: &todoListID,
 					Status:     &pending,
 					Limit:      10,
@@ -99,8 +99,36 @@ func TestTodoLister_List(t *testing.T) {
 					List(gomock.Any(), gomock.Any()).
 					Return(nil, int64(0), fmt.Errorf("db error"))
 			},
-			input:   &input.TodoLister{Opts: gateway.ListTodosOptions{}},
+			input:   &input.TodoLister{Opts: gatewayinput.ListTodosOptions{}},
 			wantErr: true,
+		},
+
+		"error: validation failed (limit too high)": {
+			prepare: func(f *fields) {},
+			input: &input.TodoLister{
+				Opts: gatewayinput.ListTodosOptions{
+					Limit: 101,
+				},
+			},
+			wantErr: true,
+		},
+
+		"success: list todos with default limit": {
+			prepare: func(f *fields) {
+				f.mockQueries.EXPECT().
+					List(gomock.Any(), &gatewayinput.ListTodosOptions{
+						TodoListID: &todoListID,
+						Limit:      20,
+					}).
+					Return(todoList, int64(2), nil)
+			},
+			input: &input.TodoLister{
+				Opts: gatewayinput.ListTodosOptions{
+					Limit: 0,
+				},
+			},
+			expected: &output.TodoLister{Todos: todoList, Total: 2},
+			wantErr:  false,
 		},
 	}
 

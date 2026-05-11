@@ -3,7 +3,7 @@ package input
 
 import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 )
 
 type TodoGetter struct {
@@ -11,7 +11,7 @@ type TodoGetter struct {
 }
 
 type TodoLister struct {
-	Opts gateway.ListTodosOptions
+	Opts input.ListTodosOptions
 }
 
 type TodoCreator struct {

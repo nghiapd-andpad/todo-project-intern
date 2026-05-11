@@ -10,7 +10,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/mock"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/todos/input"
@@ -44,14 +44,14 @@ func TestTodoListLister_List(t *testing.T) {
 		"success: list all": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
-					List(gomock.Any(), gateway.ListTodoListsOptions{
+					List(gomock.Any(), gatewayinput.ListTodoListsOptions{
 						OwnerID: &ownerID,
 						Limit:   20,
 					}).
 					Return(todoLists, int64(2), nil)
 			},
 			input: &input.TodoListLister{
-				Opts: gateway.ListTodoListsOptions{
+				Opts: gatewayinput.ListTodoListsOptions{
 					OwnerID: &ownerID,
 					Limit:   20,
 				},
@@ -65,14 +65,14 @@ func TestTodoListLister_List(t *testing.T) {
 					List(gomock.Any(), gomock.Any()).
 					Return([]*entity.TodoList{}, int64(0), nil)
 			},
-			input:    &input.TodoListLister{Opts: gateway.ListTodoListsOptions{}},
+			input:    &input.TodoListLister{Opts: gatewayinput.ListTodoListsOptions{}},
 			expected: &output.TodoListLister{TodoLists: []*entity.TodoList{}, Total: 0},
 			wantErr:  false,
 		},
 		"success: with name search": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
-					List(gomock.Any(), gateway.ListTodoListsOptions{
+					List(gomock.Any(), gatewayinput.ListTodoListsOptions{
 						OwnerID:    &ownerID,
 						NameSearch: &nameSearch,
 						Limit:      10,
@@ -80,7 +80,7 @@ func TestTodoListLister_List(t *testing.T) {
 					Return(todoLists[:1], int64(1), nil)
 			},
 			input: &input.TodoListLister{
-				Opts: gateway.ListTodoListsOptions{
+				Opts: gatewayinput.ListTodoListsOptions{
 					OwnerID:    &ownerID,
 					NameSearch: &nameSearch,
 					Limit:      10,
@@ -95,7 +95,7 @@ func TestTodoListLister_List(t *testing.T) {
 					List(gomock.Any(), gomock.Any()).
 					Return(nil, int64(0), fmt.Errorf("db error"))
 			},
-			input:   &input.TodoListLister{Opts: gateway.ListTodoListsOptions{}},
+			input:   &input.TodoListLister{Opts: gatewayinput.ListTodoListsOptions{}},
 			wantErr: true,
 		},
 	}

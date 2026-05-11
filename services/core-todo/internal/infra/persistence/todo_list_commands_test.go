@@ -8,23 +8,25 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/testutil"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/testutil"
 )
 
 func TestTodoListCommandsGateway_Create(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.New()
-	require.NoError(t, err)
-
 	tests := map[string]struct {
+		setup    func(t *testing.T) *gorm.DB
 		input    *entity.TodoList
 		validate func(t *testing.T, got *entity.TodoList)
 	}{
 		"success: basic create": {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				return testutil.NewTestDB(t, cfg)
+			},
 			input: &entity.TodoList{
 				Name:    "Work Tasks",
 				OwnerID: entity.UserID(1),
@@ -33,12 +35,18 @@ func TestTodoListCommandsGateway_Create(t *testing.T) {
 				assert.NotZero(t, got.ID)
 				assert.Equal(t, "Work Tasks", got.Name)
 				assert.Equal(t, entity.UserID(1), got.OwnerID)
+
 				assert.NotZero(t, got.CreatedAt)
 				assert.NotZero(t, got.UpdatedAt)
 			},
 		},
 
 		"success: different owner": {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				return testutil.NewTestDB(t, cfg)
+			},
 			input: &entity.TodoList{
 				Name:    "Personal",
 				OwnerID: entity.UserID(2),
@@ -51,10 +59,13 @@ func TestTodoListCommandsGateway_Create(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testutil.NewTestDB(t, cfg)
+			db := tt.setup(t)
+
 			repo := persistence.NewTodoListCommandsGateway(db)
 
 			got, err := repo.Create(context.Background(), tt.input)
@@ -70,20 +81,28 @@ func TestTodoListCommandsGateway_Create(t *testing.T) {
 func TestTodoListCommandsGateway_Update(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.New()
-	require.NoError(t, err)
-
 	tests := map[string]struct {
-		setup    func(t *testing.T, db *gorm.DB) *entity.TodoList
-		mutate   func(tl *entity.TodoList)
+		setup    func(t *testing.T) (*gorm.DB, *entity.TodoList)
+		mutate   func(todoList *entity.TodoList)
 		validate func(t *testing.T, got *entity.TodoList)
 	}{
 		"success: update name": {
-			setup: func(t *testing.T, db *gorm.DB) *entity.TodoList {
-				return testutil.CreateTodoList(t, db, "Old Name", entity.UserID(1))
+			setup: func(t *testing.T) (*gorm.DB, *entity.TodoList) {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
+				existingTodoList := testutil.CreateTodoList(
+					t,
+					db,
+					"Old Name",
+					entity.UserID(1),
+				)
+
+				return db, existingTodoList
 			},
-			mutate: func(tl *entity.TodoList) {
-				tl.Name = "New Name"
+			mutate: func(todoList *entity.TodoList) {
+				todoList.Name = "New Name"
 			},
 			validate: func(t *testing.T, got *entity.TodoList) {
 				assert.Equal(t, "New Name", got.Name)
@@ -92,11 +111,22 @@ func TestTodoListCommandsGateway_Update(t *testing.T) {
 		},
 
 		"success: update owner": {
-			setup: func(t *testing.T, db *gorm.DB) *entity.TodoList {
-				return testutil.CreateTodoList(t, db, "Project A", entity.UserID(1))
+			setup: func(t *testing.T) (*gorm.DB, *entity.TodoList) {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
+				existingTodoList := testutil.CreateTodoList(
+					t,
+					db,
+					"Project A",
+					entity.UserID(1),
+				)
+
+				return db, existingTodoList
 			},
-			mutate: func(tl *entity.TodoList) {
-				tl.OwnerID = entity.UserID(2)
+			mutate: func(todoList *entity.TodoList) {
+				todoList.OwnerID = entity.UserID(2)
 			},
 			validate: func(t *testing.T, got *entity.TodoList) {
 				assert.Equal(t, entity.UserID(2), got.OwnerID)
@@ -106,16 +136,18 @@ func TestTodoListCommandsGateway_Update(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testutil.NewTestDB(t, cfg)
+			db, existingTodoList := tt.setup(t)
+
 			repo := persistence.NewTodoListCommandsGateway(db)
 
-			existing := tt.setup(t, db)
-			tt.mutate(existing)
+			tt.mutate(existingTodoList)
 
-			got, err := repo.Update(context.Background(), existing)
+			got, err := repo.Update(context.Background(), existingTodoList)
 
 			require.NoError(t, err)
 			require.NotNil(t, got)
@@ -128,28 +160,73 @@ func TestTodoListCommandsGateway_Update(t *testing.T) {
 func TestTodoListCommandsGateway_Delete(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.New()
-	require.NoError(t, err)
+	tests := map[string]struct {
+		setup    func(t *testing.T) *gorm.DB
+		testFunc func(
+			t *testing.T,
+			db *gorm.DB,
+			repo *persistence.TodoListCommandsGateway,
+		)
+	}{
+		"success: delete existing todo list": {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
 
-	t.Run("success: delete existing todo list", func(t *testing.T) {
-		t.Parallel()
+				return testutil.NewTestDB(t, cfg)
+			},
+			testFunc: func(
+				t *testing.T,
+				db *gorm.DB,
+				repo *persistence.TodoListCommandsGateway,
+			) {
+				existingTodoList := testutil.CreateTodoList(
+					t,
+					db,
+					"To Delete",
+					entity.UserID(1),
+				)
 
-		db := testutil.NewTestDB(t, cfg)
-		repo := persistence.NewTodoListCommandsGateway(db)
+				err := repo.Delete(
+					context.Background(),
+					existingTodoList.ID,
+				)
 
-		tl := testutil.CreateTodoList(t, db, "To Delete", entity.UserID(1))
+				require.NoError(t, err)
+			},
+		},
 
-		err := repo.Delete(context.Background(), tl.ID)
-		require.NoError(t, err)
-	})
+		"success: delete non-existent - no error": {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
 
-	t.Run("success: delete non-existent - no error", func(t *testing.T) {
-		t.Parallel()
+				return testutil.NewTestDB(t, cfg)
+			},
+			testFunc: func(
+				t *testing.T,
+				_ *gorm.DB,
+				repo *persistence.TodoListCommandsGateway,
+			) {
+				err := repo.Delete(
+					context.Background(),
+					entity.TodoListID(9999),
+				)
 
-		db := testutil.NewTestDB(t, cfg)
-		repo := persistence.NewTodoListCommandsGateway(db)
+				assert.NoError(t, err)
+			},
+		},
+	}
 
-		err := repo.Delete(context.Background(), entity.TodoListID(9999))
-		assert.NoError(t, err)
-	})
+	for name, tt := range tests {
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			db := tt.setup(t)
+
+			repo := persistence.NewTodoListCommandsGateway(db)
+
+			tt.testFunc(t, db, repo)
+		})
+	}
 }
