@@ -19,7 +19,7 @@ import (
 
 type App struct {
 	Resolver   *graph.Resolver
-	JwtManager *jwt.JwtManager
+	JwtManager *jwt.JWTManager
 }
 
 func InitializeApp(cfg *config.Config) (*App, func(), error) {

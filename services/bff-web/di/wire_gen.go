@@ -59,5 +59,5 @@ func InitializeApp(cfg *config.Config) (*App, func(), error) {
 
 type App struct {
 	Resolver   *graph.Resolver
-	JwtManager *jwt.JwtManager
+	JwtManager *jwt.JWTManager
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/infra/jwt"
 )
 
-func AuthMiddleware(jwtManager *jwt.JwtManager) func(http.Handler) http.Handler {
+func AuthMiddleware(jwtManager *jwt.JWTManager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")

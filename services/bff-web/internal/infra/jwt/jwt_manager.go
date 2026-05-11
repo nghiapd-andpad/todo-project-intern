@@ -21,15 +21,15 @@ type TokenPayload struct {
 	Roles  []string
 }
 
-type JwtManager struct {
+type JWTManager struct {
 	secretKey []byte
 }
 
-func NewJwtManager(cfg *config.Config) *JwtManager {
-	return &JwtManager{secretKey: []byte(cfg.JWTSecret)}
+func NewJwtManager(cfg *config.Config) *JWTManager {
+	return &JWTManager{secretKey: []byte(cfg.JWTSecret)}
 }
 
-func (m *JwtManager) Verify(tokenStr string) (*TokenPayload, error) {
+func (m *JWTManager) Verify(tokenStr string) (*TokenPayload, error) {
 	claims := &Claims{}
 
 	token, err := jwt.ParseWithClaims(
