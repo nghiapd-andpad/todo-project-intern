@@ -21,7 +21,7 @@ func NewTodoListCreator(todoListCommandsGateway gateway.TodoListCommandsGateway)
 func (s *TodoListCreator) Create(ctx context.Context, in *input.TodoListCreator) (*output.TodoListCreator, error) {
 	todoList := &entity.TodoList{
 		Name:    in.Name,
-		OwnerID: in.OwnerID,
+		OwnerID: in.RequesterID,
 	}
 
 	created, err := s.todoListCommandsGateway.Create(ctx, todoList)

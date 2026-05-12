@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
@@ -12,52 +11,51 @@ import (
 )
 
 type TodoUpdater struct {
-	todoCommandsGateway gateway.TodoCommandsGateway
-	todoQueriesGateway  gateway.TodoQueriesGateway
+	todoListQueriesGateway gateway.TodoListQueriesGateway
+	todoQueriesGateway     gateway.TodoQueriesGateway
+	todoCommandsGateway    gateway.TodoCommandsGateway
 }
 
 func NewTodoUpdater(
-	todoCommandsGateway gateway.TodoCommandsGateway,
+	todoListQueriesGateway gateway.TodoListQueriesGateway,
 	todoQueriesGateway gateway.TodoQueriesGateway,
+	todoCommandsGateway gateway.TodoCommandsGateway,
 ) *TodoUpdater {
 	return &TodoUpdater{
-		todoCommandsGateway: todoCommandsGateway,
-		todoQueriesGateway:  todoQueriesGateway,
+		todoListQueriesGateway: todoListQueriesGateway,
+		todoQueriesGateway:     todoQueriesGateway,
+		todoCommandsGateway:    todoCommandsGateway,
 	}
 }
 
 func (s *TodoUpdater) Update(ctx context.Context, in *input.TodoUpdater) (*output.TodoUpdater, error) {
-	todo, err := s.todoQueriesGateway.Get(ctx, in.ID)
+	todo, err := s.todoQueriesGateway.Get(ctx, in.TodoID, in.TodoListID)
 	if err != nil {
-		return nil, fmt.Errorf("TodoUpdater.Get: %w", err)
+		return nil, fmt.Errorf("TodoUpdater.Update: %w", err)
 	}
 	if todo == nil {
-		return nil, entity.NewNotFound("todo not found").
-			WithDetail("todo_id", fmt.Sprintf("%d", in.ID))
+		return nil, entity.NewNotFound("todo not found")
 	}
 
-	if in.Title != nil {
-		todo.Title = *in.Title
+	todoList, err := s.todoListQueriesGateway.Get(ctx, in.TodoListID)
+	if err != nil {
+		return nil, fmt.Errorf("TodoUpdater.Update: %w", err)
 	}
-	if in.Description != nil {
-		todo.Description = in.Description
+	if todoList == nil {
+		return nil, entity.NewNotFound("todo list not found")
 	}
-	if in.Status != nil {
-		todo.Status = *in.Status
+
+	isOwner := todoList.OwnerID == in.RequesterID
+	isAssignee := todo.AssigneeID != nil && *todo.AssigneeID == in.RequesterID
+	if !isOwner && !isAssignee {
+		return nil, entity.NewAuthZ("you do not have permission to update this todo")
 	}
-	if in.Priority != nil {
-		todo.Priority = *in.Priority
-	}
-	if in.AssigneeID != nil {
-		todo.AssigneeID = in.AssigneeID
-	}
-	if in.DueDate != nil {
-		parsed, err := time.Parse("2006-01-02", *in.DueDate)
-		if err != nil {
-			return nil, entity.NewInvalidParameter("invalid due_date format, expected YYYY-MM-DD").
-				WithDetail("due_date", *in.DueDate)
-		}
-		todo.DueDate = &parsed
+
+	if isOwner {
+		applyAllFields(todo, in.Fields)
+	} else {
+		// only update status
+		applyAssigneeFields(todo, in.Fields)
 	}
 
 	updated, err := s.todoCommandsGateway.Update(ctx, todo)
@@ -66,4 +64,31 @@ func (s *TodoUpdater) Update(ctx context.Context, in *input.TodoUpdater) (*outpu
 	}
 
 	return &output.TodoUpdater{Todo: updated}, nil
+}
+
+func applyAllFields(todo *entity.Todo, fields input.UpdateTodoFields) {
+	if fields.Title != nil {
+		todo.Title = *fields.Title
+	}
+	if fields.Description != nil {
+		todo.Description = fields.Description
+	}
+	if fields.Status != nil {
+		todo.Status = *fields.Status
+	}
+	if fields.Priority != nil {
+		todo.Priority = *fields.Priority
+	}
+	if fields.DueDate != nil {
+		todo.DueDate = fields.DueDate
+	}
+	if fields.AssigneeID != nil {
+		todo.AssigneeID = fields.AssigneeID
+	}
+}
+
+func applyAssigneeFields(todo *entity.Todo, fields input.UpdateTodoFields) {
+	if fields.Status != nil {
+		todo.Status = *fields.Status
+	}
 }

@@ -22,7 +22,7 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 		return nil, nil, err
 	}
 	todoCommandsGateway := persistence.NewTodoCommandsGateway(db)
-	todoCreator := service.NewTodoCreator(todoCommandsGateway)
+	todoCreator := service.NewTodoCreator(todoCommandsGateway, cfg)
 	todoQueriesGateway := persistence.NewTodoQueriesGateway(db)
 	todoGetter := service.NewTodoGetter(todoQueriesGateway)
 	todoLister := service.NewTodoLister(todoQueriesGateway)

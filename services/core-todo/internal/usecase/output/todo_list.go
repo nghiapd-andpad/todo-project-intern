@@ -1,14 +1,16 @@
 package output
 
-import "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+import (
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/shared/pagination"
+)
 
 type TodoListGetter struct {
 	TodoList *entity.TodoList
 }
 
 type TodoListLister struct {
-	TodoLists []*entity.TodoList
-	Total     int64
+	Page *pagination.Page[*entity.TodoList]
 }
 
 type TodoListCreator struct {

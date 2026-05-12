@@ -2,38 +2,56 @@
 package input
 
 import (
+	"time"
+
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 )
 
 type TodoGetter struct {
-	ID entity.TodoID
+	TodoID      entity.TodoID
+	TodoListID  entity.TodoListID
+	RequesterID entity.UserID
 }
 
 type TodoLister struct {
-	Opts input.ListTodosOptions
+	TodoListID  entity.TodoListID
+	RequesterID entity.UserID
+	// Optional filters
+	Status      *entity.TodoStatus
+	Priority    *entity.Priority
+	TitleSearch *string
+	Offset      int
+	Limit       int
 }
 
 type TodoCreator struct {
 	TodoListID  entity.TodoListID
+	RequesterID entity.UserID
 	Title       string
 	Description *string
 	Priority    entity.Priority
-	DueDate     *string // "2006-01-02" — parse ở usecase
+	DueDate     *time.Time
 	AssigneeID  *entity.UserID
-	CreatorID   entity.UserID
 }
 
-type TodoUpdater struct {
-	ID          entity.TodoID
+type UpdateTodoFields struct {
 	Title       *string
 	Description *string
 	Status      *entity.TodoStatus
 	Priority    *entity.Priority
-	DueDate     *string
+	DueDate     *time.Time
 	AssigneeID  *entity.UserID
 }
 
+type TodoUpdater struct {
+	TodoID      entity.TodoID
+	TodoListID  entity.TodoListID
+	RequesterID entity.UserID
+	Fields      UpdateTodoFields
+}
+
 type TodoDeleter struct {
-	ID entity.TodoID
+	TodoID      entity.TodoID
+	TodoListID  entity.TodoListID
+	RequesterID entity.UserID
 }

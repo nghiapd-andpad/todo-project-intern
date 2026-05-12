@@ -49,7 +49,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	todoListQrs := persistence.NewTodoListQueriesGateway(db)
 
 	// USECASE
-	todoCreator := service.NewTodoCreator(todoCmds)
+	todoCreator := service.NewTodoCreator(todoCmds, cfg)
 	todoGetter := service.NewTodoGetter(todoQueries)
 	todoLister := service.NewTodoLister(todoQueries)
 	todoUpdater := service.NewTodoUpdater(todoCmds, todoQueries)

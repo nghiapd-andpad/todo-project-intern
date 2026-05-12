@@ -31,7 +31,6 @@ type Todo struct {
 	Priority    Priority
 	AssigneeID  *UserID
 	DueDate     *time.Time
-	CreatorID   UserID
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

@@ -2,27 +2,47 @@ package input
 
 import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
+)
+
+// TodoListFilter defines the scope of ListTodoLists.
+type TodoListFilter string
+
+const (
+	// TodoListFilterAll returns lists owned by the user or containing todos assigned to the user.
+	TodoListFilterAll TodoListFilter = "ALL"
+	// TodoListFilterOwned returns only lists owned by the user.
+	TodoListFilterOwned TodoListFilter = "OWNED"
+	// TodoListFilterAssigned returns only lists containing todos assigned to the user.
+	TodoListFilterAssigned TodoListFilter = "ASSIGNED"
 )
 
 type TodoListGetter struct {
-	ID entity.TodoListID
+	TodoListID  entity.TodoListID
+	RequesterID entity.UserID
 }
 
 type TodoListLister struct {
-	Opts input.ListTodoListsOptions
+	RequesterID entity.UserID
+	// Filter defaults to TodoListFilterAll.
+	Filter TodoListFilter
+	// Optional filters
+	NameSearch *string
+	Offset     int
+	Limit      int
 }
 
 type TodoListCreator struct {
-	Name    string
-	OwnerID entity.UserID
+	Name        string
+	RequesterID entity.UserID
 }
 
 type TodoListUpdater struct {
-	ID   entity.TodoListID
-	Name *string
+	TodoListID  entity.TodoListID
+	RequesterID entity.UserID
+	Name        *string
 }
 
 type TodoListDeleter struct {
-	ID entity.TodoListID
+	TodoListID  entity.TodoListID
+	RequesterID entity.UserID
 }

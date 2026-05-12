@@ -19,14 +19,19 @@ func NewTodoListGetter(todoListQueriesGateway gateway.TodoListQueriesGateway) *T
 }
 
 func (s *TodoListGetter) Get(ctx context.Context, in *input.TodoListGetter) (*output.TodoListGetter, error) {
-	todoList, err := s.todoListQueriesGateway.Get(ctx, in.ID)
+	todoList, err := s.todoListQueriesGateway.Get(ctx, in.TodoListID)
 	if err != nil {
 		return nil, fmt.Errorf("TodoListGetter.Get: %w", err)
 	}
-
 	if todoList == nil {
 		return nil, entity.NewNotFound("todo list not found").
-			WithDetail("todo_list_id", fmt.Sprintf("%d", in.ID))
+			WithDetail("todo_list_id", fmt.Sprintf("%d", in.TodoListID))
+	}
+
+	if todoList.OwnerID != in.RequesterID {
+		return nil, entity.NewAuthZ("you do not have permission to access this todo list").
+			WithDetail("owner_id", fmt.Sprintf("%d", todoList.OwnerID)).
+			WithDetail("requester_id", fmt.Sprintf("%d", in.RequesterID))
 	}
 
 	return &output.TodoListGetter{TodoList: todoList}, nil

@@ -26,13 +26,19 @@ func NewTodoListUpdater(
 }
 
 func (s *TodoListUpdater) Update(ctx context.Context, in *input.TodoListUpdater) (*output.TodoListUpdater, error) {
-	todoList, err := s.todoListQueriesGateway.Get(ctx, in.ID)
+	todoList, err := s.todoListQueriesGateway.Get(ctx, in.TodoListID)
 	if err != nil {
 		return nil, fmt.Errorf("TodoListUpdater.Get: %w", err)
 	}
 	if todoList == nil {
 		return nil, entity.NewNotFound("todo list not found").
-			WithDetail("todo_list_id", fmt.Sprintf("%d", in.ID))
+			WithDetail("todo_list_id", fmt.Sprintf("%d", in.TodoListID))
+	}
+
+	if todoList.OwnerID != in.RequesterID {
+		return nil, entity.NewAuthZ("you do not have permission to update this todo list").
+			WithDetail("owner_id", fmt.Sprintf("%d", todoList.OwnerID)).
+			WithDetail("requester_id", fmt.Sprintf("%d", in.RequesterID))
 	}
 
 	if in.Name != nil {

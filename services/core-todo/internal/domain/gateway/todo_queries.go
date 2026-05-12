@@ -11,6 +11,6 @@ import (
 )
 
 type TodoQueriesGateway interface {
-	Get(ctx context.Context, todoID entity.TodoID) (*entity.Todo, error)
+	Get(ctx context.Context, todoID entity.TodoID, todoListID entity.TodoListID) (*entity.Todo, error)
 	List(ctx context.Context, opts *input.ListTodosOptions) ([]*entity.Todo, int64, error)
 }

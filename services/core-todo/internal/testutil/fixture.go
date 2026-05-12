@@ -35,7 +35,7 @@ func CreateTodo(t *testing.T, db *gorm.DB, todoListID entity.TodoListID, title s
 		Title:      title,
 		Status:     entity.TodoStatusPending,
 		Priority:   entity.PriorityMedium,
-		CreatorID:  creatorID,
+		// CreatorID:  creatorID,
 	})
 	if err != nil {
 		t.Fatalf("fixture CreateTodo: %v", err)

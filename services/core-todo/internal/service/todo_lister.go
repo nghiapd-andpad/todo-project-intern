@@ -7,58 +7,59 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/shared/pagination"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/output"
 )
 
 type TodoLister struct {
-	todoQueriesGateway gateway.TodoQueriesGateway
+	todoListQueriesGateway gateway.TodoListQueriesGateway
+	todoQueriesGateway     gateway.TodoQueriesGateway
 }
 
-func NewTodoLister(todoQueriesGateway gateway.TodoQueriesGateway) *TodoLister {
-	return &TodoLister{todoQueriesGateway: todoQueriesGateway}
+func NewTodoLister(todoListQueriesGateway gateway.TodoListQueriesGateway, todoQueriesGateway gateway.TodoQueriesGateway) *TodoLister {
+	return &TodoLister{
+		todoListQueriesGateway: todoListQueriesGateway,
+		todoQueriesGateway:     todoQueriesGateway,
+	}
 }
 
 func (s *TodoLister) List(ctx context.Context, in *input.TodoLister) (*output.TodoLister, error) {
-	if in == nil {
-		in = &input.TodoLister{}
+	todoList, err := s.todoListQueriesGateway.Get(ctx, in.TodoListID)
+	if err != nil {
+		return nil, fmt.Errorf("TodoLister.List: %w", err)
+	}
+	if todoList == nil {
+		return nil, entity.NewNotFound("todo list not found")
 	}
 
-	s.applyDefaults(&in.Opts)
-	if err := s.validate(&in.Opts); err != nil {
-		return nil, err
-	}
+	opts := s.buildGatewayOpts(in, todoList)
 
-	todos, total, err := s.todoQueriesGateway.List(ctx, &in.Opts)
+	items, total, err := s.todoQueriesGateway.List(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("TodoLister.List: %w", err)
 	}
 
 	return &output.TodoLister{
-		Todos: todos,
-		Total: total,
+		Page: pagination.New(items, total, in.Offset, in.Limit),
 	}, nil
 }
 
-func (s *TodoLister) applyDefaults(o *gatewayinput.ListTodosOptions) {
+func (s *TodoLister) buildGatewayOpts(in *input.TodoLister, todoList *entity.TodoList) *gatewayinput.ListTodosOptions {
+	opts := &gatewayinput.ListTodosOptions{
+		TodoListID:  in.TodoListID,
+		Status:      in.Status,
+		Priority:    in.Priority,
+		TitleSearch: in.TitleSearch,
+		Offset:      in.Offset,
+		Limit:       in.Limit,
+	}
 
-	if o.Limit == 0 {
-		o.Limit = 20
+	if todoList.OwnerID == in.RequesterID {
+		opts.AssigneeOnly = nil
+	} else {
+		opts.AssigneeOnly = &in.RequesterID
 	}
-}
 
-func (s *TodoLister) validate(o *gatewayinput.ListTodosOptions) error {
-	if o.Limit < 0 {
-		return entity.NewInvalidParameter("limit must be non-negative")
-	}
-	if o.Limit > 100 {
-		return entity.NewInvalidParameter("limit must not exceed 100")
-	}
-	if o.Offset < 0 {
-		return entity.NewInvalidParameter("offset must be non-negative")
-	}
-	if o.TitleSearch != nil && len(*o.TitleSearch) > 255 {
-		return entity.NewInvalidParameter("title_search too long")
-	}
-	return nil
+	return opts
 }

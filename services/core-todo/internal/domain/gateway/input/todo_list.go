@@ -4,6 +4,7 @@ import "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/interna
 
 type ListTodoListsOptions struct {
 	OwnerID    *entity.UserID
+	AssigneeID *entity.UserID
 	NameSearch *string
 	Offset     int
 	Limit      int

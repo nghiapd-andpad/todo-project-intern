@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
@@ -14,19 +13,17 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/output"
 )
 
-// type TodoCreator struct {
-// 	todoCommandsGateway gateway.TodoCommandsGateway
-// }
-
 type TodoCreator struct {
-	todoCommandsGateway gateway.TodoCommandsGateway
-	cfg                 *config.Config
+	todoListQueriesGateway gateway.TodoListQueriesGateway
+	todoCommandsGateway    gateway.TodoCommandsGateway
+	cfg                    *config.Config
 }
 
-func NewTodoCreator(todoCommandsGateway gateway.TodoCommandsGateway, cfg *config.Config) *TodoCreator {
+func NewTodoCreator(todoListQueriesGateway gateway.TodoListQueriesGateway, todoCommandsGateway gateway.TodoCommandsGateway, cfg *config.Config) *TodoCreator {
 	return &TodoCreator{
-		todoCommandsGateway: todoCommandsGateway,
-		cfg:                 cfg,
+		todoListQueriesGateway: todoListQueriesGateway,
+		todoCommandsGateway:    todoCommandsGateway,
+		cfg:                    cfg,
 	}
 }
 
@@ -38,14 +35,19 @@ func (s *TodoCreator) Create(ctx context.Context, in *input.TodoCreator) (*outpu
 		}
 	}
 
-	var dueDate *time.Time
-	if in.DueDate != nil {
-		parsed, err := time.Parse("2006-01-02", *in.DueDate)
-		if err != nil {
-			return nil, entity.NewInvalidParameter("invalid due_date format, expected YYYY-MM-DD").
-				WithDetail("due_date", *in.DueDate)
-		}
-		dueDate = &parsed
+	// Find todo list
+	todoList, err := s.todoListQueriesGateway.Get(ctx, in.TodoListID)
+	if err != nil {
+		return nil, fmt.Errorf("TodoCreator.Create: %w", err)
+	}
+	if todoList == nil {
+		return nil, entity.NewNotFound("todo list not found")
+	}
+
+	if todoList.OwnerID != in.RequesterID {
+		return nil, entity.NewAuthZ("you do not have permission to create todo in this list").
+			WithDetail("owner_id", fmt.Sprintf("%d", todoList.OwnerID)).
+			WithDetail("requester_id", fmt.Sprintf("%d", in.RequesterID))
 	}
 
 	todo := &entity.Todo{
@@ -54,9 +56,8 @@ func (s *TodoCreator) Create(ctx context.Context, in *input.TodoCreator) (*outpu
 		Description: in.Description,
 		Status:      entity.TodoStatusPending,
 		Priority:    in.Priority,
-		DueDate:     dueDate,
+		DueDate:     in.DueDate,
 		AssigneeID:  in.AssigneeID,
-		CreatorID:   in.CreatorID,
 	}
 
 	created, err := s.todoCommandsGateway.Create(ctx, todo)
