@@ -26,7 +26,7 @@
 - dat ten package chua dung chuan Go vi du [auth_client.go](services/bff-web/internal/infra/grpc_client/auth_client.go)
 - Interface va implement cua no dang dat trong cung 1 file, can tach ra, vi du  [todo_queries.go](services/core-todo/internal/domain/gateway/todo_queries.go)
 - Unit test: follow Remote service
-- 
+
 
 # REVIEW 2026-05-11
 - Trong resolver nen dat ten doi utong/field muon lay gia tri luon, vi du [resolver.go](services/bff-web/internal/handler/graph/resolver.go)
@@ -34,6 +34,12 @@
 - Su dung mot so method da bi deprecated, vi du: [auth_client.go](services/bff-web/internal/infra/grpcclient/auth_client.go)
 - Van con mot so cho dang ignore error, vi du: [todo_client.go](services/bff-web/internal/infra/grpcclient/todo_client.go)
 - Follow cach dat ten cho mot so thuat ngu trong Go, vi du: [jwt.go](services/bff-web/internal/infra/jwt/jwt.go)
-- Van con co business logic trong gateway interface: [jwt.go](services/bff-web/internal/infra/jwt/jwt.go)
 - Bo sung feature flag/blacklist trong API create user/todo va update unit test --> muc dich de xem cach implement va cach xu ly unit test khi on/off flag
   - Trong unit test, neu can truyen config vao trong tung bo test 
+
+
+# REVIEW 2026-05-12
+- VFunc New... van con return interface, vi du: [user_queries.go](services/core-user/internal/infra/persistence/user_queries.go), [user_authenticator.go](services/core-user/internal/usecase/user/user_authenticator.go)
+- Van con define struct va business logic trong cung 1 file voi interface, vi du [todo_queries.go](services/core-todo/internal/domain/gateway/todo_queries.go)
+- TODO comment, vi du [todo.resolvers.go](services/bff-web/internal/handler/graph/todo.resolvers.go)
+- 
