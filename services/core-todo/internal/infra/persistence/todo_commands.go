@@ -23,9 +23,11 @@ func NewTodoCommandsGateway(db *gorm.DB) *TodoCommandsGateway {
 }
 
 func (g *TodoCommandsGateway) Create(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
+	conn := connFromContext(ctx, g.db)
+
 	m := mapper.TodoFromEntity(todo)
 
-	if err := g.db.WithContext(ctx).Create(m).Error; err != nil {
+	if err := conn.Create(m).Error; err != nil {
 		return nil, fmt.Errorf("db create todo: %w", err)
 	}
 
@@ -33,9 +35,11 @@ func (g *TodoCommandsGateway) Create(ctx context.Context, todo *entity.Todo) (*e
 }
 
 func (g *TodoCommandsGateway) Update(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
+	conn := connFromContext(ctx, g.db)
+
 	m := mapper.TodoFromEntity(todo)
 
-	if err := g.db.WithContext(ctx).Save(m).Error; err != nil {
+	if err := conn.Save(m).Error; err != nil {
 		return nil, fmt.Errorf("db update todo: %w", err)
 	}
 
@@ -43,11 +47,23 @@ func (g *TodoCommandsGateway) Update(ctx context.Context, todo *entity.Todo) (*e
 }
 
 func (g *TodoCommandsGateway) Delete(ctx context.Context, todoID entity.TodoID) error {
+	conn := connFromContext(ctx, g.db)
+
 	// soft delete
-	result := g.db.WithContext(ctx).Delete(&model.Todo{}, int64(todoID))
+	result := conn.Delete(&model.Todo{}, int64(todoID))
 
 	if result.Error != nil {
 		return fmt.Errorf("db delete todo: %w", result.Error)
+	}
+
+	return nil
+}
+
+func (g *TodoCommandsGateway) DeleteByTodoListID(ctx context.Context, todoListID entity.TodoListID) error {
+	conn := connFromContext(ctx, g.db)
+
+	if err := conn.Where("todo_list_id = ?", int64(todoListID)).Delete(&model.Todo{}).Error; err != nil {
+		return fmt.Errorf("db delete todos by list id: %w", err)
 	}
 
 	return nil

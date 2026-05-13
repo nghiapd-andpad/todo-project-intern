@@ -11,14 +11,23 @@ import (
 )
 
 type TodoListDeleter struct {
+	transactor              gateway.Transactor
 	todoListQueriesGateway  gateway.TodoListQueriesGateway
 	todoListCommandsGateway gateway.TodoListCommandsGateway
+	todoCommandsGateway     gateway.TodoCommandsGateway
 }
 
-func NewTodoListDeleter(todoListQueriesGateway gateway.TodoListQueriesGateway, todoListCommandsGateway gateway.TodoListCommandsGateway) *TodoListDeleter {
+func NewTodoListDeleter(
+	transactor gateway.Transactor,
+	todoListQueriesGateway gateway.TodoListQueriesGateway,
+	todoListCommandsGateway gateway.TodoListCommandsGateway,
+	todoCommandsGateway gateway.TodoCommandsGateway,
+) *TodoListDeleter {
 	return &TodoListDeleter{
+		transactor:              transactor,
 		todoListQueriesGateway:  todoListQueriesGateway,
 		todoListCommandsGateway: todoListCommandsGateway,
+		todoCommandsGateway:     todoCommandsGateway,
 	}
 }
 
@@ -38,7 +47,18 @@ func (s *TodoListDeleter) Delete(ctx context.Context, in *input.TodoListDeleter)
 			WithDetail("requester_id", fmt.Sprintf("%d", in.RequesterID))
 	}
 
-	if err := s.todoListCommandsGateway.Delete(ctx, in.TodoListID); err != nil {
+	err = s.transactor.Transaction(ctx, func(txCtx context.Context) error {
+		if err := s.todoCommandsGateway.DeleteByTodoListID(txCtx, in.TodoListID); err != nil {
+			return fmt.Errorf("delete todos: %w", err)
+		}
+
+		if err := s.todoListCommandsGateway.Delete(txCtx, in.TodoListID); err != nil {
+			return fmt.Errorf("delete todo list: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
 		return nil, fmt.Errorf("TodoListDeleter.Delete: %w", err)
 	}
 
