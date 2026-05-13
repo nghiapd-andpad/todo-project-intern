@@ -2,8 +2,8 @@
 package output
 
 import (
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/pagination"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/shared/pagination"
 )
 
 type TodoGetter struct {

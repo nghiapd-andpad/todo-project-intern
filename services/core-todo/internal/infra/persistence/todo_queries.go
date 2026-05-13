@@ -24,10 +24,10 @@ func NewTodoQueriesGateway(db *gorm.DB) *TodoQueriesGateway {
 
 var _ gateway.TodoQueriesGateway = (*TodoQueriesGateway)(nil)
 
-func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID) (*entity.Todo, error) {
+func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID, todoListID entity.TodoListID) (*entity.Todo, error) {
 	var m model.Todo
 
-	err := g.db.WithContext(ctx).First(&m, int64(todoID)).Error
+	err := g.db.WithContext(ctx).Where("id = ? AND todo_list_id = ?", int64(todoID), int64(todoListID)).First(&m).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -40,23 +40,17 @@ func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID) (*en
 
 func (g *TodoQueriesGateway) List(ctx context.Context, opts *gatewayinput.ListTodosOptions) ([]*entity.Todo, int64, error) {
 	// Build base query
-	q := g.db.WithContext(ctx).Model(&model.Todo{})
+	q := g.db.WithContext(ctx).Model(&model.Todo{}).Where("todo_list_id = ?", int64(opts.TodoListID))
 
 	// Apply optional filters
-	if opts.TodoListID != nil {
-		q = q.Where("todo_list_id = ?", int64(*opts.TodoListID))
+	if opts.AssigneeOnly != nil {
+		q = q.Where("assignee_id = ?", int64(*opts.AssigneeOnly))
 	}
 	if opts.Status != nil {
 		q = q.Where("status = ?", string(*opts.Status))
 	}
 	if opts.Priority != nil {
 		q = q.Where("priority = ?", string(*opts.Priority))
-	}
-	if opts.CreatorID != nil {
-		q = q.Where("creator_id = ?", int64(*opts.CreatorID))
-	}
-	if opts.AssigneeID != nil {
-		q = q.Where("assignee_id = ?", int64(*opts.AssigneeID))
 	}
 	if opts.TitleSearch != nil && *opts.TitleSearch != "" {
 		q = q.Where("LOWER(title) LIKE LOWER(?)", "%"+*opts.TitleSearch+"%")
