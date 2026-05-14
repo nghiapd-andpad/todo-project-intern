@@ -21,15 +21,22 @@ func TestTodoListGetter_Get(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx        = context.Background()
-		now        = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-		todoListID = entity.TodoListID(1)
-		todoList   = &entity.TodoList{
+		ctx         = context.Background()
+		now         = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+		todoListID  = entity.TodoListID(1)
+		requesterID = entity.UserID(10)
+
+		todoList = &entity.TodoList{
 			ID:        todoListID,
 			Name:      "Work Tasks",
-			OwnerID:   entity.UserID(1),
+			OwnerID:   requesterID,
 			CreatedAt: now,
 			UpdatedAt: now,
+		}
+
+		validInput = &input.TodoListGetter{
+			TodoListID:  todoListID,
+			RequesterID: requesterID,
 		}
 	)
 
@@ -44,59 +51,88 @@ func TestTodoListGetter_Get(t *testing.T) {
 		wantErr  bool
 		errCode  entity.ErrorCode
 	}{
-		"success: todo list found": {
+		"success: todo list found and requester is owner": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
 					Get(gomock.Any(), todoListID).
 					Return(todoList, nil)
 			},
-			input:    &input.TodoListGetter{ID: todoListID},
+			input:    validInput,
 			expected: &output.TodoListGetter{TodoList: todoList},
-			wantErr:  false,
 		},
 
-		"error: not found — infra returns nil,nil": {
+		"error: not found": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
 					Get(gomock.Any(), entity.TodoListID(999)).
 					Return(nil, nil)
 			},
-			input:   &input.TodoListGetter{ID: entity.TodoListID(999)},
+			input: &input.TodoListGetter{
+				TodoListID:  entity.TodoListID(999),
+				RequesterID: requesterID,
+			},
 			wantErr: true,
 			errCode: entity.ErrNotFound,
 		},
-		"error: db error": {
+
+		"error: query gateway error": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), todoListID).
 					Return(nil, fmt.Errorf("connection refused"))
 			},
-			input:   &input.TodoListGetter{ID: todoListID},
+			input:   validInput,
 			wantErr: true,
+		},
+
+		"error: requester is not owner": {
+			prepare: func(f *fields) {
+				f.mockQueries.EXPECT().
+					Get(gomock.Any(), todoListID).
+					Return(&entity.TodoList{
+						ID:      todoListID,
+						Name:    "Work Tasks",
+						OwnerID: entity.UserID(999),
+					}, nil)
+			},
+			input:   validInput,
+			wantErr: true,
+			errCode: entity.ErrAuthZ,
 		},
 	}
 
 	for name, tt := range tests {
+		tt := tt
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			f := &fields{mockQueries: mock.NewMockTodoListQueriesGateway(ctrl)}
+
+			f := &fields{
+				mockQueries: mock.NewMockTodoListQueriesGateway(ctrl),
+			}
+
 			tt.prepare(f)
 
 			sut := service.NewTodoListGetter(f.mockQueries)
+
 			got, err := sut.Get(ctx, tt.input)
 
 			if tt.wantErr {
 				assert.Error(t, err)
+
 				if tt.errCode != "" {
 					var appErr *entity.AppError
 					assert.ErrorAs(t, err, &appErr)
 					assert.Equal(t, tt.errCode, appErr.Code)
 				}
+
 				return
 			}
+
 			assert.NoError(t, err)
+
 			if diff := cmp.Diff(tt.expected, got); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}

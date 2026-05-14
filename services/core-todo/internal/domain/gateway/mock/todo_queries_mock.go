@@ -43,18 +43,18 @@ func (m *MockTodoQueriesGateway) EXPECT() *MockTodoQueriesGatewayMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockTodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID) (*entity.Todo, error) {
+func (m *MockTodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID, todoListID entity.TodoListID) (*entity.Todo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, todoID)
+	ret := m.ctrl.Call(m, "Get", ctx, todoID, todoListID)
 	ret0, _ := ret[0].(*entity.Todo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockTodoQueriesGatewayMockRecorder) Get(ctx, todoID any) *gomock.Call {
+func (mr *MockTodoQueriesGatewayMockRecorder) Get(ctx, todoID, todoListID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTodoQueriesGateway)(nil).Get), ctx, todoID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTodoQueriesGateway)(nil).Get), ctx, todoID, todoListID)
 }
 
 // List mocks base method.

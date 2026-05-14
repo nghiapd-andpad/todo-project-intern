@@ -70,6 +70,20 @@ func (mr *MockTodoCommandsGatewayMockRecorder) Delete(ctx, todoID any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTodoCommandsGateway)(nil).Delete), ctx, todoID)
 }
 
+// DeleteByTodoListID mocks base method.
+func (m *MockTodoCommandsGateway) DeleteByTodoListID(ctx context.Context, todoListID entity.TodoListID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteByTodoListID", ctx, todoListID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteByTodoListID indicates an expected call of DeleteByTodoListID.
+func (mr *MockTodoCommandsGatewayMockRecorder) DeleteByTodoListID(ctx, todoListID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByTodoListID", reflect.TypeOf((*MockTodoCommandsGateway)(nil).DeleteByTodoListID), ctx, todoListID)
+}
+
 // Update mocks base method.
 func (m *MockTodoCommandsGateway) Update(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
 	m.ctrl.T.Helper()

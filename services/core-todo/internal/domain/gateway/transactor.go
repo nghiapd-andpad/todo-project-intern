@@ -1,3 +1,4 @@
+//go:generate mockgen -destination=mock/transactor_mock.go -source=transactor.go -package mock
 package gateway
 
 import "context"
