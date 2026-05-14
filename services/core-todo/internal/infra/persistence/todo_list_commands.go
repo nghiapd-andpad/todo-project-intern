@@ -26,9 +26,11 @@ func (g *TodoListCommandsGateway) Create(
 	ctx context.Context,
 	todoList *entity.TodoList,
 ) (*entity.TodoList, error) {
+	conn := connFromContext(ctx, g.db)
+
 	m := mapper.TodoListFromEntity(todoList)
 
-	if err := g.db.WithContext(ctx).Create(m).Error; err != nil {
+	if err := conn.Create(m).Error; err != nil {
 		return nil, fmt.Errorf("db create todo list: %w", err)
 	}
 
@@ -39,9 +41,11 @@ func (g *TodoListCommandsGateway) Update(
 	ctx context.Context,
 	todoList *entity.TodoList,
 ) (*entity.TodoList, error) {
+	conn := connFromContext(ctx, g.db)
+
 	m := mapper.TodoListFromEntity(todoList)
 
-	if err := g.db.WithContext(ctx).Save(m).Error; err != nil {
+	if err := conn.Save(m).Error; err != nil {
 		return nil, fmt.Errorf("db update todo list: %w", err)
 	}
 
@@ -52,10 +56,10 @@ func (g *TodoListCommandsGateway) Delete(
 	ctx context.Context,
 	todoListID entity.TodoListID,
 ) error {
-	result := g.db.WithContext(ctx).Delete(&model.TodoList{}, int64(todoListID))
+	conn := connFromContext(ctx, g.db)
 
-	if result.Error != nil {
-		return fmt.Errorf("db delete todo list: %w", result.Error)
+	if err := conn.Delete(&model.TodoList{}, int64(todoListID)).Error; err != nil {
+		return fmt.Errorf("db delete todo list: %w", err)
 	}
 
 	return nil

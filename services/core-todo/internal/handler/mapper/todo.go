@@ -16,14 +16,12 @@ func TodoToPb(ent *entity.Todo) *todov1.Todo {
 
 	pb := &todov1.Todo{
 		Name: resourcename.TodoResourceName{
-			UserID:     int64(ent.CreatorID),
 			TodoListID: int64(ent.TodoListID),
 			TodoID:     int64(ent.ID),
 		}.String(),
 		Title:     ent.Title,
 		Status:    TodoStatusToPb(ent.Status),
 		Priority:  PriorityToPb(ent.Priority),
-		CreatorId: int64(ent.CreatorID),
 		CreatedAt: timestamppb.New(ent.CreatedAt),
 		UpdatedAt: timestamppb.New(ent.UpdatedAt),
 	}
@@ -40,22 +38,6 @@ func TodoToPb(ent *entity.Todo) *todov1.Todo {
 	}
 
 	return pb
-}
-
-func TodoListToPb(ent *entity.TodoList) *todov1.TodoList {
-	if ent == nil {
-		return nil
-	}
-
-	return &todov1.TodoList{
-		Name: resourcename.TodoListResourceName{
-			UserID:     int64(ent.OwnerID),
-			TodoListID: int64(ent.ID),
-		}.String(),
-		DisplayName: ent.Name,
-		CreatedAt:   timestamppb.New(ent.CreatedAt),
-		UpdatedAt:   timestamppb.New(ent.UpdatedAt),
-	}
 }
 
 func TodoStatusToPb(status entity.TodoStatus) todov1.TodoStatus {

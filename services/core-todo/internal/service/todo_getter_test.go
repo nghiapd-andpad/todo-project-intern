@@ -21,21 +21,51 @@ func TestTodoGetter_Get(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx  = context.Background()
-		now  = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+		ctx         = context.Background()
+		now         = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+		todoID      = entity.TodoID(1)
+		todoListID  = entity.TodoListID(2)
+		ownerID     = entity.UserID(10)
+		assigneeID  = entity.UserID(20)
+		requesterID = ownerID
+
 		todo = &entity.Todo{
-			ID:        entity.TodoID(1),
-			Title:     "Unit Test Get Todo",
-			Status:    entity.TodoStatusPending,
-			Priority:  entity.PriorityMedium,
-			CreatorID: entity.UserID(1),
-			CreatedAt: now,
-			UpdatedAt: now,
+			ID:         todoID,
+			TodoListID: todoListID,
+			Title:      "Unit Test Get Todo",
+			Status:     entity.TodoStatusPending,
+			Priority:   entity.PriorityMedium,
+			CreatedAt:  now,
+			UpdatedAt:  now,
+		}
+
+		assignedTodo = &entity.Todo{
+			ID:         todoID,
+			TodoListID: todoListID,
+			Title:      "Assigned Todo",
+			Status:     entity.TodoStatusPending,
+			Priority:   entity.PriorityMedium,
+			AssigneeID: &assigneeID,
+			CreatedAt:  now,
+			UpdatedAt:  now,
+		}
+
+		todoList = &entity.TodoList{
+			ID:      todoListID,
+			Name:    "Work Tasks",
+			OwnerID: ownerID,
+		}
+
+		validInput = &input.TodoGetter{
+			TodoID:      todoID,
+			TodoListID:  todoListID,
+			RequesterID: requesterID,
 		}
 	)
 
 	type fields struct {
-		mockQueries *mock.MockTodoQueriesGateway
+		mockTodoListQueries *mock.MockTodoListQueriesGateway
+		mockTodoQueries     *mock.MockTodoQueriesGateway
 	}
 
 	tests := map[string]struct {
@@ -45,61 +75,183 @@ func TestTodoGetter_Get(t *testing.T) {
 		wantErr  bool
 		errCode  entity.ErrorCode
 	}{
-		"success: todo found": {
+		"success: requester is todo list owner": {
 			prepare: func(f *fields) {
-				f.mockQueries.EXPECT().
-					Get(gomock.Any(), entity.TodoID(1)).
-					Return(todo, nil)
+				gomock.InOrder(
+					f.mockTodoQueries.EXPECT().
+						Get(gomock.Any(), todoID, todoListID).
+						Return(todo, nil),
+
+					f.mockTodoListQueries.EXPECT().
+						Get(gomock.Any(), todoListID).
+						Return(todoList, nil),
+				)
 			},
-			input:    &input.TodoGetter{ID: entity.TodoID(1)},
+			input:    validInput,
 			expected: &output.TodoGetter{Todo: todo},
-			wantErr:  false,
 		},
 
-		"error: todo not found — infra returns nil,nil": {
+		"success: requester is todo assignee": {
 			prepare: func(f *fields) {
-				f.mockQueries.EXPECT().
-					Get(gomock.Any(), entity.TodoID(999)).
+				gomock.InOrder(
+					f.mockTodoQueries.EXPECT().
+						Get(gomock.Any(), todoID, todoListID).
+						Return(assignedTodo, nil),
+
+					f.mockTodoListQueries.EXPECT().
+						Get(gomock.Any(), todoListID).
+						Return(&entity.TodoList{
+							ID:      todoListID,
+							Name:    "Work Tasks",
+							OwnerID: entity.UserID(999),
+						}, nil),
+				)
+			},
+			input: &input.TodoGetter{
+				TodoID:      todoID,
+				TodoListID:  todoListID,
+				RequesterID: assigneeID,
+			},
+			expected: &output.TodoGetter{Todo: assignedTodo},
+		},
+
+		"error: todo query gateway error": {
+			prepare: func(f *fields) {
+				f.mockTodoQueries.EXPECT().
+					Get(gomock.Any(), todoID, todoListID).
+					Return(nil, fmt.Errorf("connection lost"))
+			},
+			input:   validInput,
+			wantErr: true,
+		},
+
+		"error: todo not found": {
+			prepare: func(f *fields) {
+				f.mockTodoQueries.EXPECT().
+					Get(gomock.Any(), todoID, todoListID).
 					Return(nil, nil)
 			},
-
-			input:   &input.TodoGetter{ID: entity.TodoID(999)},
+			input:   validInput,
 			wantErr: true,
 			errCode: entity.ErrNotFound,
 		},
 
-		"error: db error": {
+		"error: todo list query gateway error": {
 			prepare: func(f *fields) {
-				f.mockQueries.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
-					Return(nil, fmt.Errorf("connection lost"))
+				gomock.InOrder(
+					f.mockTodoQueries.EXPECT().
+						Get(gomock.Any(), todoID, todoListID).
+						Return(todo, nil),
+
+					f.mockTodoListQueries.EXPECT().
+						Get(gomock.Any(), todoListID).
+						Return(nil, fmt.Errorf("connection lost")),
+				)
 			},
-			input:   &input.TodoGetter{ID: entity.TodoID(1)},
+			input:   validInput,
 			wantErr: true,
+		},
+
+		"error: todo list not found": {
+			prepare: func(f *fields) {
+				gomock.InOrder(
+					f.mockTodoQueries.EXPECT().
+						Get(gomock.Any(), todoID, todoListID).
+						Return(todo, nil),
+
+					f.mockTodoListQueries.EXPECT().
+						Get(gomock.Any(), todoListID).
+						Return(nil, nil),
+				)
+			},
+			input:   validInput,
+			wantErr: true,
+			errCode: entity.ErrNotFound,
+		},
+
+		"error: requester is neither owner nor assignee": {
+			prepare: func(f *fields) {
+				gomock.InOrder(
+					f.mockTodoQueries.EXPECT().
+						Get(gomock.Any(), todoID, todoListID).
+						Return(assignedTodo, nil),
+
+					f.mockTodoListQueries.EXPECT().
+						Get(gomock.Any(), todoListID).
+						Return(&entity.TodoList{
+							ID:      todoListID,
+							Name:    "Work Tasks",
+							OwnerID: ownerID,
+						}, nil),
+				)
+			},
+			input: &input.TodoGetter{
+				TodoID:      todoID,
+				TodoListID:  todoListID,
+				RequesterID: entity.UserID(999),
+			},
+			wantErr: true,
+			errCode: entity.ErrAuthZ,
+		},
+
+		"error: requester is not owner and todo has no assignee": {
+			prepare: func(f *fields) {
+				gomock.InOrder(
+					f.mockTodoQueries.EXPECT().
+						Get(gomock.Any(), todoID, todoListID).
+						Return(todo, nil),
+
+					f.mockTodoListQueries.EXPECT().
+						Get(gomock.Any(), todoListID).
+						Return(todoList, nil),
+				)
+			},
+			input: &input.TodoGetter{
+				TodoID:      todoID,
+				TodoListID:  todoListID,
+				RequesterID: entity.UserID(999),
+			},
+			wantErr: true,
+			errCode: entity.ErrAuthZ,
 		},
 	}
 
 	for name, tt := range tests {
+		tt := tt
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			f := &fields{mockQueries: mock.NewMockTodoQueriesGateway(ctrl)}
+
+			f := &fields{
+				mockTodoListQueries: mock.NewMockTodoListQueriesGateway(ctrl),
+				mockTodoQueries:     mock.NewMockTodoQueriesGateway(ctrl),
+			}
+
 			tt.prepare(f)
 
-			sut := service.NewTodoGetter(f.mockQueries)
+			sut := service.NewTodoGetter(
+				f.mockTodoListQueries,
+				f.mockTodoQueries,
+			)
+
 			got, err := sut.Get(ctx, tt.input)
 
 			if tt.wantErr {
 				assert.Error(t, err)
+
 				if tt.errCode != "" {
 					var appErr *entity.AppError
 					assert.ErrorAs(t, err, &appErr)
 					assert.Equal(t, tt.errCode, appErr.Code)
 				}
+
 				return
 			}
+
 			assert.NoError(t, err)
+
 			if diff := cmp.Diff(tt.expected, got); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}

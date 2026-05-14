@@ -21,20 +21,21 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	todoListQueriesGateway := persistence.NewTodoListQueriesGateway(db)
 	todoCommandsGateway := persistence.NewTodoCommandsGateway(db)
-	todoCreator := service.NewTodoCreator(todoCommandsGateway, cfg)
+	todoCreator := service.NewTodoCreator(todoListQueriesGateway, todoCommandsGateway, cfg)
 	todoQueriesGateway := persistence.NewTodoQueriesGateway(db)
-	todoGetter := service.NewTodoGetter(todoQueriesGateway)
-	todoLister := service.NewTodoLister(todoQueriesGateway)
-	todoUpdater := service.NewTodoUpdater(todoCommandsGateway, todoQueriesGateway)
-	todoDeleter := service.NewTodoDeleter(todoCommandsGateway, todoQueriesGateway)
+	todoGetter := service.NewTodoGetter(todoListQueriesGateway, todoQueriesGateway)
+	todoLister := service.NewTodoLister(todoListQueriesGateway, todoQueriesGateway)
+	todoUpdater := service.NewTodoUpdater(todoListQueriesGateway, todoQueriesGateway, todoCommandsGateway)
+	todoDeleter := service.NewTodoDeleter(todoListQueriesGateway, todoQueriesGateway, todoCommandsGateway)
 	todoListCommandsGateway := persistence.NewTodoListCommandsGateway(db)
 	todoListCreator := service.NewTodoListCreator(todoListCommandsGateway)
-	todoListQueriesGateway := persistence.NewTodoListQueriesGateway(db)
 	todoListGetter := service.NewTodoListGetter(todoListQueriesGateway)
 	todoListLister := service.NewTodoListLister(todoListQueriesGateway)
 	todoListUpdater := service.NewTodoListUpdater(todoListCommandsGateway, todoListQueriesGateway)
-	todoListDeleter := service.NewTodoListDeleter(todoListCommandsGateway)
+	transactor := persistence.NewTransactor(db)
+	todoListDeleter := service.NewTodoListDeleter(transactor, todoListQueriesGateway, todoListCommandsGateway, todoCommandsGateway)
 	todoHandler := handler.NewTodoHandler(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter, todoListCreator, todoListGetter, todoListLister, todoListUpdater, todoListDeleter)
 	server, err := handler.NewGRPCServer(cfg, todoHandler)
 	if err != nil {

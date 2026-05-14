@@ -2,8 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -13,6 +11,7 @@ import (
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/errors"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/helper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/input"
 )
@@ -21,34 +20,32 @@ func (h *TodoHandler) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequ
 	// Parse parent resource name
 	parent, err := resourcename.ParseTodoListResourceName(req.GetParent())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid parent: %v", err))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid parent: %v", err)
 	}
 
 	// Extract creator from auth context
-	userIDStr, ok := auth.GetUserID(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "missing user id in context")
-	}
-	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	requesterID, err := helper.ExtractRequesterID(auth.GetUserID(ctx))
 	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid user id in context")
+		return nil, err
+	}
+
+	dueDate, err := helper.ParseDueDate(req.GetDueDate())
+	if err != nil {
+		return nil, err
 	}
 
 	// Build input
 	in := &input.TodoCreator{
-		TodoListID: entity.TodoListID(parent.TodoListID),
-		Title:      req.GetTitle(),
-		Priority:   mapper.PbToPriorityValue(req.GetPriority()), // default Medium if UNSPECIFIED
-		CreatorID:  entity.UserID(userID),
+		TodoListID:  entity.TodoListID(parent.TodoListID),
+		RequesterID: requesterID,
+		Title:       req.GetTitle(),
+		Priority:    mapper.PbToPriorityValue(req.GetPriority()),
+		DueDate:     dueDate,
 	}
 
 	// Optional fields
 	if desc := req.GetDescription(); desc != "" {
 		in.Description = &desc
-	}
-	if req.GetDueDate() != "" {
-		d := req.GetDueDate()
-		in.DueDate = &d
 	}
 	if req.GetAssigneeId() != 0 {
 		aID := entity.UserID(req.GetAssigneeId())
@@ -56,13 +53,13 @@ func (h *TodoHandler) CreateTodo(ctx context.Context, req *todov1.CreateTodoRequ
 	}
 
 	// Execute
-	out, err := h.todoCreator.Create(ctx, in)
+	res, err := h.todoCreator.Create(ctx, in)
 	if err != nil {
 		return nil, grpcerrors.ToGRPC(err)
 	}
 
 	// Map response
 	return &todov1.CreateTodoResponse{
-		Todo: mapper.TodoToPb(out.Todo),
+		Todo: mapper.TodoToPb(res.Todo),
 	}, nil
 }

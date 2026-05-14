@@ -45,36 +45,104 @@ func (g *TodoListQueriesGateway) List(
 	ctx context.Context,
 	opts *gatewayinput.ListTodoListsOptions,
 ) ([]*entity.TodoList, int64, error) {
-	q := g.db.WithContext(ctx).Model(&model.TodoList{})
+	if opts.OwnerID != nil && opts.AssigneeID != nil {
+		return g.listAll(ctx, opts)
+	}
+	return g.listSimple(ctx, opts)
+}
+
+func (g *TodoListQueriesGateway) listAll(
+	ctx context.Context,
+	opts *gatewayinput.ListTodoListsOptions,
+) ([]*entity.TodoList, int64, error) {
+	var total int64
+	countArgs := []interface{}{int64(*opts.OwnerID), int64(*opts.AssigneeID)}
+	countQuery := `
+		SELECT COUNT(DISTINCT todo_lists.id)
+		FROM todo_lists
+		LEFT JOIN todos ON todos.todo_list_id = todo_lists.id AND todos.deleted_at IS NULL
+		WHERE todo_lists.deleted_at IS NULL
+		  AND (todo_lists.owner_id = ? OR todos.assignee_id = ?)`
+
+	if opts.NameSearch != nil && *opts.NameSearch != "" {
+		countQuery += " AND LOWER(todo_lists.name) LIKE LOWER(?)"
+		countArgs = append(countArgs, "%"+*opts.NameSearch+"%")
+	}
+
+	if err := g.db.WithContext(ctx).Raw(countQuery, countArgs...).Scan(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("db count todo lists (all): %w", err)
+	}
+
+	q := g.db.WithContext(ctx).
+		Distinct("todo_lists.*").
+		Model(&model.TodoList{}).
+		Joins("LEFT JOIN todos ON todos.todo_list_id = todo_lists.id AND todos.deleted_at IS NULL").
+		Where("todo_lists.owner_id = ? OR todos.assignee_id = ?",
+			int64(*opts.OwnerID), int64(*opts.AssigneeID))
+
+	if opts.NameSearch != nil && *opts.NameSearch != "" {
+		q = q.Where("LOWER(todo_lists.name) LIKE LOWER(?)", "%"+*opts.NameSearch+"%")
+	}
+
+	q = q.Order("todo_lists.created_at DESC").
+		Limit(opts.Limit).
+		Offset(opts.Offset)
+
+	var models []model.TodoList
+	if err := q.Find(&models).Error; err != nil {
+		return nil, 0, fmt.Errorf("db list todo lists (all): %w", err)
+	}
+
+	return toEntities(models), total, nil
+}
+
+func (g *TodoListQueriesGateway) listSimple(
+	ctx context.Context,
+	opts *gatewayinput.ListTodoListsOptions,
+) ([]*entity.TodoList, int64, error) {
+	base := g.db.WithContext(ctx).Model(&model.TodoList{})
 
 	if opts.OwnerID != nil {
-		q = q.Where("owner_id = ?", int64(*opts.OwnerID))
+		base = base.Where("todo_lists.owner_id = ?", int64(*opts.OwnerID))
+	}
+	if opts.AssigneeID != nil {
+		base = base.Joins("INNER JOIN todos ON todos.todo_list_id = todo_lists.id AND todos.deleted_at IS NULL").
+			Where("todos.assignee_id = ?", int64(*opts.AssigneeID))
 	}
 	if opts.NameSearch != nil && *opts.NameSearch != "" {
-		q = q.Where("LOWER(name) LIKE LOWER(?)", "%"+*opts.NameSearch+"%")
+		base = base.Where("LOWER(todo_lists.name) LIKE LOWER(?)", "%"+*opts.NameSearch+"%")
 	}
 
 	var total int64
-	if err := q.Count(&total).Error; err != nil {
-		return nil, 0, entity.NewInternal("failed to count todo lists")
+	countQuery := base.Session(&gorm.Session{})
+	if opts.AssigneeID != nil {
+		countQuery = countQuery.Distinct("todo_lists.id")
 	}
 
-	if opts.Limit > 0 {
-		q = q.Limit(opts.Limit)
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("db count todo lists: %w", err)
 	}
-	if opts.Offset > 0 {
-		q = q.Offset(opts.Offset)
+
+	listQuery := base
+	if opts.AssigneeID != nil {
+		listQuery = listQuery.Distinct("todo_lists.*")
 	}
 
 	var models []model.TodoList
-	if err := q.Order("created_at DESC").Find(&models).Error; err != nil {
-		return nil, 0, entity.NewInternal("failed to list todo lists")
+	if err := listQuery.Order("todo_lists.created_at DESC").
+		Limit(opts.Limit).
+		Offset(opts.Offset).
+		Find(&models).Error; err != nil {
+		return nil, 0, fmt.Errorf("db list todo lists: %w", err)
 	}
 
-	entities := make([]*entity.TodoList, len(models))
+	return toEntities(models), total, nil
+}
+
+func toEntities(models []model.TodoList) []*entity.TodoList {
+	result := make([]*entity.TodoList, len(models))
 	for i := range models {
-		entities[i] = mapper.TodoListToEntity(&models[i])
+		result[i] = mapper.TodoListToEntity(&models[i])
 	}
-
-	return entities, total, nil
+	return result
 }

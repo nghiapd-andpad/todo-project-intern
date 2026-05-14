@@ -20,11 +20,13 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 		// INFRASTRUCTURE
 		persistence.NewDatabase,
 
+		persistence.NewTransactor,
 		persistence.NewTodoCommandsGateway,
 		persistence.NewTodoQueriesGateway,
 		persistence.NewTodoListCommandsGateway,
 		persistence.NewTodoListQueriesGateway,
 
+		wire.Bind(new(gateway.Transactor), new(*persistence.Transactor)),
 		wire.Bind(new(gateway.TodoCommandsGateway), new(*persistence.TodoCommandsGateway)),
 		wire.Bind(new(gateway.TodoQueriesGateway), new(*persistence.TodoQueriesGateway)),
 		wire.Bind(new(gateway.TodoListCommandsGateway), new(*persistence.TodoListCommandsGateway)),

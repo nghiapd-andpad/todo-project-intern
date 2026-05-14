@@ -7,11 +7,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	grpcerrors "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/errors"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/helper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/input"
 )
@@ -23,42 +24,44 @@ func (h *TodoHandler) ListTodos(ctx context.Context, req *todov1.ListTodosReques
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid parent: %v", err))
 	}
 
-	// Build opts filters
-	listID := entity.TodoListID(parent.TodoListID)
-	opts := gatewayinput.ListTodosOptions{
-		TodoListID: &listID,
-		Offset:     int(req.GetOffset()),
-		Limit:      int(req.GetPageSize()),
+	requesterID, err := helper.ExtractRequesterID(auth.GetUserID(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	// Build input
+	in := &input.TodoLister{
+		TodoListID:  entity.TodoListID(parent.TodoListID),
+		RequesterID: requesterID,
+		Offset:      int(req.GetOffset()),
+		Limit:       int(req.GetPageSize()),
 	}
 
 	// Optional filters
 	if s := mapper.PbToStatus(req.GetStatusFilter()); s != nil {
-		opts.Status = s
+		in.Status = s
 	}
 	if p := mapper.PbToPriority(req.GetPriorityFilter()); p != nil {
-		opts.Priority = p
+		in.Priority = p
 	}
 	if ts := req.GetTitleSearch(); ts != "" {
-		opts.TitleSearch = &ts
+		in.TitleSearch = &ts
 	}
 
-	// Build input
-	in := &input.TodoLister{Opts: opts}
-
 	// Execute
-	out, err := h.todoLister.List(ctx, in)
+	res, err := h.todoLister.List(ctx, in)
 	if err != nil {
 		return nil, grpcerrors.ToGRPC(err)
 	}
 
 	// Map response
-	pbTodos := make([]*todov1.Todo, len(out.Todos))
-	for i, t := range out.Todos {
+	pbTodos := make([]*todov1.Todo, len(res.Page.Items))
+	for i, t := range res.Page.Items {
 		pbTodos[i] = mapper.TodoToPb(t)
 	}
 
 	return &todov1.ListTodosResponse{
 		Todos: pbTodos,
-		Total: out.Total,
+		Total: res.Page.TotalCount,
 	}, nil
 }

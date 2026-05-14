@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/pagination"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/mock"
@@ -21,13 +22,13 @@ func TestTodoListLister_List(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx        = context.Background()
-		ownerID    = entity.UserID(1)
-		nameSearch = "Work"
+		ctx         = context.Background()
+		requesterID = entity.UserID(1)
+		nameSearch  = "Work"
 
 		todoLists = []*entity.TodoList{
-			{ID: entity.TodoListID(1), Name: "Work Tasks", OwnerID: ownerID},
-			{ID: entity.TodoListID(2), Name: "Personal", OwnerID: ownerID},
+			{ID: entity.TodoListID(1), Name: "Work Tasks", OwnerID: requesterID},
+			{ID: entity.TodoListID(2), Name: "Personal", OwnerID: requesterID},
 		}
 	)
 
@@ -41,81 +42,153 @@ func TestTodoListLister_List(t *testing.T) {
 		expected *output.TodoListLister
 		wantErr  bool
 	}{
-		"success: list all": {
+		"success: default filter lists owned or assigned todo lists": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
-					List(gomock.Any(), gatewayinput.ListTodoListsOptions{
-						OwnerID: &ownerID,
+					List(gomock.Any(), &gatewayinput.ListTodoListsOptions{
+						OwnerID:    &requesterID,
+						AssigneeID: &requesterID,
+						Offset:     0,
+						Limit:      20,
+					}).
+					Return(todoLists, int64(2), nil)
+			},
+			input: &input.TodoListLister{
+				RequesterID: requesterID,
+				Offset:      0,
+				Limit:       20,
+			},
+			expected: &output.TodoListLister{
+				Page: pagination.New(todoLists, int64(2), 0, 20),
+			},
+		},
+
+		"success: owned filter": {
+			prepare: func(f *fields) {
+				f.mockQueries.EXPECT().
+					List(gomock.Any(), &gatewayinput.ListTodoListsOptions{
+						OwnerID: &requesterID,
+						Offset:  0,
 						Limit:   20,
 					}).
 					Return(todoLists, int64(2), nil)
 			},
 			input: &input.TodoListLister{
-				Opts: gatewayinput.ListTodoListsOptions{
-					OwnerID: &ownerID,
-					Limit:   20,
-				},
+				RequesterID: requesterID,
+				Filter:      input.TodoListFilterOwned,
+				Offset:      0,
+				Limit:       20,
 			},
-			expected: &output.TodoListLister{TodoLists: todoLists, Total: 2},
-			wantErr:  false,
+			expected: &output.TodoListLister{
+				Page: pagination.New(todoLists, int64(2), 0, 20),
+			},
 		},
-		"success: empty": {
+
+		"success: assigned filter": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
-					List(gomock.Any(), gomock.Any()).
-					Return([]*entity.TodoList{}, int64(0), nil)
+					List(gomock.Any(), &gatewayinput.ListTodoListsOptions{
+						AssigneeID: &requesterID,
+						Offset:     0,
+						Limit:      20,
+					}).
+					Return(todoLists, int64(2), nil)
 			},
-			input:    &input.TodoListLister{Opts: gatewayinput.ListTodoListsOptions{}},
-			expected: &output.TodoListLister{TodoLists: []*entity.TodoList{}, Total: 0},
-			wantErr:  false,
+			input: &input.TodoListLister{
+				RequesterID: requesterID,
+				Filter:      input.TodoListFilterAssigned,
+				Offset:      0,
+				Limit:       20,
+			},
+			expected: &output.TodoListLister{
+				Page: pagination.New(todoLists, int64(2), 0, 20),
+			},
 		},
+
 		"success: with name search": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
-					List(gomock.Any(), gatewayinput.ListTodoListsOptions{
-						OwnerID:    &ownerID,
+					List(gomock.Any(), &gatewayinput.ListTodoListsOptions{
+						OwnerID:    &requesterID,
+						AssigneeID: &requesterID,
 						NameSearch: &nameSearch,
+						Offset:     10,
 						Limit:      10,
 					}).
 					Return(todoLists[:1], int64(1), nil)
 			},
 			input: &input.TodoListLister{
-				Opts: gatewayinput.ListTodoListsOptions{
-					OwnerID:    &ownerID,
-					NameSearch: &nameSearch,
-					Limit:      10,
-				},
+				RequesterID: requesterID,
+				NameSearch:  &nameSearch,
+				Offset:      10,
+				Limit:       10,
 			},
-			expected: &output.TodoListLister{TodoLists: todoLists[:1], Total: 1},
-			wantErr:  false,
+			expected: &output.TodoListLister{
+				Page: pagination.New(todoLists[:1], int64(1), 10, 10),
+			},
 		},
-		"error: db error": {
+
+		"success: empty result": {
+			prepare: func(f *fields) {
+				f.mockQueries.EXPECT().
+					List(gomock.Any(), &gatewayinput.ListTodoListsOptions{
+						OwnerID:    &requesterID,
+						AssigneeID: &requesterID,
+						Offset:     0,
+						Limit:      20,
+					}).
+					Return([]*entity.TodoList{}, int64(0), nil)
+			},
+			input: &input.TodoListLister{
+				RequesterID: requesterID,
+				Offset:      0,
+				Limit:       20,
+			},
+			expected: &output.TodoListLister{
+				Page: pagination.New([]*entity.TodoList{}, int64(0), 0, 20),
+			},
+		},
+
+		"error: query gateway error": {
 			prepare: func(f *fields) {
 				f.mockQueries.EXPECT().
 					List(gomock.Any(), gomock.Any()).
 					Return(nil, int64(0), fmt.Errorf("db error"))
 			},
-			input:   &input.TodoListLister{Opts: gatewayinput.ListTodoListsOptions{}},
+			input: &input.TodoListLister{
+				RequesterID: requesterID,
+				Offset:      0,
+				Limit:       20,
+			},
 			wantErr: true,
 		},
 	}
 
 	for name, tt := range tests {
+		tt := tt
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
-			f := &fields{mockQueries: mock.NewMockTodoListQueriesGateway(ctrl)}
+
+			f := &fields{
+				mockQueries: mock.NewMockTodoListQueriesGateway(ctrl),
+			}
+
 			tt.prepare(f)
 
 			sut := service.NewTodoListLister(f.mockQueries)
+
 			got, err := sut.List(ctx, tt.input)
 
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
+
 			assert.NoError(t, err)
+
 			if diff := cmp.Diff(tt.expected, got); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}

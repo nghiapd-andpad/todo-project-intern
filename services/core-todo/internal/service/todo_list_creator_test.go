@@ -21,19 +21,19 @@ func TestTodoListCreator_Create(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx     = context.Background()
-		now     = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-		ownerID = entity.UserID(1)
+		ctx         = context.Background()
+		now         = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+		requesterID = entity.UserID(1)
 
 		validInput = &input.TodoListCreator{
-			Name:    "Task 1",
-			OwnerID: ownerID,
+			Name:        "Task 1",
+			RequesterID: requesterID,
 		}
 
 		createdEntity = &entity.TodoList{
 			ID:        entity.TodoListID(1),
 			Name:      "Task 1",
-			OwnerID:   ownerID,
+			OwnerID:   requesterID,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
@@ -54,13 +54,12 @@ func TestTodoListCreator_Create(t *testing.T) {
 				f.mockCommands.EXPECT().
 					Create(gomock.Any(), &entity.TodoList{
 						Name:    "Task 1",
-						OwnerID: ownerID,
+						OwnerID: requesterID,
 					}).
 					Return(createdEntity, nil)
 			},
 			input:    validInput,
 			expected: &output.TodoListCreator{TodoList: createdEntity},
-			wantErr:  false,
 		},
 
 		"success: create with empty name": {
@@ -68,21 +67,20 @@ func TestTodoListCreator_Create(t *testing.T) {
 				f.mockCommands.EXPECT().
 					Create(gomock.Any(), &entity.TodoList{
 						Name:    "",
-						OwnerID: ownerID,
+						OwnerID: requesterID,
 					}).
-					Return(&entity.TodoList{ID: 2, Name: "", OwnerID: ownerID}, nil)
+					Return(&entity.TodoList{ID: 2, Name: "", OwnerID: requesterID}, nil)
 			},
 			input: &input.TodoListCreator{
-				Name:    "",
-				OwnerID: ownerID,
+				Name:        "",
+				RequesterID: requesterID,
 			},
 			expected: &output.TodoListCreator{
-				TodoList: &entity.TodoList{ID: 2, Name: "", OwnerID: ownerID},
+				TodoList: &entity.TodoList{ID: 2, Name: "", OwnerID: requesterID},
 			},
-			wantErr: false,
 		},
 
-		"error: db error": {
+		"error: command gateway error": {
 			prepare: func(f *fields) {
 				f.mockCommands.EXPECT().
 					Create(gomock.Any(), gomock.Any()).
@@ -94,16 +92,21 @@ func TestTodoListCreator_Create(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctrl := gomock.NewController(t)
+
 			f := &fields{
 				mockCommands: mock.NewMockTodoListCommandsGateway(ctrl),
 			}
+
 			tt.prepare(f)
 
 			sut := service.NewTodoListCreator(f.mockCommands)
+
 			got, err := sut.Create(ctx, tt.input)
 
 			if tt.wantErr {
@@ -112,6 +115,7 @@ func TestTodoListCreator_Create(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
+
 			if diff := cmp.Diff(tt.expected, got); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}

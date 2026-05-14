@@ -26,7 +26,7 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 			existingTodo *entity.Todo,
 		)
 	}{
-		"success: found todo": {
+		"success: found todo by id and todo list id": {
 			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
 				cfg := testutil.NewTestConfig(t)
 
@@ -37,7 +37,6 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 					db,
 					entity.TodoListID(1),
 					"Unit Test Todo",
-					entity.UserID(1),
 				)
 
 				return db, existingTodo
@@ -50,12 +49,14 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 				got, err := repo.Get(
 					context.Background(),
 					existingTodo.ID,
+					existingTodo.TodoListID,
 				)
 
 				require.NoError(t, err)
 				require.NotNil(t, got)
 
 				assert.Equal(t, existingTodo.ID, got.ID)
+				assert.Equal(t, existingTodo.TodoListID, got.TodoListID)
 				assert.Equal(t, "Unit Test Todo", got.Title)
 			},
 		},
@@ -76,6 +77,74 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 				got, err := repo.Get(
 					context.Background(),
 					entity.TodoID(9999),
+					entity.TodoListID(1),
+				)
+
+				assert.NoError(t, err)
+				assert.Nil(t, got)
+			},
+		},
+
+		"not found: same todo id but different todo list id": {
+			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
+				existingTodo := testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Unit Test Todo",
+				)
+
+				return db, existingTodo
+			},
+			test: func(
+				t *testing.T,
+				repo *persistence.TodoQueriesGateway,
+				existingTodo *entity.Todo,
+			) {
+				got, err := repo.Get(
+					context.Background(),
+					existingTodo.ID,
+					entity.TodoListID(999),
+				)
+
+				assert.NoError(t, err)
+				assert.Nil(t, got)
+			},
+		},
+
+		"not found: soft-deleted todo returns nil nil": {
+			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
+				existingTodo := testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Deleted Todo",
+				)
+
+				cmdRepo := persistence.NewTodoCommandsGateway(db)
+
+				err := cmdRepo.Delete(context.Background(), existingTodo.ID)
+				require.NoError(t, err)
+
+				return db, existingTodo
+			},
+			test: func(
+				t *testing.T,
+				repo *persistence.TodoQueriesGateway,
+				existingTodo *entity.Todo,
+			) {
+				got, err := repo.Get(
+					context.Background(),
+					existingTodo.ID,
+					existingTodo.TodoListID,
 				)
 
 				assert.NoError(t, err)
@@ -120,7 +189,6 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 						db,
 						entity.TodoListID(1),
 						fmt.Sprintf("Todo %d", i),
-						entity.UserID(1),
 					)
 				}
 
@@ -129,17 +197,54 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 					db,
 					entity.TodoListID(2),
 					"Other List",
-					entity.UserID(1),
 				)
 
 				return db
 			},
 			opts: gatewayinput.ListTodosOptions{
-				TodoListID: testutil.TodoListIDPtr(entity.TodoListID(1)),
+				TodoListID: entity.TodoListID(1),
 				Limit:      10,
 			},
 			wantLen:   3,
 			wantTotal: 3,
+		},
+
+		"success: filter by assignee": {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
+				testutil.CreateTodoWithAssignee(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Assigned to 1",
+					entity.UserID(1),
+				)
+				testutil.CreateTodoWithAssignee(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Assigned to 2",
+					entity.UserID(2),
+				)
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Unassigned",
+				)
+
+				return db
+			},
+			opts: gatewayinput.ListTodosOptions{
+				TodoListID:   entity.TodoListID(1),
+				AssigneeOnly: testutil.UserIDPtr(entity.UserID(1)),
+				Limit:        10,
+			},
+			wantLen:   1,
+			wantTotal: 1,
 		},
 
 		"success: filter by status pending": {
@@ -155,7 +260,6 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 					db,
 					entity.TodoListID(1),
 					"Pending 1",
-					entity.UserID(1),
 				)
 
 				testutil.CreateTodo(
@@ -163,7 +267,6 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 					db,
 					entity.TodoListID(1),
 					"Pending 2",
-					entity.UserID(1),
 				)
 
 				doneTodo := testutil.CreateTodo(
@@ -171,7 +274,6 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 					db,
 					entity.TodoListID(1),
 					"Done",
-					entity.UserID(1),
 				)
 
 				doneTodo.Status = entity.TodoStatusDone
@@ -185,12 +287,52 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 				return db
 			},
 			opts: gatewayinput.ListTodosOptions{
-				TodoListID: testutil.TodoListIDPtr(entity.TodoListID(1)),
+				TodoListID: entity.TodoListID(1),
 				Status:     testutil.TodoStatusPtr(entity.TodoStatusPending),
 				Limit:      10,
 			},
 			wantLen:   2,
 			wantTotal: 2,
+		},
+
+		"success: filter by priority": {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
+				cmdRepo := persistence.NewTodoCommandsGateway(db)
+
+				urgentTodo := testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Urgent Todo",
+				)
+				urgentTodo.Priority = entity.PriorityUrgent
+
+				_, err := cmdRepo.Update(
+					context.Background(),
+					urgentTodo,
+				)
+				require.NoError(t, err)
+
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Medium Todo",
+				)
+
+				return db
+			},
+			opts: gatewayinput.ListTodosOptions{
+				TodoListID: entity.TodoListID(1),
+				Priority:   testutil.PriorityPtr(entity.PriorityUrgent),
+				Limit:      10,
+			},
+			wantLen:   1,
+			wantTotal: 1,
 		},
 
 		"success: pagination": {
@@ -205,14 +347,13 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 						db,
 						entity.TodoListID(1),
 						fmt.Sprintf("Todo %d", i),
-						entity.UserID(1),
 					)
 				}
 
 				return db
 			},
 			opts: gatewayinput.ListTodosOptions{
-				TodoListID: testutil.TodoListIDPtr(entity.TodoListID(1)),
+				TodoListID: entity.TodoListID(1),
 				Limit:      3,
 				Offset:     3,
 			},
@@ -220,7 +361,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 			wantTotal: 5,
 		},
 
-		"success: title search": {
+		"success: title search case-insensitive": {
 			setup: func(t *testing.T) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
@@ -230,8 +371,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 					t,
 					db,
 					entity.TodoListID(1),
-					"todo 1",
-					entity.UserID(1),
+					"TODO 1",
 				)
 
 				testutil.CreateTodo(
@@ -239,7 +379,6 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 					db,
 					entity.TodoListID(1),
 					"todo 2",
-					entity.UserID(1),
 				)
 
 				testutil.CreateTodo(
@@ -247,13 +386,12 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 					db,
 					entity.TodoListID(1),
 					"task 3",
-					entity.UserID(1),
 				)
 
 				return db
 			},
 			opts: gatewayinput.ListTodosOptions{
-				TodoListID:  testutil.TodoListIDPtr(entity.TodoListID(1)),
+				TodoListID:  entity.TodoListID(1),
 				TitleSearch: testutil.StrPtr("todo"),
 				Limit:       10,
 			},
@@ -268,11 +406,46 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 				return testutil.NewTestDB(t, cfg)
 			},
 			opts: gatewayinput.ListTodosOptions{
-				TodoListID: testutil.TodoListIDPtr(entity.TodoListID(1)),
+				TodoListID: entity.TodoListID(1),
 				Limit:      10,
 			},
 			wantLen:   0,
 			wantTotal: 0,
+		},
+
+		"success: soft-deleted todos are excluded": {
+			setup: func(t *testing.T) *gorm.DB {
+				cfg := testutil.NewTestConfig(t)
+
+				db := testutil.NewTestDB(t, cfg)
+
+				cmdRepo := persistence.NewTodoCommandsGateway(db)
+
+				testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Visible Todo",
+				)
+
+				deletedTodo := testutil.CreateTodo(
+					t,
+					db,
+					entity.TodoListID(1),
+					"Deleted Todo",
+				)
+
+				err := cmdRepo.Delete(context.Background(), deletedTodo.ID)
+				require.NoError(t, err)
+
+				return db
+			},
+			opts: gatewayinput.ListTodosOptions{
+				TodoListID: entity.TodoListID(1),
+				Limit:      10,
+			},
+			wantLen:   1,
+			wantTotal: 1,
 		},
 	}
 

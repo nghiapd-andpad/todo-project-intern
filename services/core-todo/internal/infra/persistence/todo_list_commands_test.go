@@ -165,10 +165,11 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 		testFunc func(
 			t *testing.T,
 			db *gorm.DB,
-			repo *persistence.TodoListCommandsGateway,
+			cmdRepo *persistence.TodoListCommandsGateway,
+			queryRepo *persistence.TodoListQueriesGateway,
 		)
 	}{
-		"success: delete existing todo list": {
+		"success: soft delete existing todo list": {
 			setup: func(t *testing.T) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
@@ -177,7 +178,8 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 			testFunc: func(
 				t *testing.T,
 				db *gorm.DB,
-				repo *persistence.TodoListCommandsGateway,
+				cmdRepo *persistence.TodoListCommandsGateway,
+				queryRepo *persistence.TodoListQueriesGateway,
 			) {
 				existingTodoList := testutil.CreateTodoList(
 					t,
@@ -186,12 +188,19 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 					entity.UserID(1),
 				)
 
-				err := repo.Delete(
+				before, err := queryRepo.Get(context.Background(), existingTodoList.ID)
+				require.NoError(t, err)
+				require.NotNil(t, before)
+
+				err = cmdRepo.Delete(
 					context.Background(),
 					existingTodoList.ID,
 				)
-
 				require.NoError(t, err)
+
+				after, err := queryRepo.Get(context.Background(), existingTodoList.ID)
+				require.NoError(t, err)
+				assert.Nil(t, after)
 			},
 		},
 
@@ -204,9 +213,10 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 			testFunc: func(
 				t *testing.T,
 				_ *gorm.DB,
-				repo *persistence.TodoListCommandsGateway,
+				cmdRepo *persistence.TodoListCommandsGateway,
+				_ *persistence.TodoListQueriesGateway,
 			) {
-				err := repo.Delete(
+				err := cmdRepo.Delete(
 					context.Background(),
 					entity.TodoListID(9999),
 				)
@@ -224,9 +234,9 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 
 			db := tt.setup(t)
 
-			repo := persistence.NewTodoListCommandsGateway(db)
-
-			tt.testFunc(t, db, repo)
+			queryRepo := persistence.NewTodoListQueriesGateway(db)
+			cmdRepo := persistence.NewTodoListCommandsGateway(db)
+			tt.testFunc(t, db, cmdRepo, queryRepo)
 		})
 	}
 }
