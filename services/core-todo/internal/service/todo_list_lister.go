@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/nghiapd-andpad/todo-project-intern/pkg/pagination"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/shared/pagination"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/output"
 )

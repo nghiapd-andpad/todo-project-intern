@@ -25,9 +25,11 @@ func NewTodoQueriesGateway(db *gorm.DB) *TodoQueriesGateway {
 var _ gateway.TodoQueriesGateway = (*TodoQueriesGateway)(nil)
 
 func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID, todoListID entity.TodoListID) (*entity.Todo, error) {
+	conn := connFromContext(ctx, g.db)
+
 	var m model.Todo
 
-	err := g.db.WithContext(ctx).Where("id = ? AND todo_list_id = ?", int64(todoID), int64(todoListID)).First(&m).Error
+	err := conn.Where("id = ? AND todo_list_id = ?", int64(todoID), int64(todoListID)).First(&m).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -39,8 +41,10 @@ func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID, todo
 }
 
 func (g *TodoQueriesGateway) List(ctx context.Context, opts *gatewayinput.ListTodosOptions) ([]*entity.Todo, int64, error) {
+	conn := connFromContext(ctx, g.db)
+
 	// Build base query
-	q := g.db.WithContext(ctx).Model(&model.Todo{}).Where("todo_list_id = ?", int64(opts.TodoListID))
+	q := conn.Model(&model.Todo{}).Where("todo_list_id = ?", int64(opts.TodoListID))
 
 	// Apply optional filters
 	if opts.AssigneeOnly != nil {
