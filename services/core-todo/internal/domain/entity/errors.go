@@ -22,7 +22,6 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("[%s] %s", e.Code, e.Message)
 }
 
-// method chaining
 func (e *AppError) WithDetail(key, value string) *AppError {
 	if e.Details == nil {
 		e.Details = make(map[string]string)
