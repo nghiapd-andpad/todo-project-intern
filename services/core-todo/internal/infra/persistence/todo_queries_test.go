@@ -154,8 +154,6 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -450,8 +448,6 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

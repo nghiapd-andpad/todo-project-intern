@@ -160,11 +160,63 @@ func TestTransactor_Transaction(t *testing.T) {
 				assert.Empty(t, todoLists)
 			},
 		},
+
+		"failure: rollback restores todos when list delete fails": {
+			setup: func(t *testing.T) (
+				*persistence.Transactor,
+				*persistence.TodoListCommandsGateway,
+				*persistence.TodoCommandsGateway,
+				*persistence.TodoListQueriesGateway,
+				*persistence.TodoQueriesGateway,
+			) {
+				cfg := testutil.NewTestConfig(t)
+				db := testutil.NewTestDB(t, cfg)
+
+				return persistence.NewTransactor(db),
+					persistence.NewTodoListCommandsGateway(db),
+					persistence.NewTodoCommandsGateway(db),
+					persistence.NewTodoListQueriesGateway(db),
+					persistence.NewTodoQueriesGateway(db)
+			},
+			test: func(
+				t *testing.T,
+				transactor *persistence.Transactor,
+				todoListCmdRepo *persistence.TodoListCommandsGateway,
+				todoCmdRepo *persistence.TodoCommandsGateway,
+				_ *persistence.TodoListQueriesGateway,
+				todoQueryRepo *persistence.TodoQueriesGateway,
+			) {
+				list, err := todoListCmdRepo.Create(context.Background(), &entity.TodoList{
+					Name:    "List",
+					OwnerID: entity.UserID(1),
+				})
+				require.NoError(t, err)
+
+				todo, err := todoCmdRepo.Create(context.Background(), &entity.Todo{
+					TodoListID: list.ID,
+					Title:      "Todo",
+					Status:     entity.TodoStatusPending,
+					Priority:   entity.PriorityMedium,
+				})
+				require.NoError(t, err)
+
+				err = transactor.Transaction(context.Background(), func(txCtx context.Context) error {
+					if err := todoCmdRepo.DeleteByTodoListID(txCtx, list.ID); err != nil {
+						return err
+					}
+					return errors.New("list delete failed")
+				})
+
+				require.Error(t, err)
+
+				gotTodo, err := todoQueryRepo.Get(context.Background(), todo.ID, list.ID)
+				require.NoError(t, err)
+				assert.NotNil(t, gotTodo)
+			},
+		},
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

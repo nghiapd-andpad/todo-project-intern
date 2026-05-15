@@ -17,8 +17,11 @@ import (
 func TestTodoListDeleter_Delete(t *testing.T) {
 	t.Parallel()
 
+	type txKey struct{}
+
 	var (
 		ctx         = context.Background()
+		txCtx       = context.WithValue(ctx, txKey{}, "tx-test")
 		todoListID  = entity.TodoListID(1)
 		requesterID = entity.UserID(10)
 		ownerID     = entity.UserID(10)
@@ -51,22 +54,22 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		"success: delete todos and todo list in transaction": {
 			prepare: func(f *fields) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(todoList, nil)
 
 				f.mockTransactor.EXPECT().
-					Transaction(gomock.Any(), gomock.Any()).
-					DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
-						return fn(ctx)
+					Transaction(ctx, gomock.Any()).
+					DoAndReturn(func(_ context.Context, fn func(context.Context) error) error {
+						return fn(txCtx)
 					})
 
 				gomock.InOrder(
 					f.mockTodoCommands.EXPECT().
-						DeleteByTodoListID(gomock.Any(), todoListID).
+						DeleteByTodoListID(txCtx, todoListID).
 						Return(nil),
 
 					f.mockTodoListCommands.EXPECT().
-						Delete(gomock.Any(), todoListID).
+						Delete(txCtx, todoListID).
 						Return(nil),
 				)
 			},
@@ -76,7 +79,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		"error: todo list query gateway error": {
 			prepare: func(f *fields) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(nil, fmt.Errorf("connection lost"))
 			},
 			input:   validInput,
@@ -86,7 +89,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		"error: todo list not found": {
 			prepare: func(f *fields) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(nil, nil)
 			},
 			input:   validInput,
@@ -97,7 +100,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		"error: requester is not todo list owner": {
 			prepare: func(f *fields) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(&entity.TodoList{
 						ID:      todoListID,
 						Name:    "Work Tasks",
@@ -112,17 +115,17 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		"error: delete todos in transaction failed": {
 			prepare: func(f *fields) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(todoList, nil)
 
 				f.mockTransactor.EXPECT().
-					Transaction(gomock.Any(), gomock.Any()).
+					Transaction(ctx, gomock.Any()).
 					DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
-						return fn(ctx)
+						return fn(txCtx)
 					})
 
 				f.mockTodoCommands.EXPECT().
-					DeleteByTodoListID(gomock.Any(), todoListID).
+					DeleteByTodoListID(txCtx, todoListID).
 					Return(fmt.Errorf("db error"))
 			},
 			input:   validInput,
@@ -132,22 +135,22 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		"error: delete todo list in transaction failed": {
 			prepare: func(f *fields) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(todoList, nil)
 
 				f.mockTransactor.EXPECT().
-					Transaction(gomock.Any(), gomock.Any()).
+					Transaction(ctx, gomock.Any()).
 					DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
-						return fn(ctx)
+						return fn(txCtx)
 					})
 
 				gomock.InOrder(
 					f.mockTodoCommands.EXPECT().
-						DeleteByTodoListID(gomock.Any(), todoListID).
+						DeleteByTodoListID(txCtx, todoListID).
 						Return(nil),
 
 					f.mockTodoListCommands.EXPECT().
-						Delete(gomock.Any(), todoListID).
+						Delete(txCtx, todoListID).
 						Return(fmt.Errorf("db error")),
 				)
 			},
@@ -158,11 +161,11 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		"error: transactor returns error": {
 			prepare: func(f *fields) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(todoList, nil)
 
 				f.mockTransactor.EXPECT().
-					Transaction(gomock.Any(), gomock.Any()).
+					Transaction(ctx, gomock.Any()).
 					Return(fmt.Errorf("transaction failed"))
 			},
 			input:   validInput,
@@ -171,8 +174,6 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
