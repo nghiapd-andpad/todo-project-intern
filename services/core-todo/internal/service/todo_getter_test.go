@@ -21,7 +21,6 @@ func TestTodoGetter_Get(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
 		now         = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		todoID      = entity.TodoID(1)
 		todoListID  = entity.TodoListID(2)
@@ -69,21 +68,21 @@ func TestTodoGetter_Get(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		prepare  func(f *fields)
+		prepare  func(f *fields, ctx context.Context)
 		input    *input.TodoGetter
 		expected *output.TodoGetter
 		wantErr  bool
 		errCode  entity.ErrorCode
 	}{
 		"success: requester is todo list owner": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList, nil),
 				)
 			},
@@ -92,14 +91,14 @@ func TestTodoGetter_Get(t *testing.T) {
 		},
 
 		"success: requester is todo assignee": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(assignedTodo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(&entity.TodoList{
 							ID:      todoListID,
 							Name:    "Work Tasks",
@@ -116,9 +115,9 @@ func TestTodoGetter_Get(t *testing.T) {
 		},
 
 		"error: todo query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoQueries.EXPECT().
-					Get(gomock.Any(), todoID, todoListID).
+					Get(ctx, todoID, todoListID).
 					Return(nil, fmt.Errorf("connection lost"))
 			},
 			input:   validInput,
@@ -126,9 +125,9 @@ func TestTodoGetter_Get(t *testing.T) {
 		},
 
 		"error: todo not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoQueries.EXPECT().
-					Get(gomock.Any(), todoID, todoListID).
+					Get(ctx, todoID, todoListID).
 					Return(nil, nil)
 			},
 			input:   validInput,
@@ -137,14 +136,14 @@ func TestTodoGetter_Get(t *testing.T) {
 		},
 
 		"error: todo list query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(nil, fmt.Errorf("connection lost")),
 				)
 			},
@@ -153,14 +152,14 @@ func TestTodoGetter_Get(t *testing.T) {
 		},
 
 		"error: todo list not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(nil, nil),
 				)
 			},
@@ -170,14 +169,14 @@ func TestTodoGetter_Get(t *testing.T) {
 		},
 
 		"error: requester is neither owner nor assignee": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(assignedTodo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(&entity.TodoList{
 							ID:      todoListID,
 							Name:    "Work Tasks",
@@ -195,14 +194,14 @@ func TestTodoGetter_Get(t *testing.T) {
 		},
 
 		"error: requester is not owner and todo has no assignee": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList, nil),
 				)
 			},
@@ -217,10 +216,10 @@ func TestTodoGetter_Get(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
 
@@ -229,7 +228,7 @@ func TestTodoGetter_Get(t *testing.T) {
 				mockTodoQueries:     mock.NewMockTodoQueriesGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx)
 
 			sut := service.NewTodoGetter(
 				f.mockTodoListQueries,

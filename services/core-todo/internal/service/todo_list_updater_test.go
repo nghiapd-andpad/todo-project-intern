@@ -21,7 +21,6 @@ func TestTodoListUpdater_Update(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
 		now         = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		todoListID  = entity.TodoListID(1)
 		requesterID = entity.UserID(10)
@@ -60,21 +59,21 @@ func TestTodoListUpdater_Update(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		prepare  func(f *fields)
+		prepare  func(f *fields, ctx context.Context)
 		input    *input.TodoListUpdater
 		expected *output.TodoListUpdater
 		wantErr  bool
 		errCode  entity.ErrorCode
 	}{
 		"success: update name": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(freshList(), nil),
 
 					f.mockCommands.EXPECT().
-						Update(gomock.Any(), updatedList()).
+						Update(ctx, updatedList()).
 						Return(updatedList(), nil),
 				)
 			},
@@ -85,14 +84,14 @@ func TestTodoListUpdater_Update(t *testing.T) {
 		},
 
 		"success: nil name keeps original name": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(freshList(), nil),
 
 					f.mockCommands.EXPECT().
-						Update(gomock.Any(), freshList()).
+						Update(ctx, freshList()).
 						Return(freshList(), nil),
 				)
 			},
@@ -107,9 +106,9 @@ func TestTodoListUpdater_Update(t *testing.T) {
 		},
 
 		"error: todo list not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(nil, nil)
 			},
 			input:   validInput,
@@ -118,9 +117,9 @@ func TestTodoListUpdater_Update(t *testing.T) {
 		},
 
 		"error: query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(nil, fmt.Errorf("connection lost"))
 			},
 			input:   validInput,
@@ -128,9 +127,9 @@ func TestTodoListUpdater_Update(t *testing.T) {
 		},
 
 		"error: requester is not owner": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(&entity.TodoList{
 						ID:      todoListID,
 						Name:    "Old Name",
@@ -143,14 +142,14 @@ func TestTodoListUpdater_Update(t *testing.T) {
 		},
 
 		"error: update command gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(freshList(), nil),
 
 					f.mockCommands.EXPECT().
-						Update(gomock.Any(), updatedList()).
+						Update(ctx, updatedList()).
 						Return(nil, fmt.Errorf("db error")),
 				)
 			},
@@ -160,10 +159,10 @@ func TestTodoListUpdater_Update(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
 
@@ -172,7 +171,7 @@ func TestTodoListUpdater_Update(t *testing.T) {
 				mockQueries:  mock.NewMockTodoListQueriesGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx)
 
 			sut := service.NewTodoListUpdater(
 				f.mockCommands,

@@ -20,8 +20,6 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 	type txKey struct{}
 
 	var (
-		ctx         = context.Background()
-		txCtx       = context.WithValue(ctx, txKey{}, "tx-test")
 		todoListID  = entity.TodoListID(1)
 		requesterID = entity.UserID(10)
 		ownerID     = entity.UserID(10)
@@ -46,13 +44,13 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		prepare func(f *fields)
+		prepare func(f *fields, ctx context.Context, txCtx context.Context)
 		input   *input.TodoListDeleter
 		wantErr bool
 		errCode entity.ErrorCode
 	}{
 		"success: delete todos and todo list in transaction": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context, txCtx context.Context) {
 				f.mockTodoListQueries.EXPECT().
 					Get(ctx, todoListID).
 					Return(todoList, nil)
@@ -77,7 +75,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		},
 
 		"error: todo list query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context, txCtx context.Context) {
 				f.mockTodoListQueries.EXPECT().
 					Get(ctx, todoListID).
 					Return(nil, fmt.Errorf("connection lost"))
@@ -87,7 +85,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		},
 
 		"error: todo list not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context, txCtx context.Context) {
 				f.mockTodoListQueries.EXPECT().
 					Get(ctx, todoListID).
 					Return(nil, nil)
@@ -98,7 +96,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		},
 
 		"error: requester is not todo list owner": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context, txCtx context.Context) {
 				f.mockTodoListQueries.EXPECT().
 					Get(ctx, todoListID).
 					Return(&entity.TodoList{
@@ -113,7 +111,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		},
 
 		"error: delete todos in transaction failed": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context, txCtx context.Context) {
 				f.mockTodoListQueries.EXPECT().
 					Get(ctx, todoListID).
 					Return(todoList, nil)
@@ -133,7 +131,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		},
 
 		"error: delete todo list in transaction failed": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context, txCtx context.Context) {
 				f.mockTodoListQueries.EXPECT().
 					Get(ctx, todoListID).
 					Return(todoList, nil)
@@ -159,7 +157,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		},
 
 		"error: transactor returns error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context, txCtx context.Context) {
 				f.mockTodoListQueries.EXPECT().
 					Get(ctx, todoListID).
 					Return(todoList, nil)
@@ -177,6 +175,9 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			ctx := context.Background()
+			txCtx := context.WithValue(ctx, txKey{}, "tx-test")
+
 			ctrl := gomock.NewController(t)
 
 			f := &fields{
@@ -186,7 +187,7 @@ func TestTodoListDeleter_Delete(t *testing.T) {
 				mockTodoCommands:     mock.NewMockTodoCommandsGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx, txCtx)
 
 			sut := service.NewTodoListDeleter(
 				f.mockTransactor,

@@ -23,7 +23,6 @@ func TestTodoCreator_Create(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
 		now         = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		todoListID  = entity.TodoListID(2)
 		requesterID = entity.UserID(1)
@@ -71,7 +70,7 @@ func TestTodoCreator_Create(t *testing.T) {
 
 	tests := map[string]struct {
 		cfg      *config.Config
-		prepare  func(f *fields)
+		prepare  func(f *fields, ctx context.Context)
 		input    *input.TodoCreator
 		expected *output.TodoCreator
 		wantErr  bool
@@ -79,13 +78,13 @@ func TestTodoCreator_Create(t *testing.T) {
 	}{
 		"success: create with required fields": {
 			cfg: defaultCfg,
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(existingTodoList, nil)
 
 				f.mockTodoCommands.EXPECT().
-					Create(gomock.Any(), &entity.Todo{
+					Create(ctx, &entity.Todo{
 						TodoListID: todoListID,
 						Title:      "Unit Test Create Todo",
 						Status:     entity.TodoStatusPending,
@@ -99,13 +98,13 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"success: create with optional fields": {
 			cfg: defaultCfg,
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(existingTodoList, nil)
 
 				f.mockTodoCommands.EXPECT().
-					Create(gomock.Any(), &entity.Todo{
+					Create(ctx, &entity.Todo{
 						TodoListID:  todoListID,
 						Title:       "Unit Test Create Todo",
 						Description: testutil.StrPtr("description"),
@@ -130,13 +129,18 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"success: blacklist enabled and title is valid": {
 			cfg: blacklistCfg,
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(existingTodoList, nil)
 
 				f.mockTodoCommands.EXPECT().
-					Create(gomock.Any(), gomock.Any()).
+					Create(ctx, &entity.Todo{
+						TodoListID: todoListID,
+						Title:      "Normal task",
+						Status:     entity.TodoStatusPending,
+						Priority:   entity.PriorityMedium,
+					}).
 					Return(createdEntity, nil)
 			},
 			input: &input.TodoCreator{
@@ -150,13 +154,18 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"success: blacklist disabled and title contains blacklisted word": {
 			cfg: defaultCfg,
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(existingTodoList, nil)
 
 				f.mockTodoCommands.EXPECT().
-					Create(gomock.Any(), gomock.Any()).
+					Create(ctx, &entity.Todo{
+						TodoListID: todoListID,
+						Title:      "spam task",
+						Status:     entity.TodoStatusPending,
+						Priority:   entity.PriorityMedium,
+					}).
 					Return(createdEntity, nil)
 			},
 			input: &input.TodoCreator{
@@ -170,7 +179,7 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"error: blacklist enabled and title contains blacklisted word": {
 			cfg:     blacklistCfg,
-			prepare: func(f *fields) {},
+			prepare: func(f *fields, ctx context.Context) {},
 			input: &input.TodoCreator{
 				TodoListID:  todoListID,
 				Title:       "spam task",
@@ -183,7 +192,7 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"error: blacklist is case-insensitive": {
 			cfg:     blacklistCfg,
-			prepare: func(f *fields) {},
+			prepare: func(f *fields, ctx context.Context) {},
 			input: &input.TodoCreator{
 				TodoListID:  todoListID,
 				Title:       "SPAM task",
@@ -196,7 +205,7 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"error: todo list query gateway error": {
 			cfg: defaultCfg,
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
 					Get(gomock.Any(), todoListID).
 					Return(nil, fmt.Errorf("db connection lost"))
@@ -207,9 +216,9 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"error: todo list not found": {
 			cfg: defaultCfg,
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(nil, nil)
 			},
 			input:   validInput,
@@ -219,9 +228,9 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"error: requester is not todo list owner": {
 			cfg: defaultCfg,
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(&entity.TodoList{
 						ID:      todoListID,
 						Name:    "Work Tasks",
@@ -235,13 +244,13 @@ func TestTodoCreator_Create(t *testing.T) {
 
 		"error: todo command gateway error": {
 			cfg: defaultCfg,
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(existingTodoList, nil)
 
 				f.mockTodoCommands.EXPECT().
-					Create(gomock.Any(), gomock.Any()).
+					Create(ctx, gomock.Any()).
 					Return(nil, fmt.Errorf("db connection lost"))
 			},
 			input:   validInput,
@@ -250,10 +259,10 @@ func TestTodoCreator_Create(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
 
@@ -262,7 +271,7 @@ func TestTodoCreator_Create(t *testing.T) {
 				mockTodoCommands:    mock.NewMockTodoCommandsGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx)
 
 			sut := service.NewTodoCreator(
 				f.mockTodoListQueries,

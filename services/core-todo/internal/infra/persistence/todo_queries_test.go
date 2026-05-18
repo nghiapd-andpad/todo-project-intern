@@ -19,15 +19,16 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		setup func(t *testing.T) (*gorm.DB, *entity.Todo)
+		setup func(t *testing.T, ctx context.Context) (*gorm.DB, *entity.Todo)
 		test  func(
 			t *testing.T,
+			ctx context.Context,
 			repo *persistence.TodoQueriesGateway,
 			existingTodo *entity.Todo,
 		)
 	}{
 		"success: found todo by id and todo list id": {
-			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
+			setup: func(t *testing.T, ctx context.Context) (*gorm.DB, *entity.Todo) {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -43,11 +44,12 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 			},
 			test: func(
 				t *testing.T,
+				ctx context.Context,
 				repo *persistence.TodoQueriesGateway,
 				existingTodo *entity.Todo,
 			) {
 				got, err := repo.Get(
-					context.Background(),
+					ctx,
 					existingTodo.ID,
 					existingTodo.TodoListID,
 				)
@@ -62,7 +64,7 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 		},
 
 		"not found: returns nil nil": {
-			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
+			setup: func(t *testing.T, ctx context.Context) (*gorm.DB, *entity.Todo) {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -71,11 +73,12 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 			},
 			test: func(
 				t *testing.T,
+				ctx context.Context,
 				repo *persistence.TodoQueriesGateway,
 				_ *entity.Todo,
 			) {
 				got, err := repo.Get(
-					context.Background(),
+					ctx,
 					entity.TodoID(9999),
 					entity.TodoListID(1),
 				)
@@ -86,7 +89,7 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 		},
 
 		"not found: same todo id but different todo list id": {
-			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
+			setup: func(t *testing.T, ctx context.Context) (*gorm.DB, *entity.Todo) {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -102,11 +105,12 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 			},
 			test: func(
 				t *testing.T,
+				ctx context.Context,
 				repo *persistence.TodoQueriesGateway,
 				existingTodo *entity.Todo,
 			) {
 				got, err := repo.Get(
-					context.Background(),
+					ctx,
 					existingTodo.ID,
 					entity.TodoListID(999),
 				)
@@ -117,7 +121,7 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 		},
 
 		"not found: soft-deleted todo returns nil nil": {
-			setup: func(t *testing.T) (*gorm.DB, *entity.Todo) {
+			setup: func(t *testing.T, ctx context.Context) (*gorm.DB, *entity.Todo) {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -131,18 +135,19 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 
 				cmdRepo := persistence.NewTodoCommandsGateway(db)
 
-				err := cmdRepo.Delete(context.Background(), existingTodo.ID)
+				err := cmdRepo.Delete(ctx, existingTodo.ID)
 				require.NoError(t, err)
 
 				return db, existingTodo
 			},
 			test: func(
 				t *testing.T,
+				ctx context.Context,
 				repo *persistence.TodoQueriesGateway,
 				existingTodo *entity.Todo,
 			) {
 				got, err := repo.Get(
-					context.Background(),
+					ctx,
 					existingTodo.ID,
 					existingTodo.TodoListID,
 				)
@@ -157,11 +162,13 @@ func TestTodoQueriesGateway_Get(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			db, existingTodo := tt.setup(t)
+			ctx := context.Background()
+
+			db, existingTodo := tt.setup(t, ctx)
 
 			repo := persistence.NewTodoQueriesGateway(db)
 
-			tt.test(t, repo, existingTodo)
+			tt.test(t, ctx, repo, existingTodo)
 		})
 	}
 }
@@ -170,13 +177,13 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		setup     func(t *testing.T) *gorm.DB
+		setup     func(t *testing.T, ctx context.Context) *gorm.DB
 		opts      gatewayinput.ListTodosOptions
 		wantLen   int
 		wantTotal int64
 	}{
 		"success: list by todo_list_id": {
-			setup: func(t *testing.T) *gorm.DB {
+			setup: func(t *testing.T, ctx context.Context) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -208,7 +215,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 		},
 
 		"success: filter by assignee": {
-			setup: func(t *testing.T) *gorm.DB {
+			setup: func(t *testing.T, ctx context.Context) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -246,7 +253,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 		},
 
 		"success: filter by status pending": {
-			setup: func(t *testing.T) *gorm.DB {
+			setup: func(t *testing.T, ctx context.Context) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -277,7 +284,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 				doneTodo.Status = entity.TodoStatusDone
 
 				_, err := cmdRepo.Update(
-					context.Background(),
+					ctx,
 					doneTodo,
 				)
 				require.NoError(t, err)
@@ -294,7 +301,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 		},
 
 		"success: filter by priority": {
-			setup: func(t *testing.T) *gorm.DB {
+			setup: func(t *testing.T, ctx context.Context) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -310,7 +317,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 				urgentTodo.Priority = entity.PriorityUrgent
 
 				_, err := cmdRepo.Update(
-					context.Background(),
+					ctx,
 					urgentTodo,
 				)
 				require.NoError(t, err)
@@ -334,7 +341,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 		},
 
 		"success: pagination": {
-			setup: func(t *testing.T) *gorm.DB {
+			setup: func(t *testing.T, ctx context.Context) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -360,7 +367,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 		},
 
 		"success: title search case-insensitive": {
-			setup: func(t *testing.T) *gorm.DB {
+			setup: func(t *testing.T, ctx context.Context) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -398,7 +405,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 		},
 
 		"success: empty list": {
-			setup: func(t *testing.T) *gorm.DB {
+			setup: func(t *testing.T, ctx context.Context) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
 				return testutil.NewTestDB(t, cfg)
@@ -412,7 +419,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 		},
 
 		"success: soft-deleted todos are excluded": {
-			setup: func(t *testing.T) *gorm.DB {
+			setup: func(t *testing.T, ctx context.Context) *gorm.DB {
 				cfg := testutil.NewTestConfig(t)
 
 				db := testutil.NewTestDB(t, cfg)
@@ -433,7 +440,7 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 					"Deleted Todo",
 				)
 
-				err := cmdRepo.Delete(context.Background(), deletedTodo.ID)
+				err := cmdRepo.Delete(ctx, deletedTodo.ID)
 				require.NoError(t, err)
 
 				return db
@@ -451,12 +458,14 @@ func TestTodoQueriesGateway_List(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			db := tt.setup(t)
+			ctx := context.Background()
+
+			db := tt.setup(t, ctx)
 
 			repo := persistence.NewTodoQueriesGateway(db)
 
 			got, total, err := repo.List(
-				context.Background(),
+				ctx,
 				&tt.opts,
 			)
 

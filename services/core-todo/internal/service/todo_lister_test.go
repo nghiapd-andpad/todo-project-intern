@@ -22,7 +22,6 @@ func TestTodoLister_List(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
 		todoListID  = entity.TodoListID(1)
 		requesterID = entity.UserID(10)
 		ownerID     = entity.UserID(10)
@@ -55,21 +54,21 @@ func TestTodoLister_List(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		prepare  func(f *fields)
+		prepare  func(f *fields, ctx context.Context)
 		input    *input.TodoLister
 		expected *output.TodoLister
 		wantErr  bool
 		errCode  entity.ErrorCode
 	}{
 		"success: owner lists all todos in todo list": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList, nil),
 
 					f.mockTodoQueries.EXPECT().
-						List(gomock.Any(), &gatewayinput.ListTodosOptions{
+						List(ctx, &gatewayinput.ListTodosOptions{
 							TodoListID:   todoListID,
 							AssigneeOnly: nil,
 							Offset:       0,
@@ -85,10 +84,10 @@ func TestTodoLister_List(t *testing.T) {
 		},
 
 		"success: non-owner lists only assigned todos": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(&entity.TodoList{
 							ID:      todoListID,
 							Name:    "Work Tasks",
@@ -96,7 +95,7 @@ func TestTodoLister_List(t *testing.T) {
 						}, nil),
 
 					f.mockTodoQueries.EXPECT().
-						List(gomock.Any(), &gatewayinput.ListTodosOptions{
+						List(ctx, &gatewayinput.ListTodosOptions{
 							TodoListID:   todoListID,
 							AssigneeOnly: &assigneeID,
 							Offset:       0,
@@ -116,14 +115,14 @@ func TestTodoLister_List(t *testing.T) {
 		},
 
 		"success: list with filters": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList, nil),
 
 					f.mockTodoQueries.EXPECT().
-						List(gomock.Any(), &gatewayinput.ListTodosOptions{
+						List(ctx, &gatewayinput.ListTodosOptions{
 							TodoListID:   todoListID,
 							Status:       &pending,
 							Priority:     &high,
@@ -150,14 +149,14 @@ func TestTodoLister_List(t *testing.T) {
 		},
 
 		"success: empty result": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList, nil),
 
 					f.mockTodoQueries.EXPECT().
-						List(gomock.Any(), &gatewayinput.ListTodosOptions{
+						List(ctx, &gatewayinput.ListTodosOptions{
 							TodoListID:   todoListID,
 							AssigneeOnly: nil,
 							Offset:       0,
@@ -173,9 +172,9 @@ func TestTodoLister_List(t *testing.T) {
 		},
 
 		"error: todo list query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(nil, fmt.Errorf("connection lost"))
 			},
 			input:   validInput,
@@ -183,9 +182,9 @@ func TestTodoLister_List(t *testing.T) {
 		},
 
 		"error: todo list not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoListQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(nil, nil)
 			},
 			input:   validInput,
@@ -194,14 +193,14 @@ func TestTodoLister_List(t *testing.T) {
 		},
 
 		"error: todo query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList, nil),
 
 					f.mockTodoQueries.EXPECT().
-						List(gomock.Any(), gomock.Any()).
+						List(ctx, gomock.Any()).
 						Return(nil, int64(0), fmt.Errorf("db error")),
 				)
 			},
@@ -211,10 +210,10 @@ func TestTodoLister_List(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
 
@@ -223,7 +222,7 @@ func TestTodoLister_List(t *testing.T) {
 				mockTodoQueries:     mock.NewMockTodoQueriesGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx)
 
 			sut := service.NewTodoLister(
 				f.mockTodoListQueries,

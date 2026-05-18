@@ -21,7 +21,6 @@ func TestTodoListGetter_Get(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
 		now         = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		todoListID  = entity.TodoListID(1)
 		requesterID = entity.UserID(10)
@@ -45,16 +44,16 @@ func TestTodoListGetter_Get(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		prepare  func(f *fields)
+		prepare  func(f *fields, ctx context.Context)
 		input    *input.TodoListGetter
 		expected *output.TodoListGetter
 		wantErr  bool
 		errCode  entity.ErrorCode
 	}{
 		"success: todo list found and requester is owner": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(todoList, nil)
 			},
 			input:    validInput,
@@ -62,9 +61,9 @@ func TestTodoListGetter_Get(t *testing.T) {
 		},
 
 		"error: not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockQueries.EXPECT().
-					Get(gomock.Any(), entity.TodoListID(999)).
+					Get(ctx, entity.TodoListID(999)).
 					Return(nil, nil)
 			},
 			input: &input.TodoListGetter{
@@ -76,9 +75,9 @@ func TestTodoListGetter_Get(t *testing.T) {
 		},
 
 		"error: query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(nil, fmt.Errorf("connection refused"))
 			},
 			input:   validInput,
@@ -86,9 +85,9 @@ func TestTodoListGetter_Get(t *testing.T) {
 		},
 
 		"error: requester is not owner": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockQueries.EXPECT().
-					Get(gomock.Any(), todoListID).
+					Get(ctx, todoListID).
 					Return(&entity.TodoList{
 						ID:      todoListID,
 						Name:    "Work Tasks",
@@ -102,10 +101,10 @@ func TestTodoListGetter_Get(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
 
@@ -113,7 +112,7 @@ func TestTodoListGetter_Get(t *testing.T) {
 				mockQueries: mock.NewMockTodoListQueriesGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx)
 
 			sut := service.NewTodoListGetter(f.mockQueries)
 

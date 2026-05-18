@@ -21,7 +21,6 @@ func TestTodoUpdater_Update(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
 		todoID      = entity.TodoID(1)
 		todoListID  = entity.TodoListID(2)
 		ownerID     = entity.UserID(10)
@@ -110,25 +109,25 @@ func TestTodoUpdater_Update(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		prepare  func(f *fields)
+		prepare  func(f *fields, ctx context.Context)
 		input    *input.TodoUpdater
 		expected *output.TodoUpdater
 		wantErr  bool
 		errCode  entity.ErrorCode
 	}{
 		"success: owner updates all fields": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodo(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList(ownerID), nil),
 
 					f.mockTodoCommands.EXPECT().
-						Update(gomock.Any(), ownerUpdatedTodo()).
+						Update(ctx, ownerUpdatedTodo()).
 						Return(ownerUpdatedTodo(), nil),
 				)
 			},
@@ -139,18 +138,18 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"success: owner updates no fields keeps todo unchanged": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodo(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList(ownerID), nil),
 
 					f.mockTodoCommands.EXPECT().
-						Update(gomock.Any(), oldTodo()).
+						Update(ctx, oldTodo()).
 						Return(oldTodo(), nil),
 				)
 			},
@@ -166,18 +165,18 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"success: assignee updates status only": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodo(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList(ownerID), nil),
 
 					f.mockTodoCommands.EXPECT().
-						Update(gomock.Any(), assigneeUpdatedTodo()).
+						Update(ctx, assigneeUpdatedTodo()).
 						Return(assigneeUpdatedTodo(), nil),
 				)
 			},
@@ -197,18 +196,18 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"success: assignee updates non-status fields only keeps todo unchanged": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodo(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList(ownerID), nil),
 
 					f.mockTodoCommands.EXPECT().
-						Update(gomock.Any(), oldTodo()).
+						Update(ctx, oldTodo()).
 						Return(oldTodo(), nil),
 				)
 			},
@@ -227,9 +226,9 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"error: todo query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoQueries.EXPECT().
-					Get(gomock.Any(), todoID, todoListID).
+					Get(ctx, todoID, todoListID).
 					Return(nil, fmt.Errorf("db error"))
 			},
 			input:   validInput,
@@ -237,9 +236,9 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"error: todo not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoQueries.EXPECT().
-					Get(gomock.Any(), todoID, todoListID).
+					Get(ctx, todoID, todoListID).
 					Return(nil, nil)
 			},
 			input:   validInput,
@@ -248,14 +247,14 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"error: todo list query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodo(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(nil, fmt.Errorf("db error")),
 				)
 			},
@@ -264,14 +263,14 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"error: todo list not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodo(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(nil, nil),
 				)
 			},
@@ -281,14 +280,14 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"error: requester is neither owner nor assignee": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodo(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList(ownerID), nil),
 				)
 			},
@@ -305,14 +304,14 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"error: requester is not owner and todo has no assignee": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodoWithoutAssignee(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList(ownerID), nil),
 				)
 			},
@@ -329,18 +328,18 @@ func TestTodoUpdater_Update(t *testing.T) {
 		},
 
 		"error: update command gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(oldTodo(), nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList(ownerID), nil),
 
 					f.mockTodoCommands.EXPECT().
-						Update(gomock.Any(), ownerUpdatedTodo()).
+						Update(ctx, ownerUpdatedTodo()).
 						Return(nil, fmt.Errorf("db error")),
 				)
 			},
@@ -350,10 +349,10 @@ func TestTodoUpdater_Update(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
 
@@ -363,7 +362,7 @@ func TestTodoUpdater_Update(t *testing.T) {
 				mockTodoCommands:    mock.NewMockTodoCommandsGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx)
 
 			sut := service.NewTodoUpdater(
 				f.mockTodoListQueries,

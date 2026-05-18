@@ -18,7 +18,6 @@ func TestTodoDeleter_Delete(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
 		todoID      = entity.TodoID(1)
 		todoListID  = entity.TodoListID(2)
 		requesterID = entity.UserID(10)
@@ -50,24 +49,24 @@ func TestTodoDeleter_Delete(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		prepare func(f *fields)
+		prepare func(f *fields, ctx context.Context)
 		input   *input.TodoDeleter
 		wantErr bool
 		errCode entity.ErrorCode
 	}{
 		"success: todo exists, todo list exists, requester is owner": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList, nil),
 
 					f.mockTodoCommands.EXPECT().
-						Delete(gomock.Any(), todoID).
+						Delete(ctx, todoID).
 						Return(nil),
 				)
 			},
@@ -75,9 +74,9 @@ func TestTodoDeleter_Delete(t *testing.T) {
 		},
 
 		"error: todo query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoQueries.EXPECT().
-					Get(gomock.Any(), todoID, todoListID).
+					Get(ctx, todoID, todoListID).
 					Return(nil, fmt.Errorf("connection lost"))
 			},
 			input:   validInput,
@@ -85,9 +84,9 @@ func TestTodoDeleter_Delete(t *testing.T) {
 		},
 
 		"error: todo not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockTodoQueries.EXPECT().
-					Get(gomock.Any(), todoID, todoListID).
+					Get(ctx, todoID, todoListID).
 					Return(nil, nil)
 			},
 			input:   validInput,
@@ -96,14 +95,14 @@ func TestTodoDeleter_Delete(t *testing.T) {
 		},
 
 		"error: todo list query gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(nil, fmt.Errorf("connection lost")),
 				)
 			},
@@ -112,14 +111,14 @@ func TestTodoDeleter_Delete(t *testing.T) {
 		},
 
 		"error: todo list not found": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(nil, nil),
 				)
 			},
@@ -129,14 +128,14 @@ func TestTodoDeleter_Delete(t *testing.T) {
 		},
 
 		"error: requester is not todo list owner": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(&entity.TodoList{
 							ID:      todoListID,
 							Name:    "Work Tasks",
@@ -150,18 +149,18 @@ func TestTodoDeleter_Delete(t *testing.T) {
 		},
 
 		"error: delete command gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				gomock.InOrder(
 					f.mockTodoQueries.EXPECT().
-						Get(gomock.Any(), todoID, todoListID).
+						Get(ctx, todoID, todoListID).
 						Return(todo, nil),
 
 					f.mockTodoListQueries.EXPECT().
-						Get(gomock.Any(), todoListID).
+						Get(ctx, todoListID).
 						Return(todoList, nil),
 
 					f.mockTodoCommands.EXPECT().
-						Delete(gomock.Any(), todoID).
+						Delete(ctx, todoID).
 						Return(fmt.Errorf("db error")),
 				)
 			},
@@ -171,10 +170,10 @@ func TestTodoDeleter_Delete(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
 
@@ -184,7 +183,7 @@ func TestTodoDeleter_Delete(t *testing.T) {
 				mockTodoCommands:    mock.NewMockTodoCommandsGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx)
 
 			sut := service.NewTodoDeleter(
 				f.mockTodoListQueries,

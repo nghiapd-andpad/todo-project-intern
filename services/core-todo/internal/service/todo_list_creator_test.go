@@ -21,7 +21,6 @@ func TestTodoListCreator_Create(t *testing.T) {
 	t.Parallel()
 
 	var (
-		ctx         = context.Background()
 		now         = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		requesterID = entity.UserID(1)
 
@@ -44,15 +43,15 @@ func TestTodoListCreator_Create(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		prepare  func(f *fields)
+		prepare  func(f *fields, ctx context.Context)
 		input    *input.TodoListCreator
 		expected *output.TodoListCreator
 		wantErr  bool
 	}{
 		"success: create todo list": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockCommands.EXPECT().
-					Create(gomock.Any(), &entity.TodoList{
+					Create(ctx, &entity.TodoList{
 						Name:    "Task 1",
 						OwnerID: requesterID,
 					}).
@@ -63,9 +62,9 @@ func TestTodoListCreator_Create(t *testing.T) {
 		},
 
 		"success: create with empty name": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockCommands.EXPECT().
-					Create(gomock.Any(), &entity.TodoList{
+					Create(ctx, &entity.TodoList{
 						Name:    "",
 						OwnerID: requesterID,
 					}).
@@ -81,9 +80,9 @@ func TestTodoListCreator_Create(t *testing.T) {
 		},
 
 		"error: command gateway error": {
-			prepare: func(f *fields) {
+			prepare: func(f *fields, ctx context.Context) {
 				f.mockCommands.EXPECT().
-					Create(gomock.Any(), gomock.Any()).
+					Create(ctx, gomock.Any()).
 					Return(nil, fmt.Errorf("db connection lost"))
 			},
 			input:   validInput,
@@ -92,10 +91,10 @@ func TestTodoListCreator_Create(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			ctrl := gomock.NewController(t)
 
@@ -103,7 +102,7 @@ func TestTodoListCreator_Create(t *testing.T) {
 				mockCommands: mock.NewMockTodoListCommandsGateway(ctrl),
 			}
 
-			tt.prepare(f)
+			tt.prepare(f, ctx)
 
 			sut := service.NewTodoListCreator(f.mockCommands)
 

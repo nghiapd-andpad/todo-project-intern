@@ -60,16 +60,16 @@ func TestTodoListCommandsGateway_Create(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		tt := tt
-
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			ctx := context.Background()
 
 			db := tt.setup(t)
 
 			repo := persistence.NewTodoListCommandsGateway(db)
 
-			got, err := repo.Create(context.Background(), tt.input)
+			got, err := repo.Create(ctx, tt.input)
 
 			require.NoError(t, err)
 			require.NotNil(t, got)
@@ -130,13 +130,15 @@ func TestTodoListCommandsGateway_Update(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			ctx := context.Background()
+
 			db, existingTodoList := tt.setup(t)
 
 			repo := persistence.NewTodoListCommandsGateway(db)
 
 			tt.mutate(existingTodoList)
 
-			got, err := repo.Update(context.Background(), existingTodoList)
+			got, err := repo.Update(ctx, existingTodoList)
 
 			require.NoError(t, err)
 			require.NotNil(t, got)
@@ -154,6 +156,7 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 		testFunc func(
 			t *testing.T,
 			db *gorm.DB,
+			ctx context.Context,
 			cmdRepo *persistence.TodoListCommandsGateway,
 			queryRepo *persistence.TodoListQueriesGateway,
 		)
@@ -167,12 +170,13 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 			testFunc: func(
 				t *testing.T,
 				db *gorm.DB,
+				ctx context.Context,
 				cmdRepo *persistence.TodoListCommandsGateway,
 				queryRepo *persistence.TodoListQueriesGateway,
 			) {
 				existingTodoList := testutil.CreateTodoList(t, db, "To Delete", entity.UserID(1))
 
-				before, err := queryRepo.Get(context.Background(), existingTodoList.ID)
+				before, err := queryRepo.Get(ctx, existingTodoList.ID)
 				require.NoError(t, err)
 				require.NotNil(t, before)
 
@@ -182,7 +186,7 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 				)
 				require.NoError(t, err)
 
-				after, err := queryRepo.Get(context.Background(), existingTodoList.ID)
+				after, err := queryRepo.Get(ctx, existingTodoList.ID)
 				require.NoError(t, err)
 				assert.Nil(t, after)
 			},
@@ -197,6 +201,7 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 			testFunc: func(
 				t *testing.T,
 				db *gorm.DB,
+				ctx context.Context,
 				cmdRepo *persistence.TodoListCommandsGateway,
 				queryRepo *persistence.TodoListQueriesGateway,
 			) {
@@ -204,12 +209,12 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 				todo1 := testutil.CreateTodo(t, db, todoList.ID, "Todo 1")
 				todo2 := testutil.CreateTodo(t, db, todoList.ID, "Todo 2")
 
-				err := cmdRepo.Delete(context.Background(), todoList.ID)
+				err := cmdRepo.Delete(ctx, todoList.ID)
 				require.NoError(t, err)
 
 				// todo must still be in the database
 				todoQueries := persistence.NewTodoQueriesGateway(db)
-				todos, total, err := todoQueries.List(context.Background(), &gatewayinput.ListTodosOptions{
+				todos, total, err := todoQueries.List(ctx, &gatewayinput.ListTodosOptions{
 					TodoListID: todoList.ID,
 					Limit:      10,
 				})
@@ -230,11 +235,12 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 			testFunc: func(
 				t *testing.T,
 				_ *gorm.DB,
+				ctx context.Context,
 				cmdRepo *persistence.TodoListCommandsGateway,
 				_ *persistence.TodoListQueriesGateway,
 			) {
 				err := cmdRepo.Delete(
-					context.Background(),
+					ctx,
 					entity.TodoListID(9999),
 				)
 
@@ -247,11 +253,13 @@ func TestTodoListCommandsGateway_Delete(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			ctx := context.Background()
+
 			db := tt.setup(t)
 
 			queryRepo := persistence.NewTodoListQueriesGateway(db)
 			cmdRepo := persistence.NewTodoListCommandsGateway(db)
-			tt.testFunc(t, db, cmdRepo, queryRepo)
+			tt.testFunc(t, db, ctx, cmdRepo, queryRepo)
 		})
 	}
 }

@@ -27,6 +27,7 @@ func TestTransactor_Transaction(t *testing.T) {
 		)
 		test func(
 			t *testing.T,
+			ctx context.Context,
 			transactor *persistence.Transactor,
 			todoListCmdRepo *persistence.TodoListCommandsGateway,
 			todoCmdRepo *persistence.TodoCommandsGateway,
@@ -53,6 +54,7 @@ func TestTransactor_Transaction(t *testing.T) {
 			},
 			test: func(
 				t *testing.T,
+				ctx context.Context,
 				transactor *persistence.Transactor,
 				todoListCmdRepo *persistence.TodoListCommandsGateway,
 				todoCmdRepo *persistence.TodoCommandsGateway,
@@ -61,7 +63,7 @@ func TestTransactor_Transaction(t *testing.T) {
 			) {
 				var createdTodoListID entity.TodoListID
 
-				err := transactor.Transaction(context.Background(), func(txCtx context.Context) error {
+				err := transactor.Transaction(ctx, func(txCtx context.Context) error {
 					todoList, err := todoListCmdRepo.Create(txCtx, &entity.TodoList{
 						Name:    "Committed Todo List",
 						OwnerID: entity.UserID(1),
@@ -83,12 +85,12 @@ func TestTransactor_Transaction(t *testing.T) {
 
 				require.NoError(t, err)
 
-				todoList, err := todoListQueryRepo.Get(context.Background(), createdTodoListID)
+				todoList, err := todoListQueryRepo.Get(ctx, createdTodoListID)
 				require.NoError(t, err)
 				require.NotNil(t, todoList)
 				assert.Equal(t, "Committed Todo List", todoList.Name)
 
-				todos, total, err := todoQueryRepo.List(context.Background(), &gatewayinput.ListTodosOptions{
+				todos, total, err := todoQueryRepo.List(ctx, &gatewayinput.ListTodosOptions{
 					TodoListID: createdTodoListID,
 					Limit:      10,
 				})
@@ -118,6 +120,7 @@ func TestTransactor_Transaction(t *testing.T) {
 			},
 			test: func(
 				t *testing.T,
+				ctx context.Context,
 				transactor *persistence.Transactor,
 				todoListCmdRepo *persistence.TodoListCommandsGateway,
 				todoCmdRepo *persistence.TodoCommandsGateway,
@@ -126,7 +129,7 @@ func TestTransactor_Transaction(t *testing.T) {
 			) {
 				errRollback := errors.New("force rollback")
 
-				err := transactor.Transaction(context.Background(), func(txCtx context.Context) error {
+				err := transactor.Transaction(ctx, func(txCtx context.Context) error {
 					todoList, err := todoListCmdRepo.Create(txCtx, &entity.TodoList{
 						Name:    "Rolled Back Todo List",
 						OwnerID: entity.UserID(1),
@@ -151,7 +154,7 @@ func TestTransactor_Transaction(t *testing.T) {
 				require.Error(t, err)
 				assert.ErrorIs(t, err, errRollback)
 
-				todoLists, total, err := todoListQueryRepo.List(context.Background(), &gatewayinput.ListTodoListsOptions{
+				todoLists, total, err := todoListQueryRepo.List(ctx, &gatewayinput.ListTodoListsOptions{
 					OwnerID: testutil.UserIDPtr(entity.UserID(1)),
 					Limit:   10,
 				})
@@ -180,19 +183,20 @@ func TestTransactor_Transaction(t *testing.T) {
 			},
 			test: func(
 				t *testing.T,
+				ctx context.Context,
 				transactor *persistence.Transactor,
 				todoListCmdRepo *persistence.TodoListCommandsGateway,
 				todoCmdRepo *persistence.TodoCommandsGateway,
 				_ *persistence.TodoListQueriesGateway,
 				todoQueryRepo *persistence.TodoQueriesGateway,
 			) {
-				list, err := todoListCmdRepo.Create(context.Background(), &entity.TodoList{
+				list, err := todoListCmdRepo.Create(ctx, &entity.TodoList{
 					Name:    "List",
 					OwnerID: entity.UserID(1),
 				})
 				require.NoError(t, err)
 
-				todo, err := todoCmdRepo.Create(context.Background(), &entity.Todo{
+				todo, err := todoCmdRepo.Create(ctx, &entity.Todo{
 					TodoListID: list.ID,
 					Title:      "Todo",
 					Status:     entity.TodoStatusPending,
@@ -200,7 +204,7 @@ func TestTransactor_Transaction(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				err = transactor.Transaction(context.Background(), func(txCtx context.Context) error {
+				err = transactor.Transaction(ctx, func(txCtx context.Context) error {
 					if err := todoCmdRepo.DeleteByTodoListID(txCtx, list.ID); err != nil {
 						return err
 					}
@@ -209,7 +213,7 @@ func TestTransactor_Transaction(t *testing.T) {
 
 				require.Error(t, err)
 
-				gotTodo, err := todoQueryRepo.Get(context.Background(), todo.ID, list.ID)
+				gotTodo, err := todoQueryRepo.Get(ctx, todo.ID, list.ID)
 				require.NoError(t, err)
 				assert.NotNil(t, gotTodo)
 			},
@@ -220,6 +224,8 @@ func TestTransactor_Transaction(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			ctx := context.Background()
+
 			transactor,
 				todoListCmdRepo,
 				todoCmdRepo,
@@ -228,6 +234,7 @@ func TestTransactor_Transaction(t *testing.T) {
 
 			tt.test(
 				t,
+				ctx,
 				transactor,
 				todoListCmdRepo,
 				todoCmdRepo,
