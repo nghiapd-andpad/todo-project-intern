@@ -2,6 +2,8 @@
 package mapper
 
 import (
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/resourcename"
@@ -48,6 +50,8 @@ func TodoStatusToPb(status entity.TodoStatus) todov1.TodoStatus {
 		return todov1.TodoStatus_TODO_STATUS_IN_PROGRESS
 	case entity.TodoStatusDone:
 		return todov1.TodoStatus_TODO_STATUS_DONE
+	case entity.TodoStatusOverdue:
+		return todov1.TodoStatus_TODO_STATUS_OVERDUE
 	default:
 		return todov1.TodoStatus_TODO_STATUS_UNSPECIFIED
 	}
@@ -77,10 +81,22 @@ func PbToStatus(s todov1.TodoStatus) *entity.TodoStatus {
 		result = entity.TodoStatusInProgress
 	case todov1.TodoStatus_TODO_STATUS_DONE:
 		result = entity.TodoStatusDone
+	case todov1.TodoStatus_TODO_STATUS_OVERDUE:
+		result = entity.TodoStatusOverdue
 	default:
 		return nil // UNSPECIFIED
 	}
 	return &result
+}
+
+// PbToStatusForUpdate converts proto status to entity status for UpdateTodo.
+// Returns an error if the client attempts to set OVERDUE — this status can only be set by a cron job.
+func PbToStatusForUpdate(s todov1.TodoStatus) (*entity.TodoStatus, error) {
+	if s == todov1.TodoStatus_TODO_STATUS_OVERDUE {
+		return nil, status.Error(codes.InvalidArgument,
+			"status OVERDUE cannot be set manually; it is managed automatically by the system")
+	}
+	return PbToStatus(s), nil
 }
 
 func PbToPriority(p todov1.Priority) *entity.Priority {

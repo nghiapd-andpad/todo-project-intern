@@ -1,3 +1,4 @@
+// Package logger provides Zap logger initialization and context-aware logging helpers.
 package logger
 
 import (
@@ -7,33 +8,36 @@ import (
 	"go.uber.org/zap"
 )
 
-var logger *zap.Logger = zap.NewNop()
+var baseLogger *zap.Logger = zap.NewNop()
 
 func SetLogger(l *zap.Logger) {
 	if l == nil {
-		logger = zap.NewNop()
+		baseLogger = zap.NewNop()
 		return
 	}
 
-	logger = l
+	baseLogger = l
 }
 
 func FromContext(ctx context.Context) *zap.Logger {
 	if ctx == nil {
-		return logger
+		return baseLogger
 	}
 
-	l := ctxzap.Extract(ctx)
-	if l != nil {
+	if l := ctxzap.Extract(ctx); l != nil {
 		return l
 	}
 
-	return logger
+	return baseLogger
 }
 
 func ToContext(ctx context.Context, l *zap.Logger) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	if l == nil {
-		l = logger
+		l = baseLogger
 	}
 
 	return ctxzap.ToContext(ctx, l)

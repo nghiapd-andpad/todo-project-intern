@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"buf.build/go/protovalidate"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -15,6 +16,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	todov1 "github.com/nghiapd-andpad/todo-project-intern/proto/todo/v1"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler/interceptor"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase"
 )
 
@@ -61,7 +63,7 @@ func NewTodoHandler(
 	}
 }
 
-func NewGRPCServer(cfg *config.Config, handler *TodoHandler) (*grpc.Server, error) {
+func NewGRPCServer(cfg *config.Config, handler *TodoHandler, zapLogger *zap.Logger) (*grpc.Server, error) {
 	validator, err := protovalidate.New()
 	if err != nil {
 		return nil, fmt.Errorf("create validator: %w", err)
@@ -69,6 +71,7 @@ func NewGRPCServer(cfg *config.Config, handler *TodoHandler) (*grpc.Server, erro
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
+			interceptor.LoggingUnaryServerInterceptor(zapLogger),
 			auth.UnaryServerInterceptor(),
 			func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 				if msg, ok := req.(proto.Message); ok {
