@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -67,4 +68,36 @@ func (g *TodoCommandsGateway) DeleteByTodoListID(ctx context.Context, todoListID
 	}
 
 	return nil
+}
+
+func (g *TodoCommandsGateway) MarkOverdueByIDs(ctx context.Context, ids []entity.TodoID, markedAt time.Time) (int64, error) {
+	conn := connFromContext(ctx, g.db)
+
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
+	rawIDs := make([]int64, len(ids))
+	for i, id := range ids {
+		rawIDs[i] = int64(id)
+	}
+
+	result := conn.
+		Model(&model.Todo{}).
+		Where("deleted_at IS NULL").
+		Where("id IN ?", rawIDs).
+		Where("status IN ?", []string{
+			string(entity.TodoStatusPending),
+			string(entity.TodoStatusInProgress),
+		}).
+		Updates(map[string]any{
+			"status":     string(entity.TodoStatusOverdue),
+			"updated_at": markedAt,
+		})
+
+	if result.Error != nil {
+		return 0, fmt.Errorf("db mark overdue todos by ids: %w", result.Error)
+	}
+
+	return result.RowsAffected, nil
 }

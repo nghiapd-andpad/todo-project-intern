@@ -11,6 +11,7 @@ const (
 	TodoStatusPending    TodoStatus = "PENDING"
 	TodoStatusInProgress TodoStatus = "IN_PROGRESS"
 	TodoStatusDone       TodoStatus = "DONE"
+	TodoStatusOverdue    TodoStatus = "OVERDUE"
 )
 
 type Priority string

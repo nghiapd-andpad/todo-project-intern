@@ -47,3 +47,7 @@ type TodoListUpdater interface {
 type TodoListDeleter interface {
 	Delete(ctx context.Context, in *input.TodoListDeleter) (*output.TodoListDeleter, error)
 }
+
+type TodoOverdueMarker interface {
+	MarkOverdue(ctx context.Context, in *input.TodoOverdueMarker) (*output.TodoOverdueMarker, error)
+}

@@ -55,3 +55,10 @@ type TodoDeleter struct {
 	TodoListID  entity.TodoListID
 	RequesterID entity.UserID
 }
+
+type TodoOverdueMarker struct {
+	AsOf       time.Time
+	BatchSize  int
+	MaxBatches int
+	BatchSleep time.Duration
+}

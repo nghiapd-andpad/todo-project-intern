@@ -7,15 +7,14 @@
 package todov1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -32,6 +31,7 @@ const (
 	TodoStatus_TODO_STATUS_PENDING     TodoStatus = 1
 	TodoStatus_TODO_STATUS_IN_PROGRESS TodoStatus = 2
 	TodoStatus_TODO_STATUS_DONE        TodoStatus = 3
+	TodoStatus_TODO_STATUS_OVERDUE     TodoStatus = 4
 )
 
 // Enum value maps for TodoStatus.
@@ -41,12 +41,14 @@ var (
 		1: "TODO_STATUS_PENDING",
 		2: "TODO_STATUS_IN_PROGRESS",
 		3: "TODO_STATUS_DONE",
+		4: "TODO_STATUS_OVERDUE",
 	}
 	TodoStatus_value = map[string]int32{
 		"TODO_STATUS_UNSPECIFIED": 0,
 		"TODO_STATUS_PENDING":     1,
 		"TODO_STATUS_IN_PROGRESS": 2,
 		"TODO_STATUS_DONE":        3,
+		"TODO_STATUS_OVERDUE":     4,
 	}
 )
 
@@ -1425,13 +1427,14 @@ const file_proto_todo_v1_todo_proto_rawDesc = "" +
 	"\x04todo\x18\x01 \x01(\v2\r.todo.v1.TodoR\x04todo\"0\n" +
 	"\x11DeleteTodoRequest\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\"\x14\n" +
-	"\x12DeleteTodoResponse*u\n" +
+	"\x12DeleteTodoResponse*\x8e\x01\n" +
 	"\n" +
 	"TodoStatus\x12\x1b\n" +
 	"\x17TODO_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13TODO_STATUS_PENDING\x10\x01\x12\x1b\n" +
 	"\x17TODO_STATUS_IN_PROGRESS\x10\x02\x12\x14\n" +
-	"\x10TODO_STATUS_DONE\x10\x03*s\n" +
+	"\x10TODO_STATUS_DONE\x10\x03\x12\x17\n" +
+	"\x13TODO_STATUS_OVERDUE\x10\x04*s\n" +
 	"\bPriority\x12\x18\n" +
 	"\x14PRIORITY_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fPRIORITY_LOW\x10\x01\x12\x13\n" +

@@ -28,6 +28,7 @@ enum TodoStatus {
   TODO_STATUS_PENDING = 1;
   TODO_STATUS_IN_PROGRESS = 2;
   TODO_STATUS_DONE = 3;
+  TODO_STATUS_OVERDUE = 4;
 }
 
 enum Priority {

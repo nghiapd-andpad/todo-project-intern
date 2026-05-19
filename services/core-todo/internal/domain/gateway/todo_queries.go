@@ -5,6 +5,7 @@ package gateway
 
 import (
 	"context"
+	"time"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
@@ -13,4 +14,6 @@ import (
 type TodoQueriesGateway interface {
 	Get(ctx context.Context, todoID entity.TodoID, todoListID entity.TodoListID) (*entity.Todo, error)
 	List(ctx context.Context, opts *input.ListTodosOptions) ([]*entity.Todo, int64, error)
+
+	FindOverdueTodoIDs(ctx context.Context, asOf time.Time, limit int) ([]entity.TodoID, error)
 }

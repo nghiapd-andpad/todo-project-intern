@@ -12,6 +12,7 @@ package mock
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	entity "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	input "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
@@ -40,6 +41,21 @@ func NewMockTodoQueriesGateway(ctrl *gomock.Controller) *MockTodoQueriesGateway 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTodoQueriesGateway) EXPECT() *MockTodoQueriesGatewayMockRecorder {
 	return m.recorder
+}
+
+// FindOverdueTodoIDs mocks base method.
+func (m *MockTodoQueriesGateway) FindOverdueTodoIDs(ctx context.Context, asOf time.Time, limit int) ([]entity.TodoID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindOverdueTodoIDs", ctx, asOf, limit)
+	ret0, _ := ret[0].([]entity.TodoID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindOverdueTodoIDs indicates an expected call of FindOverdueTodoIDs.
+func (mr *MockTodoQueriesGatewayMockRecorder) FindOverdueTodoIDs(ctx, asOf, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindOverdueTodoIDs", reflect.TypeOf((*MockTodoQueriesGateway)(nil).FindOverdueTodoIDs), ctx, asOf, limit)
 }
 
 // Get mocks base method.

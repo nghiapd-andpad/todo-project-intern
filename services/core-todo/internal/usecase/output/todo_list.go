@@ -22,3 +22,9 @@ type TodoListUpdater struct {
 }
 
 type TodoListDeleter struct{}
+
+type TodoOverdueMarker struct {
+	MarkedCount int64
+	BatchCount  int
+	HasMore     bool
+}

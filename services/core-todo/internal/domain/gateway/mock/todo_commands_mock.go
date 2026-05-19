@@ -12,6 +12,7 @@ package mock
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	entity "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	gomock "go.uber.org/mock/gomock"
@@ -82,6 +83,21 @@ func (m *MockTodoCommandsGateway) DeleteByTodoListID(ctx context.Context, todoLi
 func (mr *MockTodoCommandsGatewayMockRecorder) DeleteByTodoListID(ctx, todoListID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByTodoListID", reflect.TypeOf((*MockTodoCommandsGateway)(nil).DeleteByTodoListID), ctx, todoListID)
+}
+
+// MarkOverdueByIDs mocks base method.
+func (m *MockTodoCommandsGateway) MarkOverdueByIDs(ctx context.Context, ids []entity.TodoID, markedAt time.Time) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkOverdueByIDs", ctx, ids, markedAt)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkOverdueByIDs indicates an expected call of MarkOverdueByIDs.
+func (mr *MockTodoCommandsGatewayMockRecorder) MarkOverdueByIDs(ctx, ids, markedAt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkOverdueByIDs", reflect.TypeOf((*MockTodoCommandsGateway)(nil).MarkOverdueByIDs), ctx, ids, markedAt)
 }
 
 // Update mocks base method.

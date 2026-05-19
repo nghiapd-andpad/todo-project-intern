@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -84,4 +85,34 @@ func (g *TodoQueriesGateway) List(ctx context.Context, opts *gatewayinput.ListTo
 	}
 
 	return entities, total, nil
+}
+
+func (g *TodoQueriesGateway) FindOverdueTodoIDs(ctx context.Context, asOf time.Time, limit int) ([]entity.TodoID, error) {
+	conn := connFromContext(ctx, g.db)
+
+	if limit <= 0 {
+		return []entity.TodoID{}, nil
+	}
+
+	var ids []int64
+	if err := conn.Model(&model.Todo{}).
+		Where("deleted_at IS NULL").
+		Where("due_date IS NOT NULL").
+		Where("due_date <= ?", asOf).
+		Where("status IN ?", []string{
+			string(entity.TodoStatusPending),
+			string(entity.TodoStatusInProgress),
+		}).
+		Order("due_date ASC").
+		Limit(limit).
+		Pluck("id", &ids).Error; err != nil {
+		return nil, fmt.Errorf("db find overdue todo ids: %w", err)
+	}
+
+	result := make([]entity.TodoID, len(ids))
+	for i, id := range ids {
+		result[i] = entity.TodoID(id)
+	}
+
+	return result, nil
 }

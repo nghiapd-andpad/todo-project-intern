@@ -9,14 +9,17 @@ package di
 import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/cronjob"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/redis"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/service"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/utils/logger"
 	"google.golang.org/grpc"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
+func InitializeApp(cfg *config.Config) (*App, func(), error) {
 	db, cleanup, err := persistence.NewDatabase(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -37,12 +40,62 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 	transactor := persistence.NewTransactor(db)
 	todoListDeleter := service.NewTodoListDeleter(transactor, todoListQueriesGateway, todoListCommandsGateway, todoCommandsGateway)
 	todoHandler := handler.NewTodoHandler(todoCreator, todoGetter, todoLister, todoUpdater, todoDeleter, todoListCreator, todoListGetter, todoListLister, todoListUpdater, todoListDeleter)
-	server, err := handler.NewGRPCServer(cfg, todoHandler)
+	zapLogger, cleanup2, err := logger.New(cfg)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	return server, func() {
+	server, err := handler.NewGRPCServer(cfg, todoHandler, zapLogger)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	scheduler, cleanup3, err := cronjob.NewGoCronScheduler(zapLogger)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	todoOverdueMarker := service.NewTodoOverdueMarker(todoQueriesGateway, todoCommandsGateway)
+	client, cleanup4, err := redis.NewClient(cfg)
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	distributedLocker := redis.NewDistributedLocker(client)
+	cronjobScheduler, err := cronjob.NewScheduler(scheduler, todoOverdueMarker, distributedLocker, cfg, zapLogger)
+	if err != nil {
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	app := NewApp(server, cronjobScheduler)
+	return app, func() {
+		cleanup4()
+		cleanup3()
+		cleanup2()
 		cleanup()
 	}, nil
+}
+
+// wire.go:
+
+type App struct {
+	GRPCServer *grpc.Server
+	Scheduler  *cronjob.Scheduler
+}
+
+func NewApp(
+	grpcServer *grpc.Server,
+	scheduler *cronjob.Scheduler,
+) *App {
+	return &App{
+		GRPCServer: grpcServer,
+		Scheduler:  scheduler,
+	}
 }

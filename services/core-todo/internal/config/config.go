@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -19,9 +20,28 @@ type Config struct {
 	ServerPort string `envconfig:"SERVER_PORT" default:"50051"`
 	AppEnv     string `envconfig:"APP_ENV" default:"development"`
 
+	// Log
+	LogLevel  string `envconfig:"LOG_LEVEL" default:"debug"`
+	LogFormat string `envconfig:"LOG_FORMAT" default:"console"`
+
+	// Scheduler
+	SchedulerEnabled            bool          `envconfig:"SCHEDULER_ENABLED" default:"false"`
+	TodoOverdueMarkerCron       string        `envconfig:"TODO_OVERDUE_MARKER_CRON" default:"*/5 * * * *"`
+	TodoOverdueMarkerBatchSize  int           `envconfig:"TODO_OVERDUE_MARKER_BATCH_SIZE" default:"500"`
+	TodoOverdueMarkerMaxBatches int           `envconfig:"TODO_OVERDUE_MARKER_MAX_BATCHES" default:"20"`
+	TodoOverdueMarkerLockKey    string        `envconfig:"TODO_OVERDUE_MARKER_LOCK_KEY" default:"job:mark-overdue-todos"`
+	TodoOverdueMarkerLockTTL    time.Duration `envconfig:"TODO_OVERDUE_MARKER_LOCK_TTL" default:"10m"`
+	TodoOverdueMarkerBatchSleep time.Duration `envconfig:"TODO_OVERDUE_MARKER_BATCH_SLEEP" default:"100ms"`
+
+	// Redis
+	RedisHost     string `envconfig:"REDIS_HOST" default:"localhost"`
+	RedisPort     string `envconfig:"REDIS_PORT" default:"6379"`
+	RedisPassword string `envconfig:"REDIS_PASSWORD" default:""`
+	RedisDB       int    `envconfig:"REDIS_DB" default:"0"`
+
 	// Feature flags
-	TodoBlacklistEnabled bool     `envconfig:"TODO_BLACKLIST_ENABLED"`
-	TodoTitleBlacklist   []string `envconfig:"TODO_TITLE_BLACKLIST"`
+	TodoBlacklistEnabled bool     `envconfig:"TODO_BLACKLIST_ENABLED" default:"false"`
+	TodoTitleBlacklist   []string `envconfig:"TODO_TITLE_BLACKLIST" default:"spam,troll"`
 }
 
 func New() (*Config, error) {
