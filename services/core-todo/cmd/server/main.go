@@ -20,13 +20,11 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	app, cleanup, err := di.InitializeApp(cfg)
+	app, cleanup, err := di.InitializeServer(cfg)
 	if err != nil {
-		log.Fatalf("failed to initialize app: %v", err)
+		log.Fatalf("failed to initialize server: %v", err)
 	}
 	defer cleanup()
-
-	app.Scheduler.Start()
 
 	lis, err := net.Listen("tcp", ":"+cfg.ServerPort)
 	if err != nil {
@@ -39,7 +37,6 @@ func main() {
 		zap.String("app_env", cfg.AppEnv),
 		zap.String("log_level", cfg.LogLevel),
 		zap.String("log_format", cfg.LogFormat),
-		zap.Bool("scheduler_enabled", cfg.SchedulerEnabled),
 	)
 
 	if err := app.GRPCServer.Serve(lis); err != nil {

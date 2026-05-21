@@ -14,12 +14,14 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/redis"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/service"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/utils/logger"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/worker"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/worker/job"
 	"google.golang.org/grpc"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp(cfg *config.Config) (*App, func(), error) {
+func InitializeServer(cfg *config.Config) (*ServerApp, func(), error) {
 	db, cleanup, err := persistence.NewDatabase(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -51,12 +53,31 @@ func InitializeApp(cfg *config.Config) (*App, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	scheduler, cleanup3, err := cronjob.NewGoCronScheduler(zapLogger)
+	serverApp := NewServerApp(server)
+	return serverApp, func() {
+		cleanup2()
+		cleanup()
+	}, nil
+}
+
+func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
+	zapLogger, cleanup, err := logger.New(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	scheduler, cleanup2, err := cronjob.NewScheduler(zapLogger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	db, cleanup3, err := persistence.NewDatabase(cfg)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
+	todoQueriesGateway := persistence.NewTodoQueriesGateway(db)
+	todoCommandsGateway := persistence.NewTodoCommandsGateway(db)
 	todoOverdueMarker := service.NewTodoOverdueMarker(todoQueriesGateway, todoCommandsGateway)
 	client, cleanup4, err := redis.NewClient(cfg)
 	if err != nil {
@@ -66,16 +87,10 @@ func InitializeApp(cfg *config.Config) (*App, func(), error) {
 		return nil, nil, err
 	}
 	distributedLocker := redis.NewDistributedLocker(client)
-	cronjobScheduler, err := cronjob.NewScheduler(scheduler, todoOverdueMarker, distributedLocker, cfg, zapLogger)
-	if err != nil {
-		cleanup4()
-		cleanup3()
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	app := NewApp(server, cronjobScheduler)
-	return app, func() {
+	todoOverdueMarkerJob := job.NewTodoOverdueMarkerJob(todoOverdueMarker, distributedLocker, cfg, zapLogger)
+	workerWorker := worker.NewWorker(cfg, scheduler, todoOverdueMarkerJob, zapLogger)
+	workerApp := NewWorkerApp(workerWorker)
+	return workerApp, func() {
 		cleanup4()
 		cleanup3()
 		cleanup2()
@@ -85,17 +100,18 @@ func InitializeApp(cfg *config.Config) (*App, func(), error) {
 
 // wire.go:
 
-type App struct {
+type ServerApp struct {
 	GRPCServer *grpc.Server
-	Scheduler  *cronjob.Scheduler
 }
 
-func NewApp(
-	grpcServer *grpc.Server,
-	scheduler *cronjob.Scheduler,
-) *App {
-	return &App{
-		GRPCServer: grpcServer,
-		Scheduler:  scheduler,
-	}
+type WorkerApp struct {
+	Worker *worker.Worker
+}
+
+func NewWorkerApp(worker2 *worker.Worker) *WorkerApp {
+	return &WorkerApp{Worker: worker2}
+}
+
+func NewServerApp(grpcServer *grpc.Server) *ServerApp {
+	return &ServerApp{GRPCServer: grpcServer}
 }

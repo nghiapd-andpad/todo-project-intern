@@ -71,12 +71,3 @@ func (l *DistributedLocker) TryLock(ctx context.Context, key string, ttl time.Du
 
 	return true, release, nil
 }
-
-// job: update todo status
-// cronjob: cron  * * * * * 5h sáng
-// update batch:
-// distributed locker:
-// job_name token -> lưu redis: instance chỉ đăng ký vào 1 job đó
-
-// instance 1 -> khôg ghi vào được redis
-// instance 2 -> job_name ->

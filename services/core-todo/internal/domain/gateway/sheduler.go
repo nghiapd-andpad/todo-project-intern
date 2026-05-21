@@ -1,10 +1,10 @@
+// Package gateway defines outbound ports used by application services.
 package gateway
 
-import (
-	"context"
-	"time"
-)
+import "context"
 
 type Scheduler interface {
-	ScheduleOnce(ctx context.Context, jobTag string, duration time.Duration, function any, parameters ...any) error
+	ScheduleCron(ctx context.Context, name string, cronExpr string, task any, parameters ...any) error
+	Start()
+	Stop() error
 }

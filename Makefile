@@ -28,6 +28,9 @@ run-core-user:
 run-bff-web:
 	cd services/bff-web && go run ./cmd/server/...
 
+run-core-worker:
+	cd services/core-todo && go run ./cmd/worker/...
+	
 mock-core-todo:
 	cd services/core-todo && go generate ./internal/domain/gateway/...
 
