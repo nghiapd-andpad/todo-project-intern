@@ -37,12 +37,14 @@ func InitializeServer(cfg *config.Config) (*ServerApp, func(), error) {
 		persistence.NewDatabase,
 
 		persistence.NewTransactor,
+		persistence.NewIdempotencyGateway,
 		persistence.NewTodoCommandsGateway,
 		persistence.NewTodoQueriesGateway,
 		persistence.NewTodoListCommandsGateway,
 		persistence.NewTodoListQueriesGateway,
 
 		wire.Bind(new(gateway.Transactor), new(*persistence.Transactor)),
+		wire.Bind(new(gateway.IdempotencyGateway), new(*persistence.IdempotencyGateway)),
 		wire.Bind(new(gateway.TodoCommandsGateway), new(*persistence.TodoCommandsGateway)),
 		wire.Bind(new(gateway.TodoQueriesGateway), new(*persistence.TodoQueriesGateway)),
 		wire.Bind(new(gateway.TodoListCommandsGateway), new(*persistence.TodoListCommandsGateway)),

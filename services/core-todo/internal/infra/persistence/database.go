@@ -20,7 +20,7 @@ func NewDatabase(cfg *config.Config) (*gorm.DB, func(), error) {
 		return nil, nil, fmt.Errorf("failed to connect database: %w", err)
 	}
 
-	if err := db.AutoMigrate(&model.Todo{}, &model.TodoList{}); err != nil {
+	if err := db.AutoMigrate(&model.Todo{}, &model.TodoList{}, &model.IdempotencyKey{}); err != nil {
 		return nil, nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 

@@ -25,13 +25,14 @@ type TodoLister struct {
 }
 
 type TodoCreator struct {
-	TodoListID  entity.TodoListID
-	RequesterID entity.UserID
-	Title       string
-	Description *string
-	Priority    entity.Priority
-	DueDate     *time.Time
-	AssigneeID  *entity.UserID
+	TodoListID     entity.TodoListID
+	RequesterID    entity.UserID
+	Title          string
+	Description    *string
+	Priority       entity.Priority
+	DueDate        *time.Time
+	AssigneeID     *entity.UserID
+	IdempotencyKey *string
 }
 
 type UpdateTodoFields struct {

@@ -32,8 +32,9 @@ type TodoListLister struct {
 }
 
 type TodoListCreator struct {
-	Name        string
-	RequesterID entity.UserID
+	Name           string
+	RequesterID    entity.UserID
+	IdempotencyKey *string
 }
 
 type TodoListUpdater struct {

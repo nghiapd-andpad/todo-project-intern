@@ -9,6 +9,7 @@ const (
 	ErrInvalidParameter ErrorCode = "INVALID_PARAMETER"
 	ErrAuthZ            ErrorCode = "AUTHORIZATION"
 	ErrAuthN            ErrorCode = "AUTHENTICATION"
+	ErrConflict         ErrorCode = "CONFLICT"
 	ErrInternal         ErrorCode = "INTERNAL"
 )
 
@@ -44,6 +45,10 @@ func NewAuthZ(message string) *AppError {
 
 func NewAuthN(message string) *AppError {
 	return &AppError{Code: ErrAuthN, Message: message}
+}
+
+func NewConflict(message string) *AppError {
+	return &AppError{Code: ErrConflict, Message: message}
 }
 
 func NewInternal(message string) *AppError {
