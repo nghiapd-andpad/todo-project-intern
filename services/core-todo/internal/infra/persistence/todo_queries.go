@@ -116,3 +116,25 @@ func (g *TodoQueriesGateway) FindOverdueTodoIDs(ctx context.Context, asOf time.T
 
 	return result, nil
 }
+
+func (g *TodoQueriesGateway) FindSoftDeletedTodoIDs(ctx context.Context, cutoff time.Time, limit int) ([]entity.TodoID, error) {
+	conn := connFromContext(ctx, g.db)
+
+	var ids []int64
+	if err := conn.Unscoped().
+		Model(&model.Todo{}).
+		Where("deleted_at IS NOT NULL").
+		Where("deleted_at <= ?", cutoff).
+		Order("deleted_at ASC").
+		Limit(limit).
+		Pluck("id", &ids).Error; err != nil {
+		return nil, fmt.Errorf("db find soft deleted todo ids: %w", err)
+	}
+
+	result := make([]entity.TodoID, len(ids))
+	for i, id := range ids {
+		result[i] = entity.TodoID(id)
+	}
+
+	return result, nil
+}

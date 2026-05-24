@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -137,6 +138,32 @@ func (g *TodoListQueriesGateway) listSimple(
 	}
 
 	return toEntities(models), total, nil
+}
+
+func (g *TodoListQueriesGateway) FindSoftDeletedTodoListIDs(
+	ctx context.Context,
+	cutoff time.Time,
+	limit int,
+) ([]entity.TodoListID, error) {
+	conn := connFromContext(ctx, g.db)
+
+	var ids []int64
+	if err := conn.Unscoped().
+		Model(&model.TodoList{}).
+		Where("deleted_at IS NOT NULL").
+		Where("deleted_at <= ?", cutoff).
+		Order("deleted_at ASC").
+		Limit(limit).
+		Pluck("id", &ids).Error; err != nil {
+		return nil, fmt.Errorf("db find soft deleted todo list ids: %w", err)
+	}
+
+	result := make([]entity.TodoListID, len(ids))
+	for i, id := range ids {
+		result[i] = entity.TodoListID(id)
+	}
+
+	return result, nil
 }
 
 func toEntities(models []model.TodoList) []*entity.TodoList {

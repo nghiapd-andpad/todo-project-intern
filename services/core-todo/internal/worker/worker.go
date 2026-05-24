@@ -23,6 +23,7 @@ func NewWorker(
 	cfg *config.Config,
 	scheduler gateway.Scheduler,
 	todoOverdueMarkerJob *job.TodoOverdueMarkerJob,
+	todoSoftDeletedCleanupJob *job.TodoSoftDeletedCleanupJob,
 	zapLogger *zap.Logger,
 ) *Worker {
 	if zapLogger == nil {
@@ -34,6 +35,7 @@ func NewWorker(
 		scheduler: scheduler,
 		jobs: []job.CronJob{
 			todoOverdueMarkerJob,
+			todoSoftDeletedCleanupJob,
 		},
 		logger: zapLogger.With(zap.String("component", "worker")),
 	}

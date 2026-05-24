@@ -101,3 +101,49 @@ func (g *TodoCommandsGateway) MarkOverdueByIDs(ctx context.Context, ids []entity
 
 	return result.RowsAffected, nil
 }
+
+func (g *TodoCommandsGateway) HardDeleteTodosByIDs(ctx context.Context, ids []entity.TodoID) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
+	conn := connFromContext(ctx, g.db)
+
+	values := make([]int64, len(ids))
+	for i, id := range ids {
+		values[i] = int64(id)
+	}
+
+	result := conn.Unscoped().
+		Where("id IN ?", values).
+		Delete(&model.Todo{})
+
+	if result.Error != nil {
+		return 0, fmt.Errorf("db hard delete todos by ids: %w", result.Error)
+	}
+
+	return result.RowsAffected, nil
+}
+
+func (g *TodoCommandsGateway) HardDeleteTodosByTodoListIDs(ctx context.Context, todoListIDs []entity.TodoListID) (int64, error) {
+	if len(todoListIDs) == 0 {
+		return 0, nil
+	}
+
+	conn := connFromContext(ctx, g.db)
+
+	values := make([]int64, len(todoListIDs))
+	for i, id := range todoListIDs {
+		values[i] = int64(id)
+	}
+
+	result := conn.Unscoped().
+		Where("todo_list_id IN ?", values).
+		Delete(&model.Todo{})
+
+	if result.Error != nil {
+		return 0, fmt.Errorf("db hard delete todos by todo list ids: %w", result.Error)
+	}
+
+	return result.RowsAffected, nil
+}

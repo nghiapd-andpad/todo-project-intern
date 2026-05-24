@@ -88,7 +88,12 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 	}
 	distributedLocker := redis.NewDistributedLocker(client)
 	todoOverdueMarkerJob := job.NewTodoOverdueMarkerJob(todoOverdueMarker, distributedLocker, cfg, zapLogger)
-	workerWorker := worker.NewWorker(cfg, scheduler, todoOverdueMarkerJob, zapLogger)
+	transactor := persistence.NewTransactor(db)
+	todoListQueriesGateway := persistence.NewTodoListQueriesGateway(db)
+	todoListCommandsGateway := persistence.NewTodoListCommandsGateway(db)
+	todoSoftDeletedCleaner := service.NewTodoSoftDeletedCleaner(transactor, todoQueriesGateway, todoCommandsGateway, todoListQueriesGateway, todoListCommandsGateway)
+	todoSoftDeletedCleanupJob := job.NewTodoSoftDeletedCleanupJob(todoSoftDeletedCleaner, distributedLocker, cfg, zapLogger)
+	workerWorker := worker.NewWorker(cfg, scheduler, todoOverdueMarkerJob, todoSoftDeletedCleanupJob, zapLogger)
 	workerApp := NewWorkerApp(workerWorker)
 	return workerApp, func() {
 		cleanup4()

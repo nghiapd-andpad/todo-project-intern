@@ -16,4 +16,6 @@ type TodoQueriesGateway interface {
 	List(ctx context.Context, opts *input.ListTodosOptions) ([]*entity.Todo, int64, error)
 
 	FindOverdueTodoIDs(ctx context.Context, asOf time.Time, limit int) ([]entity.TodoID, error)
+
+	FindSoftDeletedTodoIDs(ctx context.Context, cutoff time.Time, limit int) ([]entity.TodoID, error)
 }

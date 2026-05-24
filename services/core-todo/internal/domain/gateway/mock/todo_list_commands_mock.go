@@ -70,6 +70,21 @@ func (mr *MockTodoListCommandsGatewayMockRecorder) Delete(ctx, todoListID any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTodoListCommandsGateway)(nil).Delete), ctx, todoListID)
 }
 
+// HardDeleteTodoListsByIDs mocks base method.
+func (m *MockTodoListCommandsGateway) HardDeleteTodoListsByIDs(ctx context.Context, ids []entity.TodoListID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HardDeleteTodoListsByIDs", ctx, ids)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HardDeleteTodoListsByIDs indicates an expected call of HardDeleteTodoListsByIDs.
+func (mr *MockTodoListCommandsGatewayMockRecorder) HardDeleteTodoListsByIDs(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HardDeleteTodoListsByIDs", reflect.TypeOf((*MockTodoListCommandsGateway)(nil).HardDeleteTodoListsByIDs), ctx, ids)
+}
+
 // Update mocks base method.
 func (m *MockTodoListCommandsGateway) Update(ctx context.Context, todoList *entity.TodoList) (*entity.TodoList, error) {
 	m.ctrl.T.Helper()

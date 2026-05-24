@@ -91,11 +91,17 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 
 		persistence.NewDatabase,
 
+		persistence.NewTransactor,
 		persistence.NewTodoCommandsGateway,
 		persistence.NewTodoQueriesGateway,
+		persistence.NewTodoListCommandsGateway,
+		persistence.NewTodoListQueriesGateway,
 
+		wire.Bind(new(gateway.Transactor), new(*persistence.Transactor)),
 		wire.Bind(new(gateway.TodoCommandsGateway), new(*persistence.TodoCommandsGateway)),
 		wire.Bind(new(gateway.TodoQueriesGateway), new(*persistence.TodoQueriesGateway)),
+		wire.Bind(new(gateway.TodoListCommandsGateway), new(*persistence.TodoListCommandsGateway)),
+		wire.Bind(new(gateway.TodoListQueriesGateway), new(*persistence.TodoListQueriesGateway)),
 
 		redis.NewClient,
 		redis.NewDistributedLocker,
@@ -107,7 +113,12 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 		service.NewTodoOverdueMarker,
 		wire.Bind(new(usecase.TodoOverdueMarker), new(*service.TodoOverdueMarker)),
 
+		service.NewTodoSoftDeletedCleaner,
+		wire.Bind(new(usecase.TodoSoftDeletedCleaner), new(*service.TodoSoftDeletedCleaner)),
+
 		job.NewTodoOverdueMarkerJob,
+		job.NewTodoSoftDeletedCleanupJob,
+
 		worker.NewWorker,
 
 		NewWorkerApp,

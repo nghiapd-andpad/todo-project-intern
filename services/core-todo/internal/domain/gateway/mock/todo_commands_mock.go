@@ -85,6 +85,36 @@ func (mr *MockTodoCommandsGatewayMockRecorder) DeleteByTodoListID(ctx, todoListI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByTodoListID", reflect.TypeOf((*MockTodoCommandsGateway)(nil).DeleteByTodoListID), ctx, todoListID)
 }
 
+// HardDeleteTodosByIDs mocks base method.
+func (m *MockTodoCommandsGateway) HardDeleteTodosByIDs(ctx context.Context, ids []entity.TodoID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HardDeleteTodosByIDs", ctx, ids)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HardDeleteTodosByIDs indicates an expected call of HardDeleteTodosByIDs.
+func (mr *MockTodoCommandsGatewayMockRecorder) HardDeleteTodosByIDs(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HardDeleteTodosByIDs", reflect.TypeOf((*MockTodoCommandsGateway)(nil).HardDeleteTodosByIDs), ctx, ids)
+}
+
+// HardDeleteTodosByTodoListIDs mocks base method.
+func (m *MockTodoCommandsGateway) HardDeleteTodosByTodoListIDs(ctx context.Context, todoListIDs []entity.TodoListID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HardDeleteTodosByTodoListIDs", ctx, todoListIDs)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HardDeleteTodosByTodoListIDs indicates an expected call of HardDeleteTodosByTodoListIDs.
+func (mr *MockTodoCommandsGatewayMockRecorder) HardDeleteTodosByTodoListIDs(ctx, todoListIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HardDeleteTodosByTodoListIDs", reflect.TypeOf((*MockTodoCommandsGateway)(nil).HardDeleteTodosByTodoListIDs), ctx, todoListIDs)
+}
+
 // MarkOverdueByIDs mocks base method.
 func (m *MockTodoCommandsGateway) MarkOverdueByIDs(ctx context.Context, ids []entity.TodoID, markedAt time.Time) (int64, error) {
 	m.ctrl.T.Helper()

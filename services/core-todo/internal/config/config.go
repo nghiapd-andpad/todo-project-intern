@@ -25,6 +25,8 @@ type Config struct {
 	LogFormat string `envconfig:"LOG_FORMAT" default:"console"`
 
 	// Scheduler
+
+	// Mark overdue todo job
 	SchedulerEnabled            bool          `envconfig:"SCHEDULER_ENABLED" default:"false"`
 	TodoOverdueMarkerCron       string        `envconfig:"TODO_OVERDUE_MARKER_CRON" default:"*/5 * * * *"`
 	TodoOverdueMarkerBatchSize  int           `envconfig:"TODO_OVERDUE_MARKER_BATCH_SIZE" default:"500"`
@@ -32,6 +34,15 @@ type Config struct {
 	TodoOverdueMarkerLockKey    string        `envconfig:"TODO_OVERDUE_MARKER_LOCK_KEY" default:"job:mark-overdue-todos"`
 	TodoOverdueMarkerLockTTL    time.Duration `envconfig:"TODO_OVERDUE_MARKER_LOCK_TTL" default:"10m"`
 	TodoOverdueMarkerBatchSleep time.Duration `envconfig:"TODO_OVERDUE_MARKER_BATCH_SLEEP" default:"100ms"`
+
+	// Soft deleted cleanup job
+	TodoSoftDeletedCleanupCron          string        `envconfig:"TODO_SOFT_DELETED_CLEANUP_CRON" default:"0 0 * * *"`
+	TodoSoftDeletedCleanupBatchSize     int           `envconfig:"TODO_SOFT_DELETED_CLEANUP_BATCH_SIZE" default:"500"`
+	TodoSoftDeletedCleanupMaxBatches    int           `envconfig:"TODO_SOFT_DELETED_CLEANUP_MAX_BATCHES" default:"20"`
+	TodoSoftDeletedCleanupRetentionDays int           `envconfig:"TODO_SOFT_DELETED_CLEANUP_RETENTION_DAYS" default:"30"`
+	TodoSoftDeletedCleanupLockKey       string        `envconfig:"TODO_SOFT_DELETED_CLEANUP_LOCK_KEY" default:"job:cleanup-soft-deleted-todos"`
+	TodoSoftDeletedCleanupLockTTL       time.Duration `envconfig:"TODO_SOFT_DELETED_CLEANUP_LOCK_TTL" default:"10m"`
+	TodoSoftDeletedCleanupBatchSleep    time.Duration `envconfig:"TODO_SOFT_DELETED_CLEANUP_BATCH_SLEEP" default:"100ms"`
 
 	// Redis
 	RedisHost     string `envconfig:"REDIS_HOST" default:"localhost"`

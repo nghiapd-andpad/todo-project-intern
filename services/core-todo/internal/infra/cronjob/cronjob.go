@@ -18,9 +18,8 @@ const defaultLimitConcurrentJobs = 10
 type Scheduler struct {
 	cronScheduler gocron.Scheduler
 	logger        *zap.Logger
-
-	stopOnce sync.Once
-	stopErr  error
+	stopOnce      sync.Once
+	stopErr       error
 }
 
 var _ gateway.Scheduler = (*Scheduler)(nil)

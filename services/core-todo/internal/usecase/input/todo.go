@@ -62,3 +62,11 @@ type TodoOverdueMarker struct {
 	MaxBatches int
 	BatchSleep time.Duration
 }
+
+type TodoSoftDeletedCleaner struct {
+	AsOf          time.Time
+	RetentionDays int
+	BatchSize     int
+	MaxBatches    int
+	BatchSleep    time.Duration
+}

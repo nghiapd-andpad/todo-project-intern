@@ -12,6 +12,7 @@ package mock
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	entity "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	input "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
@@ -40,6 +41,21 @@ func NewMockTodoListQueriesGateway(ctrl *gomock.Controller) *MockTodoListQueries
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTodoListQueriesGateway) EXPECT() *MockTodoListQueriesGatewayMockRecorder {
 	return m.recorder
+}
+
+// FindSoftDeletedTodoListIDs mocks base method.
+func (m *MockTodoListQueriesGateway) FindSoftDeletedTodoListIDs(ctx context.Context, cutoff time.Time, limit int) ([]entity.TodoListID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindSoftDeletedTodoListIDs", ctx, cutoff, limit)
+	ret0, _ := ret[0].([]entity.TodoListID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindSoftDeletedTodoListIDs indicates an expected call of FindSoftDeletedTodoListIDs.
+func (mr *MockTodoListQueriesGatewayMockRecorder) FindSoftDeletedTodoListIDs(ctx, cutoff, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindSoftDeletedTodoListIDs", reflect.TypeOf((*MockTodoListQueriesGateway)(nil).FindSoftDeletedTodoListIDs), ctx, cutoff, limit)
 }
 
 // Get mocks base method.

@@ -12,4 +12,6 @@ type TodoListCommandsGateway interface {
 	Create(ctx context.Context, todoList *entity.TodoList) (*entity.TodoList, error)
 	Update(ctx context.Context, todoList *entity.TodoList) (*entity.TodoList, error)
 	Delete(ctx context.Context, todoListID entity.TodoListID) error
+
+	HardDeleteTodoListsByIDs(ctx context.Context, ids []entity.TodoListID) (int64, error)
 }

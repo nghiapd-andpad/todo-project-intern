@@ -51,3 +51,7 @@ type TodoListDeleter interface {
 type TodoOverdueMarker interface {
 	MarkOverdue(ctx context.Context, in *input.TodoOverdueMarker) (*output.TodoOverdueMarker, error)
 }
+
+type TodoSoftDeletedCleaner interface {
+	Clean(ctx context.Context, in *input.TodoSoftDeletedCleaner) (*output.TodoSoftDeletedCleaner, error)
+}

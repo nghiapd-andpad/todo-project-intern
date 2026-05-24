@@ -23,3 +23,10 @@ type TodoUpdater struct {
 }
 
 type TodoDeleter struct{}
+
+type TodoSoftDeletedCleaner struct {
+	DeletedTodoListCount int64
+	DeletedTodoCount     int64
+	BatchCount           int
+	HasMore              bool
+}

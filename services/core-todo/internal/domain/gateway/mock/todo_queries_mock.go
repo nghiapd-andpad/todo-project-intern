@@ -58,6 +58,21 @@ func (mr *MockTodoQueriesGatewayMockRecorder) FindOverdueTodoIDs(ctx, asOf, limi
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindOverdueTodoIDs", reflect.TypeOf((*MockTodoQueriesGateway)(nil).FindOverdueTodoIDs), ctx, asOf, limit)
 }
 
+// FindSoftDeletedTodoIDs mocks base method.
+func (m *MockTodoQueriesGateway) FindSoftDeletedTodoIDs(ctx context.Context, cutoff time.Time, limit int) ([]entity.TodoID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindSoftDeletedTodoIDs", ctx, cutoff, limit)
+	ret0, _ := ret[0].([]entity.TodoID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindSoftDeletedTodoIDs indicates an expected call of FindSoftDeletedTodoIDs.
+func (mr *MockTodoQueriesGatewayMockRecorder) FindSoftDeletedTodoIDs(ctx, cutoff, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindSoftDeletedTodoIDs", reflect.TypeOf((*MockTodoQueriesGateway)(nil).FindSoftDeletedTodoIDs), ctx, cutoff, limit)
+}
+
 // Get mocks base method.
 func (m *MockTodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID, todoListID entity.TodoListID) (*entity.Todo, error) {
 	m.ctrl.T.Helper()

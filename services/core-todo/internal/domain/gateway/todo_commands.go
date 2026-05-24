@@ -16,4 +16,7 @@ type TodoCommandsGateway interface {
 	DeleteByTodoListID(ctx context.Context, todoListID entity.TodoListID) error
 
 	MarkOverdueByIDs(ctx context.Context, ids []entity.TodoID, markedAt time.Time) (int64, error)
+
+	HardDeleteTodosByIDs(ctx context.Context, ids []entity.TodoID) (int64, error)
+	HardDeleteTodosByTodoListIDs(ctx context.Context, todoListIDs []entity.TodoListID) (int64, error)
 }

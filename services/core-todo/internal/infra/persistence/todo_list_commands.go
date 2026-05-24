@@ -64,3 +64,29 @@ func (g *TodoListCommandsGateway) Delete(
 
 	return nil
 }
+
+func (g *TodoListCommandsGateway) HardDeleteTodoListsByIDs(
+	ctx context.Context,
+	ids []entity.TodoListID,
+) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
+	conn := connFromContext(ctx, g.db)
+
+	values := make([]int64, len(ids))
+	for i, id := range ids {
+		values[i] = int64(id)
+	}
+
+	result := conn.Unscoped().
+		Where("id IN ?", values).
+		Delete(&model.TodoList{})
+
+	if result.Error != nil {
+		return 0, fmt.Errorf("db hard delete todo lists by ids: %w", result.Error)
+	}
+
+	return result.RowsAffected, nil
+}
