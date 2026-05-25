@@ -31,7 +31,6 @@ func ToGraphQLTodo(in *output.TodoOutput) *Todo {
 		Status:      entity.TodoStatus(in.Status),
 		Priority:    entity.Priority(in.Priority),
 		DueDate:     in.DueDate,
-		CreatorID:   in.CreatorID,
 		AssigneeID:  in.AssigneeID,
 		CreatedAt:   in.CreatedAt,
 		UpdatedAt:   in.UpdatedAt,

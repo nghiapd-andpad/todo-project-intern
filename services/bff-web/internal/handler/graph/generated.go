@@ -31,6 +31,7 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Todo() TodoResolver
 }
 
 type DirectiveRoot struct {
@@ -70,10 +71,9 @@ type ComplexityRoot struct {
 	}
 
 	Todo struct {
+		Assignee    func(childComplexity int) int
 		AssigneeID  func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
-		Creator     func(childComplexity int) int
-		CreatorID   func(childComplexity int) int
 		Description func(childComplexity int) int
 		DueDate     func(childComplexity int) int
 		ID          func(childComplexity int) int
@@ -126,6 +126,9 @@ type QueryResolver interface {
 	UserByID(ctx context.Context, input GetUserInput) (*User, error)
 	UserByUsername(ctx context.Context, input GetUserByUsernameInput) (*User, error)
 	UserByEmail(ctx context.Context, input GetUserByEmailInput) (*User, error)
+}
+type TodoResolver interface {
+	Assignee(ctx context.Context, obj *Todo) (*User, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -335,6 +338,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.RegisterOutput.Username(childComplexity), true
 
+	case "Todo.assignee":
+		if e.ComplexityRoot.Todo.Assignee == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Todo.Assignee(childComplexity), true
 	case "Todo.assigneeID":
 		if e.ComplexityRoot.Todo.AssigneeID == nil {
 			break
@@ -347,18 +356,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Todo.CreatedAt(childComplexity), true
-	case "Todo.creator":
-		if e.ComplexityRoot.Todo.Creator == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Todo.Creator(childComplexity), true
-	case "Todo.creatorID":
-		if e.ComplexityRoot.Todo.CreatorID == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Todo.CreatorID(childComplexity), true
 	case "Todo.description":
 		if e.ComplexityRoot.Todo.Description == nil {
 			break
@@ -1125,16 +1122,14 @@ func (ec *executionContext) fieldContext_Mutation_createTodo(ctx context.Context
 				return ec.fieldContext_Todo_priority(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Todo_dueDate(ctx, field)
-			case "creatorID":
-				return ec.fieldContext_Todo_creatorID(ctx, field)
-			case "assigneeID":
-				return ec.fieldContext_Todo_assigneeID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Todo_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Todo_updatedAt(ctx, field)
-			case "creator":
-				return ec.fieldContext_Todo_creator(ctx, field)
+			case "assigneeID":
+				return ec.fieldContext_Todo_assigneeID(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Todo_assignee(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Todo", field.Name)
 		},
@@ -1205,16 +1200,14 @@ func (ec *executionContext) fieldContext_Mutation_updateTodo(ctx context.Context
 				return ec.fieldContext_Todo_priority(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Todo_dueDate(ctx, field)
-			case "creatorID":
-				return ec.fieldContext_Todo_creatorID(ctx, field)
-			case "assigneeID":
-				return ec.fieldContext_Todo_assigneeID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Todo_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Todo_updatedAt(ctx, field)
-			case "creator":
-				return ec.fieldContext_Todo_creator(ctx, field)
+			case "assigneeID":
+				return ec.fieldContext_Todo_assigneeID(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Todo_assignee(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Todo", field.Name)
 		},
@@ -1557,16 +1550,14 @@ func (ec *executionContext) fieldContext_Query_todo(ctx context.Context, field g
 				return ec.fieldContext_Todo_priority(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Todo_dueDate(ctx, field)
-			case "creatorID":
-				return ec.fieldContext_Todo_creatorID(ctx, field)
-			case "assigneeID":
-				return ec.fieldContext_Todo_assigneeID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Todo_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Todo_updatedAt(ctx, field)
-			case "creator":
-				return ec.fieldContext_Todo_creator(ctx, field)
+			case "assigneeID":
+				return ec.fieldContext_Todo_assigneeID(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Todo_assignee(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Todo", field.Name)
 		},
@@ -2200,64 +2191,6 @@ func (ec *executionContext) fieldContext_Todo_dueDate(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_creatorID(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Todo_creatorID,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatorID, nil
-		},
-		nil,
-		ec.marshalNID2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Todo_creatorID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Todo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Todo_assigneeID(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Todo_assigneeID,
-		func(ctx context.Context) (any, error) {
-			return obj.AssigneeID, nil
-		},
-		nil,
-		ec.marshalOID2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Todo_assigneeID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Todo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Todo_createdAt(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2316,14 +2249,43 @@ func (ec *executionContext) fieldContext_Todo_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Todo_creator(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
+func (ec *executionContext) _Todo_assigneeID(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Todo_creator,
+		ec.fieldContext_Todo_assigneeID,
 		func(ctx context.Context) (any, error) {
-			return obj.Creator, nil
+			return obj.AssigneeID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Todo_assigneeID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Todo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Todo_assignee(ctx context.Context, field graphql.CollectedField, obj *Todo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Todo_assignee,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Todo().Assignee(ctx, obj)
 		},
 		nil,
 		ec.marshalOUser2ᚖgithubᚗcomᚋnghiapdᚑandpadᚋtodoᚑprojectᚑinternᚋservicesᚋbffᚑwebᚋinternalᚋhandlerᚋgraphᚐUser,
@@ -2332,12 +2294,12 @@ func (ec *executionContext) _Todo_creator(ctx context.Context, field graphql.Col
 	)
 }
 
-func (ec *executionContext) fieldContext_Todo_creator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Todo_assignee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Todo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -2575,16 +2537,14 @@ func (ec *executionContext) fieldContext_TodoPage_todos(_ context.Context, field
 				return ec.fieldContext_Todo_priority(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Todo_dueDate(ctx, field)
-			case "creatorID":
-				return ec.fieldContext_Todo_creatorID(ctx, field)
-			case "assigneeID":
-				return ec.fieldContext_Todo_assigneeID(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Todo_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Todo_updatedAt(ctx, field)
-			case "creator":
-				return ec.fieldContext_Todo_creator(ctx, field)
+			case "assigneeID":
+				return ec.fieldContext_Todo_assigneeID(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Todo_assignee(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Todo", field.Name)
 		},
@@ -5191,51 +5151,77 @@ func (ec *executionContext) _Todo(ctx context.Context, sel ast.SelectionSet, obj
 		case "ID":
 			out.Values[i] = ec._Todo_ID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "todoListID":
 			out.Values[i] = ec._Todo_todoListID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "title":
 			out.Values[i] = ec._Todo_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "description":
 			out.Values[i] = ec._Todo_description(ctx, field, obj)
 		case "status":
 			out.Values[i] = ec._Todo_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "priority":
 			out.Values[i] = ec._Todo_priority(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "dueDate":
 			out.Values[i] = ec._Todo_dueDate(ctx, field, obj)
-		case "creatorID":
-			out.Values[i] = ec._Todo_creatorID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "assigneeID":
-			out.Values[i] = ec._Todo_assigneeID(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Todo_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Todo_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "creator":
-			out.Values[i] = ec._Todo_creator(ctx, field, obj)
+		case "assigneeID":
+			out.Values[i] = ec._Todo_assigneeID(ctx, field, obj)
+		case "assignee":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Todo_assignee(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

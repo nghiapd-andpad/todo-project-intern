@@ -27,3 +27,8 @@ models:
 
   Priority:
     model: github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity.Priority
+
+  Todo:
+    fields:
+      assignee:
+        resolver: true

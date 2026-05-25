@@ -11,6 +11,7 @@ import (
 
 	"github.com/nghiapd-andpad/todo-project-intern/pkg/auth"
 	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/handler/dataloader"
 	inputusecase "github.com/nghiapd-andpad/todo-project-intern/services/bff-web/internal/usecase/input"
 )
 
@@ -248,36 +249,15 @@ func (r *queryResolver) Todos(ctx context.Context, input ListTodosInput) (*TodoP
 	return ToGraphQLTodoPage(page), nil
 }
 
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *todoResolver) DueDate(ctx context.Context, obj *Todo) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented: DueDate - dueDate"))
-}
-func (r *todoResolver) CreatedAt(ctx context.Context, obj *Todo) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented: CreatedAt - createdAt"))
-}
-func (r *todoResolver) UpdatedAt(ctx context.Context, obj *Todo) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented: UpdatedAt - updatedAt"))
-}
-func (r *todoResolver) Creator(ctx context.Context, obj *Todo) (*User, error) {
-	if obj.CreatorID == "" {
+// Assignee is the resolver for the assignee field.
+func (r *todoResolver) Assignee(ctx context.Context, obj *Todo) (*User, error) {
+	if obj.AssigneeID == nil || *obj.AssigneeID == "" {
 		return nil, nil
 	}
 
-	uID, err := resourcename.ParseUserResourceName(obj.CreatorID)
-	if err != nil {
-		return nil, err
-	}
-	userIDStr := strconv.FormatInt(uID, 10)
-
 	loaders := dataloader.For(ctx)
 	if loaders != nil && loaders.UserByID != nil {
-		user, err := loaders.UserByID.Load(ctx, userIDStr)()
+		user, err := loaders.UserByID.Load(ctx, *obj.AssigneeID)()
 		if err != nil {
 			return nil, err
 		}
@@ -285,21 +265,15 @@ func (r *todoResolver) Creator(ctx context.Context, obj *Todo) (*User, error) {
 		return ToGraphQLUser(user), nil
 	}
 
-	res, err := r.userGetter.GetByID(ctx, userIDStr)
+	user, err := r.userGetter.GetByID(ctx, *obj.AssigneeID)
 	if err != nil {
 		return nil, err
 	}
 
-	return ToGraphQLUser(res), nil
+	return ToGraphQLUser(user), nil
 }
-func (r *todoListResolver) CreatedAt(ctx context.Context, obj *TodoList) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented: CreatedAt - createdAt"))
-}
-func (r *todoListResolver) UpdatedAt(ctx context.Context, obj *TodoList) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented: UpdatedAt - updatedAt"))
-}
+
+// Todo returns TodoResolver implementation.
 func (r *Resolver) Todo() TodoResolver { return &todoResolver{r} }
-func (r *Resolver) TodoList() TodoListResolver { return &todoListResolver{r} }
+
 type todoResolver struct{ *Resolver }
-type todoListResolver struct{ *Resolver }
-*/

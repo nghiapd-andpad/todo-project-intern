@@ -37,11 +37,10 @@ type Todo {
   status: TodoStatus!
   priority: Priority!
   dueDate: Time
-  creatorID: ID!
-  assigneeID: ID
   createdAt: Time!
   updatedAt: Time!
-  creator: User
+  assigneeID: ID
+  assignee: User
 }
 
 # TodoList Inputs

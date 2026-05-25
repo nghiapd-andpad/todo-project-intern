@@ -101,11 +101,10 @@ type Todo struct {
 	Status      entity.TodoStatus `json:"status"`
 	Priority    entity.Priority   `json:"priority"`
 	DueDate     *time.Time        `json:"dueDate,omitempty"`
-	CreatorID   string            `json:"creatorID"`
-	AssigneeID  *string           `json:"assigneeID,omitempty"`
 	CreatedAt   time.Time         `json:"createdAt"`
 	UpdatedAt   time.Time         `json:"updatedAt"`
-	Creator     *User             `json:"creator,omitempty"`
+	AssigneeID  *string           `json:"assigneeID,omitempty"`
+	Assignee    *User             `json:"assignee,omitempty"`
 }
 
 type TodoList struct {
