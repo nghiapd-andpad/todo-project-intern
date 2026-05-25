@@ -51,6 +51,8 @@ func (s *TodoUpdater) Update(ctx context.Context, in *input.TodoUpdater) (*outpu
 		return nil, entity.NewAuthZ("you do not have permission to update this todo")
 	}
 
+	todo.Version = in.Version
+
 	if isOwner {
 		applyAllFields(todo, in.Fields)
 	} else {

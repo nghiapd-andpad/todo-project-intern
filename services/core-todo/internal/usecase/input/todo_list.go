@@ -40,6 +40,7 @@ type TodoListCreator struct {
 type TodoListUpdater struct {
 	TodoListID  entity.TodoListID
 	RequesterID entity.UserID
+	Version     int64
 	Name        *string
 }
 

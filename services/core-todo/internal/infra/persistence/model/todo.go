@@ -19,6 +19,7 @@ type Todo struct {
 	Status      string         `gorm:"column:status;size:50;not null;index;index:idx_todos_overdue_marker,priority:2"`
 	DueDate     *time.Time     `gorm:"column:due_date;index:idx_todos_overdue_marker,priority:3"`
 	DeletedAt   gorm.DeletedAt `gorm:"index;index:idx_todos_overdue_marker,priority:1"`
+	Version     int64          `gorm:"column:version;not null;default:1"`
 }
 
 func (Todo) TableName() string {

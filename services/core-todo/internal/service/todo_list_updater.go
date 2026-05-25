@@ -41,6 +41,8 @@ func (s *TodoListUpdater) Update(ctx context.Context, in *input.TodoListUpdater)
 			WithDetail("requester_id", fmt.Sprintf("%d", in.RequesterID))
 	}
 
+	todoList.Version = in.Version
+
 	if in.Name != nil {
 		todoList.Name = *in.Name
 	}

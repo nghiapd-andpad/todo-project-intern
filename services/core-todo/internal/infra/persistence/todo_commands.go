@@ -38,13 +38,35 @@ func (g *TodoCommandsGateway) Create(ctx context.Context, todo *entity.Todo) (*e
 func (g *TodoCommandsGateway) Update(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
 	conn := connFromContext(ctx, g.db)
 
-	m := mapper.TodoFromEntity(todo)
-
-	if err := conn.Save(m).Error; err != nil {
-		return nil, fmt.Errorf("db update todo: %w", err)
+	updates := map[string]any{
+		"title":       todo.Title,
+		"description": todo.Description,
+		"status":      string(todo.Status),
+		"priority":    string(todo.Priority),
+		"due_date":    todo.DueDate,
+		"assignee_id": todo.AssigneeID,
+		"version":     todo.Version + 1,
 	}
 
-	return mapper.TodoToEntity(m), nil
+	result := conn.
+		Model(&model.Todo{}).
+		Where("id = ?", int64(todo.ID)).
+		Where("version = ?", todo.Version).
+		Updates(updates)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("db update todo: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, entity.NewConflict(
+			"todo was updated by another request",
+		)
+	}
+
+	todo.Version++
+
+	return todo, nil
 }
 
 func (g *TodoCommandsGateway) Delete(ctx context.Context, todoID entity.TodoID) error {

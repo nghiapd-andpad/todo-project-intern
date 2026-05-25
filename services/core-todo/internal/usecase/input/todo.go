@@ -48,6 +48,7 @@ type TodoUpdater struct {
 	TodoID      entity.TodoID
 	TodoListID  entity.TodoListID
 	RequesterID entity.UserID
+	Version     int64
 	Fields      UpdateTodoFields
 }
 

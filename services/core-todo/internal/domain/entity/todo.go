@@ -34,4 +34,5 @@ type Todo struct {
 	DueDate     *time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Version     int64
 }

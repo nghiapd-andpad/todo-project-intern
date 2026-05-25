@@ -13,6 +13,7 @@ type TodoList struct {
 	CreatedAt time.Time      `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"column:updated_at;autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	Version   int64          `gorm:"column:version;not null;default:1"`
 }
 
 func (TodoList) TableName() string {

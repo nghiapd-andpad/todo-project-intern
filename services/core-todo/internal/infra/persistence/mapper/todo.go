@@ -20,6 +20,7 @@ func TodoToEntity(m *model.Todo) *entity.Todo {
 		DueDate:     m.DueDate,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
+		Version:     m.Version,
 	}
 
 	if m.AssigneeID != nil {
@@ -45,6 +46,7 @@ func TodoFromEntity(e *entity.Todo) *model.Todo {
 		DueDate:     e.DueDate,
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,
+		Version:     e.Version,
 	}
 
 	if e.AssigneeID != nil {

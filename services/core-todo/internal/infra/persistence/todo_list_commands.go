@@ -43,13 +43,28 @@ func (g *TodoListCommandsGateway) Update(
 ) (*entity.TodoList, error) {
 	conn := connFromContext(ctx, g.db)
 
-	m := mapper.TodoListFromEntity(todoList)
-
-	if err := conn.Save(m).Error; err != nil {
-		return nil, fmt.Errorf("db update todo list: %w", err)
+	updates := map[string]any{
+		"name":    todoList.Name,
+		"version": todoList.Version + 1,
 	}
 
-	return mapper.TodoListToEntity(m), nil
+	result := conn.
+		Model(&model.TodoList{}).
+		Where("id = ?", int64(todoList.ID)).
+		Where("version = ?", todoList.Version).
+		Updates(updates)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("db update todo list: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, entity.NewConflict("todo list was updated by another request")
+	}
+
+	todoList.Version++
+
+	return todoList, nil
 }
 
 func (g *TodoListCommandsGateway) Delete(
