@@ -1,7 +1,11 @@
 // Package input defines the input data structures for gateways.
 package input
 
-import "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+import (
+	"time"
+
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+)
 
 type ListTodosOptions struct {
 	TodoListID   entity.TodoListID
@@ -11,4 +15,8 @@ type ListTodosOptions struct {
 	TitleSearch  *string
 	Offset       int
 	Limit        int
+
+	// cursor pagination
+	CursorCreatedAt *time.Time
+	CursorID        *entity.TodoID
 }

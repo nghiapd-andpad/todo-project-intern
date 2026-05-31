@@ -11,5 +11,5 @@ import (
 type IdempotencyGateway interface {
 	Find(ctx context.Context, userID entity.UserID, operation string, key string) (*output.IdempotencyRecord, error)
 	CreateProcessing(ctx context.Context, in *input.CreateIdempotencyRecord) (*output.IdempotencyRecord, error)
-	MarkCompleted(ctx context.Context, id int64, resourceID int64) error
+	MarkCompleted(ctx context.Context, id int64, resourceType string, resourceID int64) error
 }

@@ -19,8 +19,8 @@ type IdempotencyRecord struct {
 	UserID         entity.UserID
 	Operation      string
 	IdempotencyKey string
-	RequestHash    string
 	Status         IdempotencyStatus
+	ResourceType   *string
 	ResourceID     *int64
 	ExpiresAt      time.Time
 }

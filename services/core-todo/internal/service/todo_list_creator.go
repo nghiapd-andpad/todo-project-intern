@@ -11,7 +11,6 @@ import (
 	gatewayoutput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/output"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/output"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/utils/idempotency"
 )
 
 const createTodoListOperation = "CREATE_TODO_LIST"
@@ -38,22 +37,12 @@ func NewTodoListCreator(
 }
 
 func (s *TodoListCreator) Create(ctx context.Context, in *input.TodoListCreator) (*output.TodoListCreator, error) {
-	requestHash, err := idempotency.Hash(struct {
-		RequesterID entity.UserID
-		Name        string
-	}{
-		RequesterID: in.RequesterID,
-		Name:        in.Name,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("TodoListCreator.Create: build request hash: %w", err)
-	}
-
 	todoList := &entity.TodoList{
 		Name:    in.Name,
 		OwnerID: in.RequesterID,
 	}
 
+	// No idempotency key means normal create flow.
 	if in.IdempotencyKey == nil || *in.IdempotencyKey == "" {
 		created, err := s.todoListCommandsGateway.Create(ctx, todoList)
 		if err != nil {
@@ -65,7 +54,8 @@ func (s *TodoListCreator) Create(ctx context.Context, in *input.TodoListCreator)
 
 	var created *entity.TodoList
 
-	err = s.transactor.Transaction(ctx, func(txCtx context.Context) error {
+	err := s.transactor.Transaction(ctx, func(txCtx context.Context) error {
+		// Find existing idempotency record by technical key.
 		record, err := s.idempotencyGateway.Find(
 			txCtx,
 			in.RequesterID,
@@ -77,15 +67,13 @@ func (s *TodoListCreator) Create(ctx context.Context, in *input.TodoListCreator)
 		}
 
 		if record != nil {
-			if record.RequestHash != requestHash {
-				return entity.NewInvalidParameter("idempotency key reused with different request")
-			}
-
-			if record.Status == gatewayoutput.IdempotencyStatusCompleted {
+			switch record.Status {
+			case gatewayoutput.IdempotencyStatusCompleted:
 				if record.ResourceID == nil {
 					return entity.NewConflict("idempotency record completed without resource id")
 				}
 
+				// Replay by loading created resource.
 				replayed, err := s.todoListQueriesGateway.Get(
 					txCtx,
 					entity.TodoListID(*record.ResourceID),
@@ -99,32 +87,39 @@ func (s *TodoListCreator) Create(ctx context.Context, in *input.TodoListCreator)
 
 				created = replayed
 				return nil
-			}
 
-			if record.Status == gatewayoutput.IdempotencyStatusProcessing {
+			case gatewayoutput.IdempotencyStatusProcessing:
 				return entity.NewConflict("idempotency request is still processing")
-			}
 
-			return entity.NewConflict("idempotency request is in invalid state")
+			default:
+				return entity.NewConflict("idempotency request is in invalid state")
+			}
 		}
 
+		// First execution: create PROCESSING record.
 		record, err = s.idempotencyGateway.CreateProcessing(txCtx, &gatewayinput.CreateIdempotencyRecord{
 			UserID:         in.RequesterID,
 			Operation:      createTodoListOperation,
 			IdempotencyKey: *in.IdempotencyKey,
-			RequestHash:    requestHash,
 			ExpiresAt:      time.Now().UTC().Add(24 * time.Hour),
 		})
 		if err != nil {
 			return err
 		}
 
+		// Create resource.
 		created, err = s.todoListCommandsGateway.Create(txCtx, todoList)
 		if err != nil {
 			return err
 		}
 
-		if err := s.idempotencyGateway.MarkCompleted(txCtx, record.ID, int64(created.ID)); err != nil {
+		// Mark idempotency record as completed.
+		if err := s.idempotencyGateway.MarkCompleted(
+			txCtx,
+			record.ID,
+			"todo_list",
+			int64(created.ID),
+		); err != nil {
 			return err
 		}
 

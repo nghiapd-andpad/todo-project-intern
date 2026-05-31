@@ -16,7 +16,6 @@ func IdempotencyRecordFromModel(m *model.IdempotencyKey) *output.IdempotencyReco
 		UserID:         entity.UserID(m.UserID),
 		Operation:      m.Operation,
 		IdempotencyKey: m.IdempotencyKey,
-		RequestHash:    m.RequestHash,
 		Status:         output.IdempotencyStatus(m.Status),
 		ResourceID:     m.ResourceID,
 		ExpiresAt:      m.ExpiresAt,

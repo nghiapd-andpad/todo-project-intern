@@ -44,10 +44,9 @@ func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID, todo
 func (g *TodoQueriesGateway) List(ctx context.Context, opts *gatewayinput.ListTodosOptions) ([]*entity.Todo, int64, error) {
 	conn := connFromContext(ctx, g.db)
 
-	// Build base query
-	q := conn.Model(&model.Todo{}).Where("todo_list_id = ?", int64(opts.TodoListID))
+	q := conn.Model(&model.Todo{}).
+		Where("todo_list_id = ?", int64(opts.TodoListID))
 
-	// Apply optional filters
 	if opts.AssigneeOnly != nil {
 		q = q.Where("assignee_id = ?", int64(*opts.AssigneeOnly))
 	}
@@ -66,16 +65,28 @@ func (g *TodoQueriesGateway) List(ctx context.Context, opts *gatewayinput.ListTo
 		return nil, 0, fmt.Errorf("db count todos: %w", err)
 	}
 
-	// Apply pagination
+	if opts.CursorCreatedAt != nil && opts.CursorID != nil {
+		q = q.Where(
+			"(created_at < ? OR (created_at = ? AND id < ?))",
+			*opts.CursorCreatedAt,
+			*opts.CursorCreatedAt,
+			int64(*opts.CursorID),
+		)
+	}
+
 	if opts.Limit > 0 {
 		q = q.Limit(opts.Limit)
 	}
-	if opts.Offset > 0 {
+
+	if opts.Offset > 0 && opts.CursorCreatedAt == nil && opts.CursorID == nil {
 		q = q.Offset(opts.Offset)
 	}
 
 	var models []model.Todo
-	if err := q.Order("created_at DESC").Find(&models).Error; err != nil {
+	if err := q.
+		Order("created_at DESC").
+		Order("id DESC").
+		Find(&models).Error; err != nil {
 		return nil, 0, fmt.Errorf("db list todos: %w", err)
 	}
 

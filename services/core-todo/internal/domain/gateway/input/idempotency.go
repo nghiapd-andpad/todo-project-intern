@@ -10,6 +10,5 @@ type CreateIdempotencyRecord struct {
 	UserID         entity.UserID
 	Operation      string
 	IdempotencyKey string
-	RequestHash    string
 	ExpiresAt      time.Time
 }

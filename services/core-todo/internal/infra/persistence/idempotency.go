@@ -57,7 +57,6 @@ func (g *IdempotencyGateway) CreateProcessing(
 		UserID:         int64(in.UserID),
 		Operation:      in.Operation,
 		IdempotencyKey: in.IdempotencyKey,
-		RequestHash:    in.RequestHash,
 		Status:         string(gatewayoutput.IdempotencyStatusProcessing),
 		ExpiresAt:      in.ExpiresAt,
 	}
@@ -69,14 +68,15 @@ func (g *IdempotencyGateway) CreateProcessing(
 	return mapper.IdempotencyRecordFromModel(m), nil
 }
 
-func (g *IdempotencyGateway) MarkCompleted(ctx context.Context, id int64, resourceID int64) error {
+func (g *IdempotencyGateway) MarkCompleted(ctx context.Context, id int64, resourceType string, resourceID int64) error {
 	conn := connFromContext(ctx, g.db)
 
 	if err := conn.Model(&model.IdempotencyKey{}).
 		Where("id = ?", id).
 		Updates(map[string]any{
-			"status":      string(gatewayoutput.IdempotencyStatusCompleted),
-			"resource_id": resourceID,
+			"status":        string(gatewayoutput.IdempotencyStatusCompleted),
+			"resource_type": resourceType,
+			"resource_id":   resourceID,
 		}).Error; err != nil {
 		return fmt.Errorf("db mark idempotency completed: %w", err)
 	}
