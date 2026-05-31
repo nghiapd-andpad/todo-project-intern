@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
@@ -25,10 +26,7 @@ func NewTodoListQueriesGateway(db *gorm.DB) *TodoListQueriesGateway {
 
 var _ gateway.TodoListQueriesGateway = (*TodoListQueriesGateway)(nil)
 
-func (g *TodoListQueriesGateway) Get(
-	ctx context.Context,
-	todoListID entity.TodoListID,
-) (*entity.TodoList, error) {
+func (g *TodoListQueriesGateway) Get(ctx context.Context, todoListID entity.TodoListID) (*entity.TodoList, error) {
 	var m model.TodoList
 
 	err := g.db.WithContext(ctx).First(&m, int64(todoListID)).Error
@@ -42,20 +40,33 @@ func (g *TodoListQueriesGateway) Get(
 	return mapper.TodoListToEntity(&m), nil
 }
 
-func (g *TodoListQueriesGateway) List(
-	ctx context.Context,
-	opts *gatewayinput.ListTodoListsOptions,
-) ([]*entity.TodoList, int64, error) {
+func (g *TodoListQueriesGateway) List(ctx context.Context, opts *gatewayinput.ListTodoListsOptions) ([]*entity.TodoList, int64, error) {
 	if opts.OwnerID != nil && opts.AssigneeID != nil {
 		return g.listAll(ctx, opts)
 	}
 	return g.listSimple(ctx, opts)
 }
 
-func (g *TodoListQueriesGateway) listAll(
-	ctx context.Context,
-	opts *gatewayinput.ListTodoListsOptions,
-) ([]*entity.TodoList, int64, error) {
+func (g *TodoListQueriesGateway) GetForUpdate(ctx context.Context, todoListID entity.TodoListID) (*entity.TodoList, error) {
+	conn := connFromContext(ctx, g.db)
+
+	var m model.TodoList
+
+	err := conn.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		First(&m, int64(todoListID)).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("db get todo list for update: %w", err)
+	}
+
+	return mapper.TodoListToEntity(&m), nil
+}
+
+func (g *TodoListQueriesGateway) listAll(ctx context.Context, opts *gatewayinput.ListTodoListsOptions) ([]*entity.TodoList, int64, error) {
 	var total int64
 	countArgs := []interface{}{int64(*opts.OwnerID), int64(*opts.AssigneeID)}
 	countQuery := `
@@ -94,13 +105,10 @@ func (g *TodoListQueriesGateway) listAll(
 		return nil, 0, fmt.Errorf("db list todo lists (all): %w", err)
 	}
 
-	return toEntities(models), total, nil
+	return mapper.TodoListstoEntities(models), total, nil
 }
 
-func (g *TodoListQueriesGateway) listSimple(
-	ctx context.Context,
-	opts *gatewayinput.ListTodoListsOptions,
-) ([]*entity.TodoList, int64, error) {
+func (g *TodoListQueriesGateway) listSimple(ctx context.Context, opts *gatewayinput.ListTodoListsOptions) ([]*entity.TodoList, int64, error) {
 	base := g.db.WithContext(ctx).Model(&model.TodoList{})
 
 	if opts.OwnerID != nil {
@@ -137,14 +145,10 @@ func (g *TodoListQueriesGateway) listSimple(
 		return nil, 0, fmt.Errorf("db list todo lists: %w", err)
 	}
 
-	return toEntities(models), total, nil
+	return mapper.TodoListstoEntities(models), total, nil
 }
 
-func (g *TodoListQueriesGateway) FindSoftDeletedTodoListIDs(
-	ctx context.Context,
-	cutoff time.Time,
-	limit int,
-) ([]entity.TodoListID, error) {
+func (g *TodoListQueriesGateway) FindSoftDeletedTodoListIDs(ctx context.Context, cutoff time.Time, limit int) ([]entity.TodoListID, error) {
 	conn := connFromContext(ctx, g.db)
 
 	var ids []int64
@@ -164,12 +168,4 @@ func (g *TodoListQueriesGateway) FindSoftDeletedTodoListIDs(
 	}
 
 	return result, nil
-}
-
-func toEntities(models []model.TodoList) []*entity.TodoList {
-	result := make([]*entity.TodoList, len(models))
-	for i := range models {
-		result[i] = mapper.TodoListToEntity(&models[i])
-	}
-	return result
 }

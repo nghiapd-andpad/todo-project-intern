@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
@@ -36,6 +37,26 @@ func (g *TodoQueriesGateway) Get(ctx context.Context, todoID entity.TodoID, todo
 			return nil, nil
 		}
 		return nil, fmt.Errorf("db get todo: %w", err)
+	}
+
+	return mapper.TodoToEntity(&m), nil
+}
+
+func (g *TodoQueriesGateway) GetForUpdate(ctx context.Context, todoID entity.TodoID, todoListID entity.TodoListID) (*entity.Todo, error) {
+	conn := connFromContext(ctx, g.db)
+
+	var m model.Todo
+
+	err := conn.
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("id = ? AND todo_list_id = ?", int64(todoID), int64(todoListID)).
+		First(&m).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("db get todo for update: %w", err)
 	}
 
 	return mapper.TodoToEntity(&m), nil

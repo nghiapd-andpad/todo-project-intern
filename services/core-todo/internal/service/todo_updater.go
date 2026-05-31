@@ -11,17 +11,20 @@ import (
 )
 
 type TodoUpdater struct {
+	transactor             gateway.Transactor
 	todoListQueriesGateway gateway.TodoListQueriesGateway
 	todoQueriesGateway     gateway.TodoQueriesGateway
 	todoCommandsGateway    gateway.TodoCommandsGateway
 }
 
 func NewTodoUpdater(
+	transactor gateway.Transactor,
 	todoListQueriesGateway gateway.TodoListQueriesGateway,
 	todoQueriesGateway gateway.TodoQueriesGateway,
 	todoCommandsGateway gateway.TodoCommandsGateway,
 ) *TodoUpdater {
 	return &TodoUpdater{
+		transactor:             transactor,
 		todoListQueriesGateway: todoListQueriesGateway,
 		todoQueriesGateway:     todoQueriesGateway,
 		todoCommandsGateway:    todoCommandsGateway,
@@ -29,38 +32,46 @@ func NewTodoUpdater(
 }
 
 func (s *TodoUpdater) Update(ctx context.Context, in *input.TodoUpdater) (*output.TodoUpdater, error) {
-	todo, err := s.todoQueriesGateway.Get(ctx, in.TodoID, in.TodoListID)
-	if err != nil {
-		return nil, fmt.Errorf("TodoUpdater.Update: %w", err)
-	}
-	if todo == nil {
-		return nil, entity.NewNotFound("todo not found")
-	}
+	var updated *entity.Todo
 
-	todoList, err := s.todoListQueriesGateway.Get(ctx, in.TodoListID)
-	if err != nil {
-		return nil, fmt.Errorf("TodoUpdater.Update: %w", err)
-	}
-	if todoList == nil {
-		return nil, entity.NewNotFound("todo list not found")
-	}
+	err := s.transactor.Transaction(ctx, func(txCtx context.Context) error {
+		// Lock todo row before applying update logic.
+		todo, err := s.todoQueriesGateway.GetForUpdate(txCtx, in.TodoID, in.TodoListID)
+		if err != nil {
+			return fmt.Errorf("TodoUpdater.GetForUpdate: %w", err)
+		}
+		if todo == nil {
+			return entity.NewNotFound("todo not found")
+		}
 
-	isOwner := todoList.OwnerID == in.RequesterID
-	isAssignee := todo.AssigneeID != nil && *todo.AssigneeID == in.RequesterID
-	if !isOwner && !isAssignee {
-		return nil, entity.NewAuthZ("you do not have permission to update this todo")
-	}
+		todoList, err := s.todoListQueriesGateway.Get(txCtx, in.TodoListID)
+		if err != nil {
+			return fmt.Errorf("TodoUpdater.GetTodoList: %w", err)
+		}
+		if todoList == nil {
+			return entity.NewNotFound("todo list not found")
+		}
 
-	todo.Version = in.Version
+		isOwner := todoList.OwnerID == in.RequesterID
+		isAssignee := todo.AssigneeID != nil && *todo.AssigneeID == in.RequesterID
+		if !isOwner && !isAssignee {
+			return entity.NewAuthZ("you do not have permission to update this todo")
+		}
 
-	if isOwner {
-		applyAllFields(todo, in.Fields)
-	} else {
-		// only update status
-		applyAssigneeFields(todo, in.Fields)
-	}
+		if isOwner {
+			applyAllFields(todo, in.Fields)
+		} else {
+			// Assignee can only update status.
+			applyAssigneeFields(todo, in.Fields)
+		}
 
-	updated, err := s.todoCommandsGateway.Update(ctx, todo)
+		updated, err = s.todoCommandsGateway.Update(txCtx, todo)
+		if err != nil {
+			return fmt.Errorf("TodoUpdater.Update: %w", err)
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("TodoUpdater.Update: %w", err)
 	}

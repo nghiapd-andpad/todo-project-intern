@@ -21,6 +21,14 @@ func TodoListToEntity(m *model.TodoList) *entity.TodoList {
 	}
 }
 
+func TodoListstoEntities(models []model.TodoList) []*entity.TodoList {
+	result := make([]*entity.TodoList, len(models))
+	for i := range models {
+		result[i] = TodoListToEntity(&models[i])
+	}
+	return result
+}
+
 func TodoListFromEntity(e *entity.TodoList) *model.TodoList {
 	if e == nil {
 		return nil

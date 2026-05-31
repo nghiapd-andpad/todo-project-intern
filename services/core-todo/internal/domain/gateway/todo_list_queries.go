@@ -13,6 +13,7 @@ import (
 type TodoListQueriesGateway interface {
 	Get(ctx context.Context, todoListID entity.TodoListID) (*entity.TodoList, error)
 	List(ctx context.Context, opts *input.ListTodoListsOptions) ([]*entity.TodoList, int64, error)
+	GetForUpdate(ctx context.Context, todoListID entity.TodoListID) (*entity.TodoList, error)
 
 	FindSoftDeletedTodoListIDs(ctx context.Context, cutoff time.Time, limit int) ([]entity.TodoListID, error)
 }
