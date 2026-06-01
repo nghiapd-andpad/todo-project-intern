@@ -16,6 +16,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/utils/logger"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/worker"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/worker/job"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -54,7 +55,7 @@ func InitializeServer(cfg *config.Config) (*ServerApp, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	serverApp := NewServerApp(server)
+	serverApp := NewServerApp(server, zapLogger)
 	return serverApp, func() {
 		cleanup2()
 		cleanup()
@@ -95,7 +96,7 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 	todoSoftDeletedCleaner := service.NewTodoSoftDeletedCleaner(transactor, todoQueriesGateway, todoCommandsGateway, todoListQueriesGateway, todoListCommandsGateway)
 	todoSoftDeletedCleanupJob := job.NewTodoSoftDeletedCleanupJob(todoSoftDeletedCleaner, distributedLocker, cfg, zapLogger)
 	workerWorker := worker.NewWorker(cfg, scheduler, todoOverdueMarkerJob, todoSoftDeletedCleanupJob, zapLogger)
-	workerApp := NewWorkerApp(workerWorker)
+	workerApp := NewWorkerApp(workerWorker, zapLogger)
 	return workerApp, func() {
 		cleanup4()
 		cleanup3()
@@ -108,16 +109,24 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 
 type ServerApp struct {
 	GRPCServer *grpc.Server
+	Logger     *zap.Logger
 }
 
 type WorkerApp struct {
 	Worker *worker.Worker
+	Logger *zap.Logger
 }
 
-func NewWorkerApp(worker2 *worker.Worker) *WorkerApp {
-	return &WorkerApp{Worker: worker2}
+func NewWorkerApp(worker2 *worker.Worker, zapLogger *zap.Logger) *WorkerApp {
+	return &WorkerApp{
+		Worker: worker2,
+		Logger: zapLogger,
+	}
 }
 
-func NewServerApp(grpcServer *grpc.Server) *ServerApp {
-	return &ServerApp{GRPCServer: grpcServer}
+func NewServerApp(grpcServer *grpc.Server, zapLogger *zap.Logger) *ServerApp {
+	return &ServerApp{
+		GRPCServer: grpcServer,
+		Logger:     zapLogger,
+	}
 }

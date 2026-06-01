@@ -28,11 +28,14 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+cfg.ServerPort)
 	if err != nil {
-		logutil.Error(ctx, "failed to listen", zap.Error(err))
+		app.Logger.Error("failed to listen",
+			zap.String("port", cfg.ServerPort),
+			zap.Error(err),
+		)
 		return
 	}
 
-	logutil.Info(ctx, "grpc server started",
+	app.Logger.Info("grpc server started",
 		zap.String("port", cfg.ServerPort),
 		zap.String("app_env", cfg.AppEnv),
 		zap.String("log_level", cfg.LogLevel),

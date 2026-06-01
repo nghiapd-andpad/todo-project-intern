@@ -5,6 +5,7 @@ package di
 
 import (
 	"github.com/google/wire"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
@@ -22,10 +23,12 @@ import (
 
 type ServerApp struct {
 	GRPCServer *grpc.Server
+	Logger     *zap.Logger
 }
 
 type WorkerApp struct {
 	Worker *worker.Worker
+	Logger *zap.Logger
 }
 
 func InitializeServer(cfg *config.Config) (*ServerApp, func(), error) {
@@ -128,10 +131,16 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 	return nil, nil, nil
 }
 
-func NewWorkerApp(worker *worker.Worker) *WorkerApp {
-	return &WorkerApp{Worker: worker}
+func NewWorkerApp(worker *worker.Worker, zapLogger *zap.Logger) *WorkerApp {
+	return &WorkerApp{
+		Worker: worker,
+		Logger: zapLogger,
+	}
 }
 
-func NewServerApp(grpcServer *grpc.Server) *ServerApp {
-	return &ServerApp{GRPCServer: grpcServer}
+func NewServerApp(grpcServer *grpc.Server, zapLogger *zap.Logger) *ServerApp {
+	return &ServerApp{
+		GRPCServer: grpcServer,
+		Logger:     zapLogger,
+	}
 }

@@ -8,6 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
+type loggerKey struct{}
+
 var baseLogger *zap.Logger = zap.NewNop()
 
 func SetLogger(l *zap.Logger) {
@@ -24,7 +26,7 @@ func FromContext(ctx context.Context) *zap.Logger {
 		return baseLogger
 	}
 
-	if l := ctxzap.Extract(ctx); l != nil {
+	if l, ok := ctx.Value(loggerKey{}).(*zap.Logger); ok && l != nil {
 		return l
 	}
 
