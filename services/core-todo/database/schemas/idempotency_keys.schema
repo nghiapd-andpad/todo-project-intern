@@ -1,0 +1,17 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+create_table "idempotency_keys", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  t.bigint "user_id", null: false
+  t.string "operation", null: false, limit: 100
+  t.string "idempotency_key", null: false, limit: 255
+  t.string "status", null: false, limit: 20
+  t.string "resource_type", limit: 50
+  t.bigint "resource_id"
+  t.datetime "created_at", null: false
+  t.datetime "updated_at", null: false
+  t.datetime "expires_at", null: false
+
+  t.index ["expires_at"], name: "idx_idempotency_keys_expires_at"
+  t.index ["user_id", "operation", "idempotency_key"], name: "uk_idempotency_scope", unique: true
+end

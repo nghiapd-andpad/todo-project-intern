@@ -1,4 +1,8 @@
 .PHONY: proto
+
+CORE_TODO_DIR := services/core-todo
+CORE_TODO_COMPOSE := cd $(CORE_TODO_DIR) && docker compose --profile db
+
 proto-buf:
 	buf generate
 
@@ -52,3 +56,34 @@ test-unit-core-todo-coverage:
     go test ./internal/... -coverprofile=coverage.out -covermode=atomic -count=1 && \
     go tool cover -html=coverage.out -o coverage.html && \
 	go tool cover -func=coverage.out
+
+core-todo-db-up:
+	$(CORE_TODO_COMPOSE) up -d core-todo-database core-todo-redis
+
+core-todo-db-down:
+	$(CORE_TODO_COMPOSE) down
+
+core-todo-db-reset:
+	$(CORE_TODO_COMPOSE) down -v
+	$(CORE_TODO_COMPOSE) up -d core-todo-database core-todo-redis
+
+core-todo-dbmigrator-build:
+	$(CORE_TODO_COMPOSE) build core-todo-dbmigrator
+
+core-todo-dbmigrator-shell:
+	$(CORE_TODO_COMPOSE) run --rm core-todo-dbmigrator bash
+
+core-todo-ridgepole-version:
+	$(CORE_TODO_COMPOSE) run --rm core-todo-dbmigrator ridgepole --version
+
+core-todo-ridgepole-export:
+	$(CORE_TODO_COMPOSE) run --rm core-todo-dbmigrator \
+		ridgepole --config database/config/ridgepole.yaml -E local --export -o /tmp/schema.rb
+
+core-todo-ridgepole-diff:
+	$(CORE_TODO_COMPOSE) run --rm core-todo-dbmigrator \
+		ridgepole --config database/config/ridgepole.yaml -E local --apply --dry-run -f database/schemas/Schemafile
+
+core-todo-ridgepole-apply:
+	$(CORE_TODO_COMPOSE) run --rm core-todo-dbmigrator \
+		ridgepole --config database/config/ridgepole.yaml -E local --apply -f database/schemas/Schemafile

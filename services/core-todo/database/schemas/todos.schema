@@ -1,0 +1,24 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+create_table "todos", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  t.bigint "todo_list_id"
+  t.string "title", null: false, limit: 255
+  t.text "description"
+  t.string "priority", null: false, limit: 50
+  t.bigint "assignee_id"
+  t.datetime "created_at", null: false
+  t.datetime "updated_at", null: false
+  t.string "status", null: false, limit: 50
+  t.datetime "due_date"
+  t.datetime "deleted_at"
+  t.bigint "version", null: false, default: 1
+
+  t.index ["assignee_id"], name: "idx_todos_assignee_id"
+  t.index ["deleted_at"], name: "idx_todos_deleted_at"
+  t.index ["deleted_at", "status", "due_date"], name: "idx_todos_overdue_marker"
+  t.index ["due_date"], name: "idx_todos_due_date"
+  t.index ["priority"], name: "idx_todos_priority"
+  t.index ["status"], name: "idx_todos_status"
+  t.index ["todo_list_id"], name: "idx_todos_todo_list_id"
+end
