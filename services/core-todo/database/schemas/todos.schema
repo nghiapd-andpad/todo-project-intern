@@ -21,4 +21,5 @@ create_table "todos", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", collatio
   t.index ["priority"], name: "idx_todos_priority"
   t.index ["status"], name: "idx_todos_status"
   t.index ["todo_list_id"], name: "idx_todos_todo_list_id"
+  t.index ["todo_list_id", "title", "assignee_id", "due_date"], name: "uk_todos_business_duplicate", unique: true
 end

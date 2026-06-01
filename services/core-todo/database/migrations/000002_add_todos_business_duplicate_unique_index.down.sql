@@ -1,0 +1,1 @@
+DROP INDEX `uk_todos_business_duplicate` ON `todos`;
