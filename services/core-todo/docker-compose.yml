@@ -1,0 +1,46 @@
+services:
+  core-todo-database:
+    image: mysql:8.0.28
+    container_name: core-todo-database
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      TZ: "Asia/Tokyo"
+    volumes:
+      - ./database/docker/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./database/docker/sqls:/docker-entrypoint-initdb.d
+      - core_todo_mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    profiles:
+      - core-todo
+      - db
+
+  core-todo-redis:
+    image: redis:latest
+    container_name: core-todo-redis
+    platform: linux/amd64
+    ports:
+      - "6379:6379"
+    profiles:
+      - core-todo
+      - db
+
+  core-todo-dbmigrator:
+    build:
+      context: .
+      dockerfile: database/docker/Dockerfile
+    container_name: core-todo-dbmigrator
+    depends_on:
+      - core-todo-database
+    command: /bin/bash
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/app
+    profiles:
+      - core-todo
+      - db
+
+volumes:
+  core_todo_mysql_data:

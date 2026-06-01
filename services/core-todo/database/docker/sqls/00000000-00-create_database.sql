@@ -1,0 +1,7 @@
+CREATE DATABASE IF NOT EXISTS todo_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;
+
+CREATE DATABASE IF NOT EXISTS todo_test
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;

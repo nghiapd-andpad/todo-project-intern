@@ -1,0 +1,14 @@
+---
+local:
+  adapter: mysql2
+  host: core-todo-database
+  username: root
+  password: root
+  database: todo_db
+
+test:
+  adapter: mysql2
+  host: core-todo-database
+  username: root
+  password: root
+  database: todo_test
