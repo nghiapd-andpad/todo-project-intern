@@ -9,7 +9,7 @@ import (
 
 type Todo struct {
 	ID          int64          `gorm:"primaryKey;autoIncrement"`
-	TodoListID  int64          `gorm:"column:todo_list_id;index"`
+	TodoListID  int64          `gorm:"column:todo_list_id;not null;index"`
 	Title       string         `gorm:"column:title;size:255;not null"`
 	Description *string        `gorm:"column:description;type:text"`
 	Priority    string         `gorm:"column:priority;size:50;not null;index"`

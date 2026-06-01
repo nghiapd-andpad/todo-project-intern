@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 create_table "todos", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
-  t.bigint "todo_list_id"
+  t.bigint "todo_list_id", null: false
   t.string "title", null: false, limit: 255
   t.text "description"
   t.string "priority", null: false, limit: 50

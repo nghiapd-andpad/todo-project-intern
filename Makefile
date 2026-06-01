@@ -87,3 +87,21 @@ core-todo-ridgepole-diff:
 core-todo-ridgepole-apply:
 	$(CORE_TODO_COMPOSE) run --rm core-todo-dbmigrator \
 		ridgepole --config database/config/ridgepole.yaml -E local --apply -f database/schemas/Schemafile
+
+core-todo-migrate-up:
+	cd services/core-todo && migrate \
+		-path database/migrations \
+		-database "mysql://root:root@tcp(localhost:3306)/todo_db" \
+		up
+
+core-todo-migrate-down:
+	cd services/core-todo && migrate \
+		-path database/migrations \
+		-database "mysql://root:root@tcp(localhost:3306)/todo_db" \
+		down 1
+
+core-todo-migrate-version:
+	cd services/core-todo && migrate \
+		-path database/migrations \
+		-database "mysql://root:root@tcp(localhost:3306)/todo_db" \
+		version

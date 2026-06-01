@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
 
 func NewDatabase(cfg *config.Config) (*gorm.DB, func(), error) {
@@ -18,10 +17,6 @@ func NewDatabase(cfg *config.Config) (*gorm.DB, func(), error) {
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to connect database: %w", err)
-	}
-
-	if err := db.AutoMigrate(&model.Todo{}, &model.TodoList{}, &model.IdempotencyKey{}); err != nil {
-		return nil, nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
 	cleanup := func() {
