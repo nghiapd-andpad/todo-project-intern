@@ -44,14 +44,12 @@ func (g *TodoListCommandsGateway) Update(
 	conn := connFromContext(ctx, g.db)
 
 	updates := map[string]any{
-		"name":    todoList.Name,
-		"version": todoList.Version + 1,
+		"name": todoList.Name,
 	}
 
 	result := conn.
 		Model(&model.TodoList{}).
 		Where("id = ?", int64(todoList.ID)).
-		Where("version = ?", todoList.Version).
 		Updates(updates)
 
 	if result.Error != nil {
@@ -61,8 +59,6 @@ func (g *TodoListCommandsGateway) Update(
 	if result.RowsAffected == 0 {
 		return nil, entity.NewConflict("todo list was updated by another request")
 	}
-
-	todoList.Version++
 
 	return todoList, nil
 }

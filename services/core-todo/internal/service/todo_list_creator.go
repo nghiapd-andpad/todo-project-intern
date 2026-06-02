@@ -42,16 +42,6 @@ func (s *TodoListCreator) Create(ctx context.Context, in *input.TodoListCreator)
 		OwnerID: in.RequesterID,
 	}
 
-	// No idempotency key means normal create flow.
-	if in.IdempotencyKey == nil || *in.IdempotencyKey == "" {
-		created, err := s.todoListCommandsGateway.Create(ctx, todoList)
-		if err != nil {
-			return nil, fmt.Errorf("TodoListCreator.Create: %w", err)
-		}
-
-		return &output.TodoListCreator{TodoList: created}, nil
-	}
-
 	var created *entity.TodoList
 
 	err := s.transactor.Transaction(ctx, func(txCtx context.Context) error {

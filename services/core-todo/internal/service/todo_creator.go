@@ -67,16 +67,6 @@ func (s *TodoCreator) Create(ctx context.Context, in *input.TodoCreator) (*outpu
 		AssigneeID:  in.AssigneeID,
 	}
 
-	// No idempotency key means normal create flow.
-	if in.IdempotencyKey == nil || *in.IdempotencyKey == "" {
-		created, err := s.todoCommandsGateway.Create(ctx, todo)
-		if err != nil {
-			return nil, fmt.Errorf("TodoCreator.Create: %w", err)
-		}
-
-		return &output.TodoCreator{Todo: created}, nil
-	}
-
 	var created *entity.Todo
 
 	err = s.transactor.Transaction(ctx, func(txCtx context.Context) error {

@@ -17,7 +17,6 @@ func TodoListToEntity(m *model.TodoList) *entity.TodoList {
 		OwnerID:   entity.UserID(m.OwnerID),
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
-		Version:   m.Version,
 	}
 }
 
@@ -40,6 +39,5 @@ func TodoListFromEntity(e *entity.TodoList) *model.TodoList {
 		OwnerID:   int64(e.OwnerID),
 		CreatedAt: e.CreatedAt,
 		UpdatedAt: e.UpdatedAt,
-		Version:   e.Version,
 	}
 }

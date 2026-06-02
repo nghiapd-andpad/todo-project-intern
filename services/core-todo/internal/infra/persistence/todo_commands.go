@@ -45,13 +45,11 @@ func (g *TodoCommandsGateway) Update(ctx context.Context, todo *entity.Todo) (*e
 		"priority":    string(todo.Priority),
 		"due_date":    todo.DueDate,
 		"assignee_id": todo.AssigneeID,
-		"version":     todo.Version + 1,
 	}
 
 	result := conn.
 		Model(&model.Todo{}).
 		Where("id = ?", int64(todo.ID)).
-		Where("version = ?", todo.Version).
 		Updates(updates)
 
 	if result.Error != nil {
@@ -63,8 +61,6 @@ func (g *TodoCommandsGateway) Update(ctx context.Context, todo *entity.Todo) (*e
 			"todo was updated by another request",
 		)
 	}
-
-	todo.Version++
 
 	return todo, nil
 }

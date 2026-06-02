@@ -12,7 +12,6 @@ create_table "todos", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", collatio
   t.string "status", null: false, limit: 50
   t.datetime "due_date"
   t.datetime "deleted_at"
-  t.bigint "version", null: false, default: 1
 
   t.index ["assignee_id"], name: "idx_todos_assignee_id"
   t.index ["deleted_at"], name: "idx_todos_deleted_at"
