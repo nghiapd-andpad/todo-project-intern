@@ -8,7 +8,6 @@ require (
 	github.com/99designs/gqlgen v0.17.89
 	github.com/go-co-op/gocron/v2 v2.21.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
 	github.com/graph-gophers/dataloader/v7 v7.1.3

@@ -58,7 +58,7 @@ test-unit-core-todo-coverage:
 	go tool cover -func=coverage.out
 
 core-todo-db-up:
-	$(CORE_TODO_COMPOSE) up -d core-todo-database core-todo-redis
+	$(CORE_TODO_COMPOSE) up -d core-todo-database core-todo-redis core-todo-rabbitmq
 
 core-todo-db-down:
 	$(CORE_TODO_COMPOSE) down
@@ -105,3 +105,12 @@ core-todo-migrate-version:
 		-path database/migrations \
 		-database "mysql://root:root@tcp(localhost:3306)/todo_db" \
 		version
+
+core-todo-migrate-create:
+	cd services/core-todo && migrate create \
+		-ext sql \
+		-dir database/migrations \
+		$(name)
+
+core-todo-rabbitmq-logs:
+	$(CORE_TODO_COMPOSE) logs -f core-todo-rabbitmq
