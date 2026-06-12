@@ -4,3 +4,5 @@
 require_relative 'todo_lists.schema'
 require_relative 'todos.schema'
 require_relative 'idempotency_keys.schema'
+require_relative 'audit_logs.schema'
+require_relative 'outbox_events.schema'

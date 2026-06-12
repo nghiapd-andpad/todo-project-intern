@@ -73,6 +73,21 @@ func (mr *MockTodoListQueriesGatewayMockRecorder) Get(ctx, todoListID any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTodoListQueriesGateway)(nil).Get), ctx, todoListID)
 }
 
+// GetForUpdate mocks base method.
+func (m *MockTodoListQueriesGateway) GetForUpdate(ctx context.Context, todoListID entity.TodoListID) (*entity.TodoList, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetForUpdate", ctx, todoListID)
+	ret0, _ := ret[0].(*entity.TodoList)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetForUpdate indicates an expected call of GetForUpdate.
+func (mr *MockTodoListQueriesGatewayMockRecorder) GetForUpdate(ctx, todoListID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetForUpdate", reflect.TypeOf((*MockTodoListQueriesGateway)(nil).GetForUpdate), ctx, todoListID)
+}
+
 // List mocks base method.
 func (m *MockTodoListQueriesGateway) List(ctx context.Context, opts *input.ListTodoListsOptions) ([]*entity.TodoList, int64, error) {
 	m.ctrl.T.Helper()

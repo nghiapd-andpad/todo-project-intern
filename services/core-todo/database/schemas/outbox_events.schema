@@ -1,0 +1,17 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+create_table "outbox_events", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  t.string "event_name", null: false, limit: 100
+  t.string "routing_key", null: false, limit: 100
+  t.json "payload", null: false
+  t.string "status", null: false, limit: 20
+  t.integer "retry_count", null: false, default: 0
+  t.text "last_error"
+  t.datetime "created_at", null: false
+  t.datetime "updated_at", null: false
+  t.datetime "published_at"
+
+  t.index ["status", "created_at"], name: "idx_outbox_events_status_created_at"
+  t.index ["routing_key"], name: "idx_outbox_events_routing_key"
+end

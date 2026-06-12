@@ -46,12 +46,16 @@ func InitializeServer(cfg *config.Config) (*ServerApp, func(), error) {
 		persistence.NewTodoListCommandsGateway,
 		persistence.NewTodoListQueriesGateway,
 
+		persistence.NewOutboxEventCommandsGateway,
+
 		wire.Bind(new(gateway.Transactor), new(*persistence.Transactor)),
 		wire.Bind(new(gateway.IdempotencyGateway), new(*persistence.IdempotencyGateway)),
 		wire.Bind(new(gateway.TodoCommandsGateway), new(*persistence.TodoCommandsGateway)),
 		wire.Bind(new(gateway.TodoQueriesGateway), new(*persistence.TodoQueriesGateway)),
 		wire.Bind(new(gateway.TodoListCommandsGateway), new(*persistence.TodoListCommandsGateway)),
 		wire.Bind(new(gateway.TodoListQueriesGateway), new(*persistence.TodoListQueriesGateway)),
+
+		wire.Bind(new(gateway.OutboxEventCommandsGateway), new(*persistence.OutboxEventCommandsGateway)),
 
 		// USE CASE
 		service.NewTodoCreator,

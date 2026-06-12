@@ -53,6 +53,15 @@ type Config struct {
 	// Feature flags
 	TodoBlacklistEnabled bool     `envconfig:"TODO_BLACKLIST_ENABLED" default:"false"`
 	TodoTitleBlacklist   []string `envconfig:"TODO_TITLE_BLACKLIST" default:"spam,troll"`
+
+	// RabbitMQ
+	RabbitMQHost            string `envconfig:"RABBITMQ_HOST" default:"localhost"`
+	RabbitMQPort            string `envconfig:"RABBITMQ_PORT" default:"5672"`
+	RabbitMQUser            string `envconfig:"RABBITMQ_USER" default:"root"`
+	RabbitMQPassword        string `envconfig:"RABBITMQ_PASSWORD" default:"root"`
+	RabbitMQExchange        string `envconfig:"RABBITMQ_EXCHANGE" default:"todo.events"`
+	RabbitMQAuditQueue      string `envconfig:"RABBITMQ_AUDIT_QUEUE" default:"todo.audit.queue"`
+	RabbitMQAuditRoutingKey string `envconfig:"RABBITMQ_AUDIT_ROUTING_KEY" default:"todo.*"`
 }
 
 func New() (*Config, error) {
