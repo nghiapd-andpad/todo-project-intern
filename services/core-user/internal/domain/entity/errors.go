@@ -10,6 +10,7 @@ const (
 	ErrInvalidParameter ErrorCode = "INVALID_PARAMETER"
 	ErrAuthZ            ErrorCode = "AUTHORIZATION"
 	ErrAuthN            ErrorCode = "AUTHENTICATION"
+	ErrAlreadyHandled   ErrorCode = "AlreadyHandled"
 	ErrInternal         ErrorCode = "INTERNAL"
 
 	// User-specific error codes
@@ -55,11 +56,14 @@ func NewAuthN(message string) *AppError {
 	return &AppError{Code: ErrAuthN, Message: message}
 }
 
+func NewAlreadyHandled(message string) *AppError {
+	return &AppError{Code: ErrAlreadyHandled, Message: message}
+}
+
 func NewInternal(message string) *AppError {
 	return &AppError{Code: ErrInternal, Message: message}
 }
 
-// User-specific constructors
 func NewInvalidCredentials() *AppError {
 	return &AppError{Code: ErrInvalidCredentials, Message: "invalid username or password"}
 }

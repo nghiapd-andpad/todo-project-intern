@@ -18,9 +18,11 @@ func NewUserCommandsGateway(db *gorm.DB) *UserCommandsGateway {
 	return &UserCommandsGateway{db: db}
 }
 
-func (r *UserCommandsGateway) Create(ctx context.Context, e *entity.User) (*entity.User, error) {
+func (g *UserCommandsGateway) Create(ctx context.Context, e *entity.User) (*entity.User, error) {
+	conn := connFromContext(ctx, g.db)
+
 	m := mapper.EntityToModel(e)
-	if err := r.db.WithContext(ctx).Create(m).Error; err != nil {
+	if err := conn.Create(m).Error; err != nil {
 		return nil, fmt.Errorf("db create user: %w", err)
 	}
 	return mapper.ModelToEntity(m), nil

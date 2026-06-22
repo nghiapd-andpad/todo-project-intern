@@ -19,7 +19,7 @@ Outbox Publisher Worker
 --> RabbitMQ xoá message khỏi queue
 
 ## Flow
-CreateTodo API
+CreateTodo API (core-todo)
       |
       v
 TodoCreator
@@ -28,23 +28,24 @@ TodoCreator
       |-- INSERT outbox_events status = PENDING
       v
 DB Transaction Commit
+
+------------------------
+
+Outbox Publisher Worker (core-user)
       |
-      v
-Outbox Publisher Worker
-      |
-      |-- SELECT PENDING / FAILED events
+      |-- SELECT PENDING / FAILED events (limit)
       |-- Publish to RabbitMQ
       v
 RabbitMQ Exchange: todo.events
       |
-      | routing_key = todo.created
+      | routing_key = todo.assigned
       v
-RabbitMQ Queue: todo.audit.queue
+RabbitMQ Queue: todo.notification.queue (binding)
       |
       v
-Audit Consumer
+Notification Consumer
       |
-      |-- INSERT audit_logs
+      |-- INSERT notifications tables, gửi email cho user
       |-- ACK message
       v
 RabbitMQ deletes message
@@ -62,3 +63,23 @@ Next:
 - Implement Outbox Publisher Worker.
 - Implement Audit Consumer.
 - Apply events to remaining Todo/TodoList CRUD operations.
+
+
+## Improve notification consumer
+NotificationConsumer nhận todo.assigned
+    │
+    ├── INSERT notifications (DB)
+    │
+    └── INSERT outbox_events (notification.created)
+              │
+              ▼
+    OutboxPublisherJob (core-user worker)
+              │
+              ▼
+    user.events exchange
+              │
+              ▼
+    email.queue
+              │
+              ▼
+    EmailConsumer → SMTP
