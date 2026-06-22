@@ -12,9 +12,9 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/cronjob"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/email"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/rabbitmq"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/redis"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/security"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/service"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/usecase"
@@ -33,8 +33,10 @@ type WorkerApp struct {
 	Logger *zap.Logger
 }
 
-func InitializeServer(cfg *config.Config) (*grpc.Server, func(), error) {
+func InitializeServer(cfg *config.Config) (*ServerApp, func(), error) {
 	wire.Build(
+		logutil.New,
+
 		// INFRASTRUCTURE
 		persistence.NewDatabase,
 
@@ -59,6 +61,8 @@ func InitializeServer(cfg *config.Config) (*grpc.Server, func(), error) {
 
 		// SERVER
 		handler.NewGRPCServer,
+
+		NewServerApp,
 	)
 	return nil, nil, nil
 }
@@ -72,20 +76,26 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 		persistence.NewTransactor,
 		persistence.NewOutboxEventCommandsGateway,
 		persistence.NewOutboxEventQueriesGateway,
+		persistence.NewNotificationCommandsGateway,
+		persistence.NewUserQueryGateway,
 
 		wire.Bind(new(gateway.Transactor), new(*persistence.Transactor)),
 		wire.Bind(new(gateway.OutboxEventCommandsGateway), new(*persistence.OutboxEventCommandsGateway)),
 		wire.Bind(new(gateway.OutboxEventQueriesGateway), new(*persistence.OutboxEventQueriesGateway)),
+		wire.Bind(new(gateway.NotificationCommandsGateway), new(*persistence.NotificationCommandsGateway)),
+		wire.Bind(new(gateway.UserQueriesGateway), new(*persistence.UserQueriesGateway)),
 
-		// Redis
-		redis.NewClient,
-		redis.NewDistributedLocker,
-		wire.Bind(new(gateway.DistributedLocker), new(*redis.DistributedLocker)),
+
+		// Email Sender
+		email.NewSMTPEmailSender,
+		wire.Bind(new(gateway.EmailSender), new(*email.SMTPEmailSender)),
 
 		// RabbitMQ
 		rabbitmq.NewConnection,
 		rabbitmq.NewPublisher,
 		wire.Bind(new(gateway.EventPublisher), new(*rabbitmq.Publisher)),
+		rabbitmq.NewNotificationConsumer,
+		rabbitmq.NewEmailConsumer,
 
 		// Scheduler
 		cronjob.NewScheduler,

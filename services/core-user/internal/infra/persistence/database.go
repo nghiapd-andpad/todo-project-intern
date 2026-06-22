@@ -21,7 +21,7 @@ func NewDatabase(cfg *config.Config) (*gorm.DB, func(), error) {
 	}
 
 	// Auto Migrate
-	if err := db.AutoMigrate(&model.User{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.Notification{}, &model.OutboxEvent{}); err != nil {
 		return nil, nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 

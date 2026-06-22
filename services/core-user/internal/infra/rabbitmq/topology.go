@@ -66,5 +66,28 @@ func setupTopology(conn *amqp.Connection, cfg *config.Config) error {
 		return fmt.Errorf("bind notification queue: %w", err)
 	}
 
+	// Declare email queue
+	if _, err := ch.QueueDeclare(
+		"email.queue",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	); err != nil {
+		return fmt.Errorf("declare email queue: %w", err)
+	}
+
+	// Bind: notification.email.requested -> email.queue
+	if err := ch.QueueBind(
+		"email.queue",
+		"notification.email.requested",
+		cfg.RabbitMQUserExchange,
+		false,
+		nil,
+	); err != nil {
+		return fmt.Errorf("bind email queue: %w", err)
+	}
+
 	return nil
 }

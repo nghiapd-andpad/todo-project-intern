@@ -9,15 +9,22 @@ package di
 import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/handler"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/cronjob"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/email"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/persistence"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/rabbitmq"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/infra/security"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/service"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/utils/logger"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/worker"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/worker/job"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
+func InitializeServer(cfg *config.Config) (*ServerApp, func(), error) {
 	db, cleanup, err := persistence.NewDatabase(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -34,7 +41,85 @@ func InitializeApp(cfg *config.Config) (*grpc.Server, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	return server, func() {
+	zapLogger, cleanup2, err := logger.New(cfg)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	serverApp := NewServerApp(server, zapLogger)
+	return serverApp, func() {
+		cleanup2()
 		cleanup()
 	}, nil
+}
+
+func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
+	zapLogger, cleanup, err := logger.New(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	scheduler, cleanup2, err := cronjob.NewScheduler(zapLogger)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	connection, cleanup3, err := rabbitmq.NewConnection(cfg)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	db, cleanup4, err := persistence.NewDatabase(cfg)
+	if err != nil {
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	notificationCommandsGateway := persistence.NewNotificationCommandsGateway(db)
+	outboxEventCommandsGateway := persistence.NewOutboxEventCommandsGateway(db)
+	userQueriesGateway := persistence.NewUserQueryGateway(db)
+	transactor := persistence.NewTransactor(db)
+	notificationConsumer := rabbitmq.NewNotificationConsumer(connection, notificationCommandsGateway, outboxEventCommandsGateway, userQueriesGateway, transactor, cfg, zapLogger)
+	smtpEmailSender := email.NewSMTPEmailSender(cfg, zapLogger)
+	emailConsumer := rabbitmq.NewEmailConsumer(connection, smtpEmailSender, cfg, zapLogger)
+	outboxEventQueriesGateway := persistence.NewOutboxEventQueriesGateway(db)
+	publisher, cleanup5, err := rabbitmq.NewPublisher(connection, cfg)
+	if err != nil {
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	outboxPublisherJob := job.NewOutboxPublisherJob(transactor, outboxEventQueriesGateway, outboxEventCommandsGateway, publisher, cfg, zapLogger)
+	workerWorker := worker.NewWorker(cfg, scheduler, notificationConsumer, emailConsumer, outboxPublisherJob, zapLogger)
+	workerApp := NewWorkerApp(workerWorker, zapLogger)
+	return workerApp, func() {
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
+}
+
+// wire.go:
+
+type ServerApp struct {
+	GRPCServer *grpc.Server
+	Logger     *zap.Logger
+}
+
+type WorkerApp struct {
+	Worker *worker.Worker
+	Logger *zap.Logger
+}
+
+func NewWorkerApp(w *worker.Worker, zapLogger *zap.Logger) *WorkerApp {
+	return &WorkerApp{Worker: w, Logger: zapLogger}
+}
+
+func NewServerApp(grpcServer *grpc.Server, zapLogger *zap.Logger) *ServerApp {
+	return &ServerApp{GRPCServer: grpcServer, Logger: zapLogger}
 }

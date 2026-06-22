@@ -10,20 +10,28 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/config"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/event"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway"
 	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-user/internal/domain/gateway/input"
 )
 
 type NotificationConsumer struct {
-	conn      *amqp.Connection
-	notifCmds gateway.NotificationCommandsGateway
-	cfg       *config.Config
-	logger    *zap.Logger
+	conn        *amqp.Connection
+	notifCmds   gateway.NotificationCommandsGateway
+	outboxCmds  gateway.OutboxEventCommandsGateway
+	userQueries gateway.UserQueriesGateway
+	transactor  gateway.Transactor
+	cfg         *config.Config
+	logger      *zap.Logger
 }
 
 func NewNotificationConsumer(
 	conn *amqp.Connection,
 	notifCmds gateway.NotificationCommandsGateway,
+	outboxCmds gateway.OutboxEventCommandsGateway,
+	userQueries gateway.UserQueriesGateway,
+	transactor gateway.Transactor,
 	cfg *config.Config,
 	zapLogger *zap.Logger,
 ) *NotificationConsumer {
@@ -31,10 +39,13 @@ func NewNotificationConsumer(
 		zapLogger = zap.NewNop()
 	}
 	return &NotificationConsumer{
-		conn:      conn,
-		notifCmds: notifCmds,
-		cfg:       cfg,
-		logger:    zapLogger.With(zap.String("component", "notification_consumer")),
+		conn:        conn,
+		notifCmds:   notifCmds,
+		outboxCmds:  outboxCmds,
+		userQueries: userQueries,
+		transactor:  transactor,
+		cfg:         cfg,
+		logger:      zapLogger.With(zap.String("component", "notification_consumer")),
 	}
 }
 
@@ -115,13 +126,67 @@ func (c *NotificationConsumer) handle(ctx context.Context, d amqp.Delivery) {
 		return
 	}
 
-	if err := c.notifCmds.Create(ctx, &gatewayinput.CreateNotification{
-		ReceiverID: p.AssigneeID,
-		Title:      "You have been assigned a new todo.",
-		Content:    fmt.Sprintf("Todo \"%s\" assigned a new todo.", p.Title),
-	}); err != nil {
-		logger.Error("notification consumer: insert notification failed — requeuing",
+	// Fetch Receiver User Email
+	user, err := c.userQueries.GetByID(ctx, entity.UserID(p.AssigneeID))
+	if err != nil {
+		logger.Error("notification consumer: get receiver user failed — requeuing",
 			zap.Int64("assignee_id", p.AssigneeID),
+			zap.Error(err),
+		)
+		_ = d.Nack(false, true)
+		return
+	}
+	if user == nil {
+		logger.Error("notification consumer: assignee user not found — discarding",
+			zap.Int64("assignee_id", p.AssigneeID),
+		)
+		_ = d.Ack(false)
+		return
+	}
+
+	err = c.transactor.Transaction(ctx, func(txCtx context.Context) error {
+		notifID, rowsAffected, err := c.notifCmds.Create(txCtx, &gatewayinput.CreateNotification{
+			ReceiverID:   p.AssigneeID,
+			ResourceType: "todo",
+			ResourceID:   p.TodoID,
+			EventName:    d.RoutingKey,
+			OccurredAt:   p.OccurredOn,
+			Title:        "You have been assigned a new todo.",
+			Content:      fmt.Sprintf("Todo \"%s\" assigned to you.", p.Title),
+		})
+		if err != nil {
+			return err
+		}
+
+		if rowsAffected > 0 {
+			emailEvent := event.NotificationEmailRequested{
+				NotificationID: notifID,
+				ReceiverID:     p.AssigneeID,
+				Email:          user.Email,
+				Subject:        "New Todo Assigned",
+				Content:        fmt.Sprintf("Hello %s,\n\nYou have been assigned a new todo: \"%s\".\n\nBest regards,\nTodo App", user.Username, p.Title),
+				OccurredOn:     time.Now().UTC(),
+			}
+
+			payload, err := json.Marshal(emailEvent)
+			if err != nil {
+				return fmt.Errorf("marshal NotificationEmailRequested event: %w", err)
+			}
+
+			if err := c.outboxCmds.Create(txCtx, &gatewayinput.CreateOutboxEvent{
+				EventName:  emailEvent.EventName(),
+				RoutingKey: emailEvent.EventName(),
+				Payload:    payload,
+			}); err != nil {
+				return fmt.Errorf("create outbox event: %w", err)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		logger.Error("notification consumer: database transaction failed — requeuing",
 			zap.Error(err),
 		)
 		if getXDeathCount(d.Headers) >= 3 {
@@ -134,7 +199,7 @@ func (c *NotificationConsumer) handle(ctx context.Context, d amqp.Delivery) {
 
 	_ = d.Ack(false)
 
-	logger.Info("notification consumer: notification created",
+	logger.Info("notification consumer: notification processed successfully",
 		zap.Int64("receiver_id", p.AssigneeID),
 		zap.Int64("todo_id", p.TodoID),
 	)

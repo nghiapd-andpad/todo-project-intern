@@ -52,6 +52,13 @@ type Config struct {
 
 	// core-user publishes here
 	RabbitMQUserExchange string `envconfig:"RABBITMQ_USER_EXCHANGE" default:"user.events"`
+
+	// SMTP settings
+	SMTPHost     string `envconfig:"SMTP_HOST" default:""`
+	SMTPPort     int    `envconfig:"SMTP_PORT" default:"1025"`
+	SMTPUser     string `envconfig:"SMTP_USER" default:""`
+	SMTPPassword string `envconfig:"SMTP_PASSWORD" default:""`
+	SMTPSender   string `envconfig:"SMTP_SENDER" default:"noreply@todo.com"`
 }
 
 func New() (*Config, error) {
