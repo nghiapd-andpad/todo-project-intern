@@ -42,6 +42,8 @@ type Config struct {
 	RabbitMQNotificationQueue         string `envconfig:"RABBITMQ_NOTIFICATION_QUEUE" default:"todo.notification.queue"`
 	RabbitMQNotificationRoutingKey    string `envconfig:"RABBITMQ_NOTIFICATION_ROUTING_KEY" default:"todo.assigned"`
 	RabbitMQNotificationPrefetchCount int    `envconfig:"RABBITMQ_NOTIFICATION_PREFETCH_COUNT" default:"10"`
+	RabbitMQNotificationWorkers       int    `envconfig:"RABBITMQ_NOTIFICATION_WORKERS" default:"5"`
+	RabbitMQEmailWorkers              int    `envconfig:"RABBITMQ_EMAIL_WORKERS" default:"5"`
 
 	// Outbox publisher worker
 	SchedulerEnabled bool `envconfig:"SCHEDULER_ENABLED" default:"false"`

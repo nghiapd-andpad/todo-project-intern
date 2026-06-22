@@ -2,8 +2,11 @@ package rabbitmq
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -17,13 +20,14 @@ import (
 )
 
 type NotificationConsumer struct {
-	conn        *amqp.Connection
-	notifCmds   gateway.NotificationCommandsGateway
-	outboxCmds  gateway.OutboxEventCommandsGateway
-	userQueries gateway.UserQueriesGateway
-	transactor  gateway.Transactor
-	cfg         *config.Config
-	logger      *zap.Logger
+	conn            *amqp.Connection
+	notifCmds       gateway.NotificationCommandsGateway
+	outboxCmds      gateway.OutboxEventCommandsGateway
+	userQueries     gateway.UserQueriesGateway
+	processedEvents gateway.ProcessedEventGateway
+	transactor      gateway.Transactor
+	cfg             *config.Config
+	logger          *zap.Logger
 }
 
 func NewNotificationConsumer(
@@ -31,6 +35,7 @@ func NewNotificationConsumer(
 	notifCmds gateway.NotificationCommandsGateway,
 	outboxCmds gateway.OutboxEventCommandsGateway,
 	userQueries gateway.UserQueriesGateway,
+	processedEvents gateway.ProcessedEventGateway,
 	transactor gateway.Transactor,
 	cfg *config.Config,
 	zapLogger *zap.Logger,
@@ -39,13 +44,14 @@ func NewNotificationConsumer(
 		zapLogger = zap.NewNop()
 	}
 	return &NotificationConsumer{
-		conn:        conn,
-		notifCmds:   notifCmds,
-		outboxCmds:  outboxCmds,
-		userQueries: userQueries,
-		transactor:  transactor,
-		cfg:         cfg,
-		logger:      zapLogger.With(zap.String("component", "notification_consumer")),
+		conn:            conn,
+		notifCmds:       notifCmds,
+		outboxCmds:      outboxCmds,
+		userQueries:     userQueries,
+		processedEvents: processedEvents,
+		transactor:      transactor,
+		cfg:             cfg,
+		logger:          zapLogger.With(zap.String("component", "notification_consumer")),
 	}
 }
 
@@ -83,18 +89,34 @@ func (c *NotificationConsumer) Start(ctx context.Context) error {
 			c.logger.Info("notification consumer stopped")
 		}()
 
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case d, ok := <-deliveries:
-				if !ok {
-					c.logger.Error("notification consumer: delivery channel closed")
-					return
-				}
-				c.handle(ctx, d)
-			}
+		var wg sync.WaitGroup
+		workers := c.cfg.RabbitMQNotificationWorkers
+		if workers <= 0 {
+			workers = 1
 		}
+
+		c.logger.Info("starting notification consumer worker pool", zap.Int("workers", workers))
+
+		for i := 0; i < workers; i++ {
+			wg.Add(1)
+			go func(workerID int) {
+				defer wg.Done()
+				c.logger.Debug("notification consumer worker started", zap.Int("worker_id", workerID))
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case d, ok := <-deliveries:
+						if !ok {
+							return
+						}
+						c.handle(ctx, d)
+					}
+				}
+			}(i)
+		}
+
+		wg.Wait()
 	}()
 
 	return nil
@@ -126,6 +148,10 @@ func (c *NotificationConsumer) handle(ctx context.Context, d amqp.Delivery) {
 		return
 	}
 
+	// Hash payload for technical duplicate check
+	hashBytes := sha256.Sum256(d.Body)
+	eventHash := hex.EncodeToString(hashBytes[:])
+
 	// Fetch Receiver User Email
 	user, err := c.userQueries.GetByID(ctx, entity.UserID(p.AssigneeID))
 	if err != nil {
@@ -144,7 +170,17 @@ func (c *NotificationConsumer) handle(ctx context.Context, d amqp.Delivery) {
 		return
 	}
 
+	var isDuplicate bool
 	err = c.transactor.Transaction(ctx, func(txCtx context.Context) error {
+		ok, err := c.processedEvents.TryRecord(txCtx, eventHash, "notification_consumer")
+		if err != nil {
+			return err
+		}
+		if !ok {
+			isDuplicate = true
+			return nil
+		}
+
 		notifID, rowsAffected, err := c.notifCmds.Create(txCtx, &gatewayinput.CreateNotification{
 			ReceiverID:   p.AssigneeID,
 			ResourceType: "todo",
@@ -198,6 +234,13 @@ func (c *NotificationConsumer) handle(ctx context.Context, d amqp.Delivery) {
 	}
 
 	_ = d.Ack(false)
+
+	if isDuplicate {
+		logger.Warn("notification consumer: duplicate event detected via technical hash — skipped",
+			zap.String("event_hash", eventHash),
+		)
+		return
+	}
 
 	logger.Info("notification consumer: notification processed successfully",
 		zap.Int64("receiver_id", p.AssigneeID),

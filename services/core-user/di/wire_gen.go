@@ -79,10 +79,11 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 	notificationCommandsGateway := persistence.NewNotificationCommandsGateway(db)
 	outboxEventCommandsGateway := persistence.NewOutboxEventCommandsGateway(db)
 	userQueriesGateway := persistence.NewUserQueryGateway(db)
+	processedEventGateway := persistence.NewProcessedEventGateway(db)
 	transactor := persistence.NewTransactor(db)
-	notificationConsumer := rabbitmq.NewNotificationConsumer(connection, notificationCommandsGateway, outboxEventCommandsGateway, userQueriesGateway, transactor, cfg, zapLogger)
+	notificationConsumer := rabbitmq.NewNotificationConsumer(connection, notificationCommandsGateway, outboxEventCommandsGateway, userQueriesGateway, processedEventGateway, transactor, cfg, zapLogger)
 	smtpEmailSender := email.NewSMTPEmailSender(cfg, zapLogger)
-	emailConsumer := rabbitmq.NewEmailConsumer(connection, smtpEmailSender, cfg, zapLogger)
+	emailConsumer := rabbitmq.NewEmailConsumer(connection, smtpEmailSender, processedEventGateway, transactor, cfg, zapLogger)
 	outboxEventQueriesGateway := persistence.NewOutboxEventQueriesGateway(db)
 	publisher, cleanup5, err := rabbitmq.NewPublisher(connection, cfg)
 	if err != nil {

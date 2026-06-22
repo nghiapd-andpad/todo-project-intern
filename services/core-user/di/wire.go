@@ -78,12 +78,14 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 		persistence.NewOutboxEventQueriesGateway,
 		persistence.NewNotificationCommandsGateway,
 		persistence.NewUserQueryGateway,
+		persistence.NewProcessedEventGateway,
 
 		wire.Bind(new(gateway.Transactor), new(*persistence.Transactor)),
 		wire.Bind(new(gateway.OutboxEventCommandsGateway), new(*persistence.OutboxEventCommandsGateway)),
 		wire.Bind(new(gateway.OutboxEventQueriesGateway), new(*persistence.OutboxEventQueriesGateway)),
 		wire.Bind(new(gateway.NotificationCommandsGateway), new(*persistence.NotificationCommandsGateway)),
 		wire.Bind(new(gateway.UserQueriesGateway), new(*persistence.UserQueriesGateway)),
+		wire.Bind(new(gateway.ProcessedEventGateway), new(*persistence.ProcessedEventGateway)),
 
 
 		// Email Sender
