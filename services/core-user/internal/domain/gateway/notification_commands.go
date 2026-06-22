@@ -9,5 +9,5 @@ import (
 )
 
 type NotificationCommandsGateway interface {
-	Create(ctx context.Context, in *input.CreateNotification) error
+	Create(ctx context.Context, in *input.CreateNotification) (id int64, rowsAffected int64, err error)
 }

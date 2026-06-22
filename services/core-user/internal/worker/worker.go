@@ -20,6 +20,7 @@ type Worker struct {
 	jobs      []job.CronJob
 
 	notificationConsumer *rabbitmq.NotificationConsumer
+	emailConsumer        *rabbitmq.EmailConsumer
 
 	logger *zap.Logger
 }
@@ -29,6 +30,7 @@ func NewWorker(
 	scheduler gateway.Scheduler,
 
 	notificationConsumer *rabbitmq.NotificationConsumer,
+	emailConsumer *rabbitmq.EmailConsumer,
 	outboxPublisherJob *job.OutboxPublisherJob,
 
 	zapLogger *zap.Logger,
@@ -41,6 +43,7 @@ func NewWorker(
 		cfg:                  cfg,
 		scheduler:            scheduler,
 		notificationConsumer: notificationConsumer,
+		emailConsumer:        emailConsumer,
 		jobs: []job.CronJob{
 			outboxPublisherJob,
 		},
@@ -51,6 +54,10 @@ func NewWorker(
 func (w *Worker) Start(ctx context.Context) error {
 	if err := w.notificationConsumer.Start(ctx); err != nil {
 		return fmt.Errorf("start notification consumer: %w", err)
+	}
+
+	if err := w.emailConsumer.Start(ctx); err != nil {
+		return fmt.Errorf("start email consumer: %w", err)
 	}
 
 	if w.cfg != nil &&

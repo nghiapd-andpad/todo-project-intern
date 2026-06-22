@@ -29,7 +29,7 @@ func NewPublisher(conn *amqp.Connection, cfg *config.Config) (*Publisher, func()
 
 	return &Publisher{
 		ch:       ch,
-		exchange: cfg.RabbitMQTodoExchange,
+		exchange: cfg.RabbitMQUserExchange,
 	}, cleanup, nil
 }
 
