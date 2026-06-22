@@ -10,5 +10,6 @@ import (
 )
 
 type OutboxEventQueriesGateway interface {
-	FindPending(ctx context.Context, in *input.ListPendingOutboxEvents) ([]*output.OutboxEvent, error)
+	// FindClaimable selects PENDING/FAILED events, and PROCESSING events stuck past StuckThreshold, using SELECT FOR UPDATE SKIP LOCKED.
+	FindClaimable(ctx context.Context, in *input.FindClaimableOutboxEvents) ([]*output.OutboxEvent, error)
 }

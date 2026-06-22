@@ -2,19 +2,24 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/event"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
+	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/input"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/usecase/output"
 )
 
 type TodoUpdater struct {
-	transactor             gateway.Transactor
-	todoListQueriesGateway gateway.TodoListQueriesGateway
-	todoQueriesGateway     gateway.TodoQueriesGateway
-	todoCommandsGateway    gateway.TodoCommandsGateway
+	transactor                 gateway.Transactor
+	todoListQueriesGateway     gateway.TodoListQueriesGateway
+	todoQueriesGateway         gateway.TodoQueriesGateway
+	todoCommandsGateway        gateway.TodoCommandsGateway
+	outboxEventCommandsGateway gateway.OutboxEventCommandsGateway
 }
 
 func NewTodoUpdater(
@@ -22,12 +27,14 @@ func NewTodoUpdater(
 	todoListQueriesGateway gateway.TodoListQueriesGateway,
 	todoQueriesGateway gateway.TodoQueriesGateway,
 	todoCommandsGateway gateway.TodoCommandsGateway,
+	outboxEventCommandsGateway gateway.OutboxEventCommandsGateway,
 ) *TodoUpdater {
 	return &TodoUpdater{
-		transactor:             transactor,
-		todoListQueriesGateway: todoListQueriesGateway,
-		todoQueriesGateway:     todoQueriesGateway,
-		todoCommandsGateway:    todoCommandsGateway,
+		transactor:                 transactor,
+		todoListQueriesGateway:     todoListQueriesGateway,
+		todoQueriesGateway:         todoQueriesGateway,
+		todoCommandsGateway:        todoCommandsGateway,
+		outboxEventCommandsGateway: outboxEventCommandsGateway,
 	}
 }
 
@@ -58,6 +65,9 @@ func (s *TodoUpdater) Update(ctx context.Context, in *input.TodoUpdater) (*outpu
 			return entity.NewAuthZ("you do not have permission to update this todo")
 		}
 
+		// Capture old assignee before applying changes
+		oldAssigneeID := todo.AssigneeID
+
 		if isOwner {
 			applyAllFields(todo, in.Fields)
 		} else {
@@ -70,6 +80,31 @@ func (s *TodoUpdater) Update(ctx context.Context, in *input.TodoUpdater) (*outpu
 			return fmt.Errorf("TodoUpdater.Update: %w", err)
 		}
 
+		// Emit TodoAssigned only when assignee actually changed
+		if shouldEmitTodoAssigned(oldAssigneeID, updated.AssigneeID) {
+			ev := event.TodoAssigned{
+				TodoID:     int64(updated.ID),
+				TodoListID: int64(updated.TodoListID),
+				ActorID:    int64(in.RequesterID),
+				AssigneeID: int64(*updated.AssigneeID),
+				Title:      updated.Title,
+				OccurredOn: time.Now().UTC(),
+			}
+
+			payload, err := json.Marshal(ev)
+			if err != nil {
+				return fmt.Errorf("marshal TodoAssigned event: %w", err)
+			}
+
+			if err := s.outboxEventCommandsGateway.Create(txCtx, &gatewayinput.CreateOutboxEvent{
+				EventName:  ev.EventName(),
+				RoutingKey: ev.EventName(), // "todo.assigned"
+				Payload:    payload,
+			}); err != nil {
+				return fmt.Errorf("create outbox event: %w", err)
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -77,6 +112,16 @@ func (s *TodoUpdater) Update(ctx context.Context, in *input.TodoUpdater) (*outpu
 	}
 
 	return &output.TodoUpdater{Todo: updated}, nil
+}
+
+func shouldEmitTodoAssigned(old, new *entity.UserID) bool {
+	if new == nil {
+		return false
+	}
+	if old == nil {
+		return true
+	}
+	return *old != *new
 }
 
 func applyAllFields(todo *entity.Todo, fields input.UpdateTodoFields) {

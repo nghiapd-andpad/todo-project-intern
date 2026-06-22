@@ -3,14 +3,12 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
-	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/event"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	gatewayoutput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/output"
@@ -136,29 +134,6 @@ func (s *TodoCreator) Create(ctx context.Context, in *input.TodoCreator) (*outpu
 
 		// Create resource.
 		created, err = s.todoCommandsGateway.Create(txCtx, todo)
-		if err != nil {
-			return err
-		}
-
-		// Create domain event.
-		event := event.TodoCreated{
-			TodoID:     int64(created.ID),
-			TodoListID: int64(created.TodoListID),
-			ActorID:    int64(in.RequesterID),
-			Title:      created.Title,
-			OccurredOn: time.Now().UTC(),
-		}
-
-		payload, err := json.Marshal(event)
-		if err != nil {
-			return err
-		}
-
-		err = s.outboxEventCommandsGateway.Create(txCtx, &gatewayinput.CreateOutboxEvent{
-			EventName:  event.EventName(),
-			RoutingKey: event.EventName(),
-			Payload:    payload,
-		})
 		if err != nil {
 			return err
 		}

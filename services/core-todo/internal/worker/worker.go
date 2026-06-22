@@ -24,6 +24,7 @@ func NewWorker(
 	scheduler gateway.Scheduler,
 	todoOverdueMarkerJob *job.TodoOverdueMarkerJob,
 	todoSoftDeletedCleanupJob *job.TodoSoftDeletedCleanupJob,
+	outboxPublisherJob *job.OutboxPublisherJob,
 	zapLogger *zap.Logger,
 ) *Worker {
 	if zapLogger == nil {
@@ -36,6 +37,7 @@ func NewWorker(
 		jobs: []job.CronJob{
 			todoOverdueMarkerJob,
 			todoSoftDeletedCleanupJob,
+			outboxPublisherJob,
 		},
 		logger: zapLogger.With(zap.String("component", "worker")),
 	}
@@ -66,6 +68,5 @@ func (w *Worker) Stop() error {
 	if w.scheduler == nil {
 		return nil
 	}
-
 	return w.scheduler.Stop()
 }

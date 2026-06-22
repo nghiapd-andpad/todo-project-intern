@@ -8,21 +8,16 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/config"
 )
 
-func setupTopology(
-	conn *amqp.Connection,
-	cfg *config.Config,
-) error {
-
+func setupTopology(conn *amqp.Connection, cfg *config.Config) error {
 	ch, err := conn.Channel()
 	if err != nil {
 		return fmt.Errorf("rabbitmq open channel: %w", err)
 	}
 	defer ch.Close()
 
-	// Topic Exchange
-
+	// todo.events exchange
 	if err := ch.ExchangeDeclare(
-		cfg.RabbitMQExchange,
+		cfg.RabbitMQTodoExchange,
 		"topic",
 		true,
 		false,
@@ -30,33 +25,29 @@ func setupTopology(
 		false,
 		nil,
 	); err != nil {
-		return fmt.Errorf("declare exchange: %w", err)
+		return fmt.Errorf("declare todo exchange: %w", err)
 	}
 
-	// Audit Queue
-
-	_, err = ch.QueueDeclare(
-		cfg.RabbitMQAuditQueue,
+	// todo.notification.queue
+	if _, err := ch.QueueDeclare(
+		cfg.RabbitMQNotificationQueue,
 		true,
 		false,
 		false,
 		false,
 		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("declare audit queue: %w", err)
+	); err != nil {
+		return fmt.Errorf("declare notification queue: %w", err)
 	}
 
-	// Binding
-
 	if err := ch.QueueBind(
-		cfg.RabbitMQAuditQueue,
-		cfg.RabbitMQAuditRoutingKey,
-		cfg.RabbitMQExchange,
+		cfg.RabbitMQNotificationQueue,
+		cfg.RabbitMQNotificationRoutingKey, // "todo.assigned"
+		cfg.RabbitMQTodoExchange,
 		false,
 		nil,
 	); err != nil {
-		return fmt.Errorf("bind audit queue: %w", err)
+		return fmt.Errorf("bind notification queue: %w", err)
 	}
 
 	return nil

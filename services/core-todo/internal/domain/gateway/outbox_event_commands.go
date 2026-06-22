@@ -10,6 +10,8 @@ import (
 
 type OutboxEventCommandsGateway interface {
 	Create(ctx context.Context, in *input.CreateOutboxEvent) error
+	MarkProcessing(ctx context.Context, ids []int64) error
 	MarkPublished(ctx context.Context, id int64) error
 	MarkFailed(ctx context.Context, id int64, errMsg string) error
+	MarkDead(ctx context.Context, id int64, errMsg string) error
 }

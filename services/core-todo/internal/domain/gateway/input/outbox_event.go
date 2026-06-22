@@ -1,11 +1,15 @@
 package input
 
+import "time"
+
 type CreateOutboxEvent struct {
 	EventName  string
 	RoutingKey string
 	Payload    []byte
 }
 
-type ListPendingOutboxEvents struct {
-	Limit int
+type FindClaimableOutboxEvents struct {
+	BatchSize      int
+	MaxRetry       int
+	StuckThreshold time.Duration
 }

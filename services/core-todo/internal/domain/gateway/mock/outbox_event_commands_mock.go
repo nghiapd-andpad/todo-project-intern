@@ -14,7 +14,6 @@ import (
 	reflect "reflect"
 
 	input "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
-	model "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -56,19 +55,18 @@ func (mr *MockOutboxEventCommandsGatewayMockRecorder) Create(ctx, in any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockOutboxEventCommandsGateway)(nil).Create), ctx, in)
 }
 
-// FindPending mocks base method.
-func (m *MockOutboxEventCommandsGateway) FindPending(ctx context.Context, in *input.ListPendingOutboxEvents) ([]*model.OutboxEvent, error) {
+// MarkDead mocks base method.
+func (m *MockOutboxEventCommandsGateway) MarkDead(ctx context.Context, id int64, errMsg string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindPending", ctx, in)
-	ret0, _ := ret[0].([]*model.OutboxEvent)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "MarkDead", ctx, id, errMsg)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// FindPending indicates an expected call of FindPending.
-func (mr *MockOutboxEventCommandsGatewayMockRecorder) FindPending(ctx, in any) *gomock.Call {
+// MarkDead indicates an expected call of MarkDead.
+func (mr *MockOutboxEventCommandsGatewayMockRecorder) MarkDead(ctx, id, errMsg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindPending", reflect.TypeOf((*MockOutboxEventCommandsGateway)(nil).FindPending), ctx, in)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkDead", reflect.TypeOf((*MockOutboxEventCommandsGateway)(nil).MarkDead), ctx, id, errMsg)
 }
 
 // MarkFailed mocks base method.

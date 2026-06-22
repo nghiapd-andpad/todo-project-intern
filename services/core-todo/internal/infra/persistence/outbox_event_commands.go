@@ -8,6 +8,7 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/entity"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
 	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
 	gatewayoutput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/output"
@@ -41,18 +42,43 @@ func (g *OutboxEventCommandsGateway) Create(ctx context.Context, in *gatewayinpu
 	return nil
 }
 
-func (g *OutboxEventCommandsGateway) MarkPublished(ctx context.Context, id int64) error {
+func (g *OutboxEventCommandsGateway) MarkProcessing(ctx context.Context, ids []int64) error {
 	conn := connFromContext(ctx, g.db)
 
-	now := time.Now().UTC()
+	if len(ids) == 0 {
+		return nil
+	}
+
 	if err := conn.Model(&model.OutboxEvent{}).
-		Where("id = ?", id).
+		Where("id IN ?", ids).
 		Updates(map[string]any{
-			"status":       string(gatewayoutput.OutboxEventStatusSent),
+			"status":      string(gatewayoutput.OutboxEventStatusProcessing),
+			"retry_count": gorm.Expr("retry_count + 1"),
+		}).Error; err != nil {
+		return fmt.Errorf("db mark outbox events processing: %w", err)
+	}
+
+	return nil
+}
+
+func (g *OutboxEventCommandsGateway) MarkPublished(ctx context.Context, id int64) error {
+	now := time.Now().UTC()
+
+	result := g.db.WithContext(ctx).
+		Model(&model.OutboxEvent{}).
+		Where("id = ? AND status = ?", id, string(gatewayoutput.OutboxEventStatusProcessing)).
+		Updates(map[string]any{
+			"status":       string(gatewayoutput.OutboxEventStatusPublished),
 			"published_at": now,
 			"last_error":   nil,
-		}).Error; err != nil {
-		return fmt.Errorf("db mark outbox event published: %w", err)
+		})
+
+	if result.Error != nil {
+		return fmt.Errorf("db mark outbox event published: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return entity.NewAlreadyHandled(fmt.Sprintf("event %d already handled elsewhere", id))
 	}
 
 	return nil
@@ -69,6 +95,21 @@ func (g *OutboxEventCommandsGateway) MarkFailed(ctx context.Context, id int64, e
 			"last_error":  errMsg,
 		}).Error; err != nil {
 		return fmt.Errorf("db mark outbox event failed: %w", err)
+	}
+
+	return nil
+}
+
+func (g *OutboxEventCommandsGateway) MarkDead(ctx context.Context, id int64, errMsg string) error {
+	conn := connFromContext(ctx, g.db)
+
+	if err := conn.Model(&model.OutboxEvent{}).
+		Where("id = ?", id).
+		Updates(map[string]any{
+			"status":     string(gatewayoutput.OutboxEventStatusDead),
+			"last_error": errMsg,
+		}).Error; err != nil {
+		return fmt.Errorf("db mark outbox event dead: %w", err)
 	}
 
 	return nil

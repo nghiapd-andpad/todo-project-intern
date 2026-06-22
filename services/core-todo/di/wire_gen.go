@@ -11,6 +11,7 @@ import (
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/handler"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/cronjob"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/rabbitmq"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/redis"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/service"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/utils/logger"
@@ -36,7 +37,7 @@ func InitializeServer(cfg *config.Config) (*ServerApp, func(), error) {
 	todoCreator := service.NewTodoCreator(cfg, transactor, idempotencyGateway, todoQueriesGateway, todoCommandsGateway, todoListQueriesGateway, outboxEventCommandsGateway)
 	todoGetter := service.NewTodoGetter(todoListQueriesGateway, todoQueriesGateway)
 	todoLister := service.NewTodoLister(todoListQueriesGateway, todoQueriesGateway)
-	todoUpdater := service.NewTodoUpdater(transactor, todoListQueriesGateway, todoQueriesGateway, todoCommandsGateway)
+	todoUpdater := service.NewTodoUpdater(transactor, todoListQueriesGateway, todoQueriesGateway, todoCommandsGateway, outboxEventCommandsGateway)
 	todoDeleter := service.NewTodoDeleter(todoListQueriesGateway, todoQueriesGateway, todoCommandsGateway)
 	todoListCommandsGateway := persistence.NewTodoListCommandsGateway(db)
 	todoListCreator := service.NewTodoListCreator(transactor, idempotencyGateway, todoListQueriesGateway, todoListCommandsGateway)
@@ -96,9 +97,31 @@ func InitializeWorker(cfg *config.Config) (*WorkerApp, func(), error) {
 	todoListCommandsGateway := persistence.NewTodoListCommandsGateway(db)
 	todoSoftDeletedCleaner := service.NewTodoSoftDeletedCleaner(transactor, todoQueriesGateway, todoCommandsGateway, todoListQueriesGateway, todoListCommandsGateway)
 	todoSoftDeletedCleanupJob := job.NewTodoSoftDeletedCleanupJob(todoSoftDeletedCleaner, distributedLocker, cfg, zapLogger)
-	workerWorker := worker.NewWorker(cfg, scheduler, todoOverdueMarkerJob, todoSoftDeletedCleanupJob, zapLogger)
+	outboxEventQueriesGateway := persistence.NewOutboxEventQueriesGateway(db)
+	outboxEventCommandsGateway := persistence.NewOutboxEventCommandsGateway(db)
+	connection, cleanup5, err := rabbitmq.NewConnection(cfg)
+	if err != nil {
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	publisher, cleanup6, err := rabbitmq.NewPublisher(connection, cfg)
+	if err != nil {
+		cleanup5()
+		cleanup4()
+		cleanup3()
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	outboxPublisherJob := job.NewOutboxPublisherJob(transactor, outboxEventQueriesGateway, outboxEventCommandsGateway, publisher, cfg, zapLogger)
+	workerWorker := worker.NewWorker(cfg, scheduler, todoOverdueMarkerJob, todoSoftDeletedCleanupJob, outboxPublisherJob, zapLogger)
 	workerApp := NewWorkerApp(workerWorker, zapLogger)
 	return workerApp, func() {
+		cleanup6()
+		cleanup5()
 		cleanup4()
 		cleanup3()
 		cleanup2()
@@ -118,16 +141,10 @@ type WorkerApp struct {
 	Logger *zap.Logger
 }
 
-func NewWorkerApp(worker2 *worker.Worker, zapLogger *zap.Logger) *WorkerApp {
-	return &WorkerApp{
-		Worker: worker2,
-		Logger: zapLogger,
-	}
+func NewWorkerApp(w *worker.Worker, zapLogger *zap.Logger) *WorkerApp {
+	return &WorkerApp{Worker: w, Logger: zapLogger}
 }
 
 func NewServerApp(grpcServer *grpc.Server, zapLogger *zap.Logger) *ServerApp {
-	return &ServerApp{
-		GRPCServer: grpcServer,
-		Logger:     zapLogger,
-	}
+	return &ServerApp{GRPCServer: grpcServer, Logger: zapLogger}
 }

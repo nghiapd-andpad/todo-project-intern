@@ -3,12 +3,14 @@ package persistence
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway"
-	gatewayinput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
-	gatewayoutput "github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/output"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/input"
+	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/domain/gateway/output"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/mapper"
 	"github.com/nghiapd-andpad/todo-project-intern/services/core-todo/internal/infra/persistence/model"
 )
@@ -23,24 +25,30 @@ func NewOutboxEventQueriesGateway(db *gorm.DB) *OutboxEventQueriesGateway {
 
 var _ gateway.OutboxEventQueriesGateway = (*OutboxEventQueriesGateway)(nil)
 
-func (g *OutboxEventQueriesGateway) FindPending(
-	ctx context.Context,
-	in *gatewayinput.ListPendingOutboxEvents,
-) ([]*gatewayoutput.OutboxEvent, error) {
+func (g *OutboxEventQueriesGateway) FindClaimable(ctx context.Context, in *input.FindClaimableOutboxEvents) ([]*output.OutboxEvent, error) {
 	conn := connFromContext(ctx, g.db)
 
-	limit := in.Limit
-	if limit <= 0 {
-		limit = 100
-	}
+	stuckBefore := time.Now().UTC().Add(-in.StuckThreshold)
 
 	var models []*model.OutboxEvent
+
 	if err := conn.
-		Where("status = ?", string(gatewayoutput.OutboxEventStatusPending)).
+		Clauses(clause.Locking{
+			Strength: "UPDATE",
+			Options:  "SKIP LOCKED",
+		}).
+		Where(
+			"(status IN (?, ?) OR (status = ? AND updated_at < ?)) AND retry_count < ?",
+			string(output.OutboxEventStatusPending),
+			string(output.OutboxEventStatusFailed),
+			string(output.OutboxEventStatusProcessing),
+			stuckBefore,
+			in.MaxRetry,
+		).
 		Order("created_at ASC").
-		Limit(limit).
+		Limit(in.BatchSize).
 		Find(&models).Error; err != nil {
-		return nil, fmt.Errorf("db find pending outbox events: %w", err)
+		return nil, fmt.Errorf("db find claimable outbox events: %w", err)
 	}
 
 	return mapper.OutboxEventsToOutput(models), nil

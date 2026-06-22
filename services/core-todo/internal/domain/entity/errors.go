@@ -10,6 +10,7 @@ const (
 	ErrAuthZ            ErrorCode = "AUTHORIZATION"
 	ErrAuthN            ErrorCode = "AUTHENTICATION"
 	ErrConflict         ErrorCode = "CONFLICT"
+	ErrAlreadyHandled   ErrorCode = "AlreadyHandled"
 	ErrInternal         ErrorCode = "INTERNAL"
 )
 
@@ -49,6 +50,10 @@ func NewAuthN(message string) *AppError {
 
 func NewConflict(message string) *AppError {
 	return &AppError{Code: ErrConflict, Message: message}
+}
+
+func NewAlreadyHandled(message string) *AppError {
+	return &AppError{Code: ErrAlreadyHandled, Message: message}
 }
 
 func NewInternal(message string) *AppError {

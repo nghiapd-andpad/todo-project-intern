@@ -5,9 +5,11 @@ import "time"
 type OutboxEventStatus string
 
 const (
-	OutboxEventStatusPending OutboxEventStatus = "PENDING"
-	OutboxEventStatusSent    OutboxEventStatus = "SENT"
-	OutboxEventStatusFailed  OutboxEventStatus = "FAILED"
+	OutboxEventStatusPending    OutboxEventStatus = "PENDING"
+	OutboxEventStatusProcessing OutboxEventStatus = "PROCESSING"
+	OutboxEventStatusPublished  OutboxEventStatus = "PUBLISHED"
+	OutboxEventStatusFailed     OutboxEventStatus = "FAILED"
+	OutboxEventStatusDead       OutboxEventStatus = "DEAD"
 )
 
 type OutboxEvent struct {

@@ -1,4 +1,3 @@
-// Package config provides configuration loading and management for the application.
 package config
 
 import (
@@ -20,14 +19,12 @@ type Config struct {
 	ServerPort string `envconfig:"SERVER_PORT" default:"50051"`
 	AppEnv     string `envconfig:"APP_ENV" default:"development"`
 
-	// Log
 	LogLevel  string `envconfig:"LOG_LEVEL" default:"debug"`
 	LogFormat string `envconfig:"LOG_FORMAT" default:"console"`
 
-	// Scheduler
+	SchedulerEnabled bool `envconfig:"SCHEDULER_ENABLED" default:"false"`
 
 	// Mark overdue todo job
-	SchedulerEnabled            bool          `envconfig:"SCHEDULER_ENABLED" default:"false"`
 	TodoOverdueMarkerCron       string        `envconfig:"TODO_OVERDUE_MARKER_CRON" default:"*/5 * * * *"`
 	TodoOverdueMarkerBatchSize  int           `envconfig:"TODO_OVERDUE_MARKER_BATCH_SIZE" default:"500"`
 	TodoOverdueMarkerMaxBatches int           `envconfig:"TODO_OVERDUE_MARKER_MAX_BATCHES" default:"20"`
@@ -44,6 +41,11 @@ type Config struct {
 	TodoSoftDeletedCleanupLockTTL       time.Duration `envconfig:"TODO_SOFT_DELETED_CLEANUP_LOCK_TTL" default:"10m"`
 	TodoSoftDeletedCleanupBatchSleep    time.Duration `envconfig:"TODO_SOFT_DELETED_CLEANUP_BATCH_SLEEP" default:"100ms"`
 
+	// Outbox publisher worker (no Redis lock — uses SKIP LOCKED instead)
+	OutboxPublisherCron      string `envconfig:"OUTBOX_PUBLISHER_CRON" default:"*/1 * * * *"`
+	OutboxPublisherBatchSize int    `envconfig:"OUTBOX_PUBLISHER_BATCH_SIZE" default:"100"`
+	OutboxPublisherMaxRetry  int    `envconfig:"OUTBOX_PUBLISHER_MAX_RETRY" default:"5"`
+
 	// Redis
 	RedisHost     string `envconfig:"REDIS_HOST" default:"localhost"`
 	RedisPort     string `envconfig:"REDIS_PORT" default:"6379"`
@@ -55,13 +57,22 @@ type Config struct {
 	TodoTitleBlacklist   []string `envconfig:"TODO_TITLE_BLACKLIST" default:"spam,troll"`
 
 	// RabbitMQ
-	RabbitMQHost            string `envconfig:"RABBITMQ_HOST" default:"localhost"`
-	RabbitMQPort            string `envconfig:"RABBITMQ_PORT" default:"5672"`
-	RabbitMQUser            string `envconfig:"RABBITMQ_USER" default:"root"`
-	RabbitMQPassword        string `envconfig:"RABBITMQ_PASSWORD" default:"root"`
-	RabbitMQExchange        string `envconfig:"RABBITMQ_EXCHANGE" default:"todo.events"`
-	RabbitMQAuditQueue      string `envconfig:"RABBITMQ_AUDIT_QUEUE" default:"todo.audit.queue"`
-	RabbitMQAuditRoutingKey string `envconfig:"RABBITMQ_AUDIT_ROUTING_KEY" default:"todo.*"`
+	RabbitMQHost     string `envconfig:"RABBITMQ_HOST" default:"localhost"`
+	RabbitMQPort     string `envconfig:"RABBITMQ_PORT" default:"5672"`
+	RabbitMQUser     string `envconfig:"RABBITMQ_USER" default:"root"`
+	RabbitMQPassword string `envconfig:"RABBITMQ_PASSWORD" default:"root"`
+
+	// core-todo publishes to this exchange
+	RabbitMQTodoExchange string `envconfig:"RABBITMQ_TODO_EXCHANGE" default:"todo.events"`
+
+	// core-user publishes to this exchange, core-todo subscribes
+	RabbitMQUserExchange            string `envconfig:"RABBITMQ_USER_EXCHANGE" default:"user.events"`
+	RabbitMQUserEventsQueue         string `envconfig:"RABBITMQ_USER_EVENTS_QUEUE" default:"todo.user-events.queue"`
+	RabbitMQUserEventsRoutingKey    string `envconfig:"RABBITMQ_USER_EVENTS_ROUTING_KEY" default:"user.*"`
+	RabbitMQUserEventsPrefetchCount int    `envconfig:"RABBITMQ_USER_EVENTS_PREFETCH_COUNT" default:"10"`
+
+	RabbitMQNotificationQueue      string `envconfig:"RABBITMQ_NOTIFICATION_QUEUE" default:"todo.notification.queue"`
+	RabbitMQNotificationRoutingKey string `envconfig:"RABBITMQ_NOTIFICATION_ROUTING_KEY" default:"todo.assigned"`
 }
 
 func New() (*Config, error) {
