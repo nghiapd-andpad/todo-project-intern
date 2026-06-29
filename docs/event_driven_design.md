@@ -29,9 +29,7 @@ TodoCreator
       v
 DB Transaction Commit
 
-------------------------
-
-Outbox Publisher Worker (core-user)
+Outbox Publisher Worker (core-todo)
       |
       |-- SELECT PENDING / FAILED events (limit)
       |-- Publish to RabbitMQ
@@ -43,11 +41,25 @@ RabbitMQ Exchange: todo.events
 RabbitMQ Queue: todo.notification.queue (binding)
       |
       v
-Notification Consumer
-      |
-      |-- INSERT notifications tables, gửi email cho user
-      |-- ACK message
-      v
+NotificationConsumer nhận todo.assigned (core-user)
+    │
+    ├── INSERT notifications (DB)
+    │
+    └── INSERT outbox_events (notification.created)
+              │
+              ▼
+    OutboxPublisherJob (core-user worker)
+              │
+              ▼
+    user.events exchange
+              │
+              ▼
+    email.queue
+              │
+              ▼
+    EmailConsumer → SMTP
+              |-- ACK message
+              v
 RabbitMQ deletes message
 
 ## Current Progress
@@ -66,20 +78,10 @@ Next:
 
 
 ## Improve notification consumer
-NotificationConsumer nhận todo.assigned
-    │
-    ├── INSERT notifications (DB)
-    │
-    └── INSERT outbox_events (notification.created)
-              │
-              ▼
-    OutboxPublisherJob (core-user worker)
-              │
-              ▼
-    user.events exchange
-              │
-              ▼
-    email.queue
-              │
-              ▼
-    EmailConsumer → SMTP
+
+consumer/worker tach rieng
+auto scale
+
+sharding key: userID
+notifcation.queue.userID -> 
+
